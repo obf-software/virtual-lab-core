@@ -1,0 +1,8 @@
+{
+    "name": "@virtual-lab-core/websocket-server",
+    "version": "0.0.0",
+    "type": "module",
+    "dependencies": {
+        "zod": "^3.22.2"
+    }
+}

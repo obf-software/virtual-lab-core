@@ -1,0 +1,32 @@
+{
+    "name": "virtual-lab-core",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": "18"
+    },
+    "scripts": {
+        "dev": "sst dev",
+        "build": "sst build",
+        "deploy": "sst deploy",
+        "remove": "sst remove",
+        "console": "sst console",
+        "typecheck": "tsc --noEmit",
+        "format": "prettier --write ."
+    },
+    "devDependencies": {
+        "@tsconfig/node18": "1.0.3",
+        "@types/aws-lambda": "^8.10.119",
+        "@types/node": "^18.17.13",
+        "aws-cdk-lib": "2.91.0",
+        "constructs": "10.2.69",
+        "prettier": "^3.0.3",
+        "sst": "2.24.22",
+        "typescript": "^5.2.2"
+    },
+    "workspaces": [
+        "packages/api",
+        "packages/websocket-server"
+    ]
+}

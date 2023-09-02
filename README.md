@@ -1,1 +1,1 @@
-# admin-dashboard
+# virtual-lab-core
