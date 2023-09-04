@@ -1,6 +1,7 @@
 import { SSTConfig } from 'sst';
 import { Api } from './stacks/Api';
 import { Auth } from './stacks/Auth';
+import { Client } from './stacks/Client';
 
 export default {
     config(_input) {
@@ -12,5 +13,6 @@ export default {
     stacks(app) {
         app.stack(Auth);
         app.stack(Api);
+        app.stack(Client);
     },
 } satisfies SSTConfig;
