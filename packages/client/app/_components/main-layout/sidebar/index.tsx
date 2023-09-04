@@ -1,5 +1,6 @@
 import { menuItemsMap, useMenu } from '@/contexts/menu';
 import { Box, BoxProps, CloseButton, Flex, Icon, Text, useColorModeValue } from '@chakra-ui/react';
+import { Link as NextLink } from '@chakra-ui/next-js';
 
 interface SidebarProps extends BoxProps {
     onClose: () => void;
@@ -9,12 +10,12 @@ interface SidebarProps extends BoxProps {
  * TODO: Sobstituir a box do menu item por um next.js LINK
  */
 export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
-    const { getActiveMenuItem } = useMenu();
+    const { getActiveMenuItem, setActiveMenuItem } = useMenu();
 
-    const menuItems = [...Object.values(menuItemsMap)];
+    const menuItems = [...Object.entries(menuItemsMap)];
 
     const activeIndex = menuItems.findIndex(
-        (item) => item.label === getActiveMenuItem().data.label,
+        ([id, item]) => item.label === getActiveMenuItem().data.label,
     );
 
     return (
@@ -48,13 +49,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                 />
             </Flex>
 
-            {menuItems.map((item, index) => (
-                <Box
+            {menuItems.map(([id, item], index) => (
+                <NextLink
                     key={`nav-item-${item.label}`}
-                    as='a'
-                    href='#'
+                    href={item.href}
                     style={{ textDecoration: 'none' }}
                     _focus={{ boxShadow: 'none' }}
+                    onClick={() => {
+                        setActiveMenuItem(id as keyof typeof menuItemsMap);
+                    }}
                 >
                     <Flex
                         align='center'
@@ -80,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
 
                         <Text>{item.label}</Text>
                     </Flex>
-                </Box>
+                </NextLink>
             ))}
         </Box>
     );
