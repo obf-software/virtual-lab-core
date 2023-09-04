@@ -16,7 +16,7 @@ import {
     useColorModeValue,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FiBell, FiChevronDown, FiMenu } from 'react-icons/fi';
+import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'react-icons/fi';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -110,10 +110,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                             bg={useColorModeValue('white', 'gray.900')}
                             borderColor={useColorModeValue('gray.200', 'gray.700')}
                         >
-                            <MenuItem>Perfil</MenuItem>
-                            <MenuItem>Configurações</MenuItem>
+                            <MenuItem icon={<FiUser />}>Perfil</MenuItem>
+                            <MenuItem icon={<FiSettings />}>Configurações</MenuItem>
                             <MenuDivider />
-                            <MenuItem onClick={signOut}>Sair</MenuItem>
+                            <MenuItem
+                                icon={<FiLogOut />}
+                                onClick={signOut}
+                                textColor={'red.400'}
+                            >
+                                Sair
+                            </MenuItem>
                         </MenuList>
                     </Menu>
                 </Flex>
