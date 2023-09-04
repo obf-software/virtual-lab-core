@@ -1,12 +1,16 @@
-import { AddIcon } from '@chakra-ui/icons';
 import React, { PropsWithChildren, createContext, useContext, useState } from 'react';
+import { IconType } from 'react-icons';
+import { FiHome, FiMonitor, FiServer, FiUser, FiUsers } from 'react-icons/fi';
 
 export enum MenuItems {
     HOME = 'HOME',
+    INSTANCES = 'INSTANCES',
+    USERS = 'USERS',
+    GROUPS = 'GROUPS',
 }
 
 export type MenuItemData = {
-    icon: React.ReactElement;
+    icon: IconType;
     label: string;
     href: string;
 };
@@ -15,9 +19,24 @@ export const menuItemsMap: {
     [key in keyof typeof MenuItems]: MenuItemData;
 } = {
     HOME: {
-        icon: <AddIcon />,
-        label: 'Home',
+        icon: FiHome,
+        label: 'Início',
         href: '/',
+    },
+    INSTANCES: {
+        icon: FiMonitor,
+        label: 'Instâncias',
+        href: '/instances',
+    },
+    USERS: {
+        icon: FiUser,
+        label: 'Usuários',
+        href: '/users',
+    },
+    GROUPS: {
+        icon: FiUsers,
+        label: 'Grupos',
+        href: '/groups',
     },
 };
 
