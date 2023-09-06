@@ -11,12 +11,21 @@ import {
     MenuDivider,
     MenuItem,
     MenuList,
+    Popover,
+    PopoverArrow,
+    PopoverBody,
+    PopoverCloseButton,
+    PopoverContent,
+    PopoverHeader,
+    PopoverTrigger,
     Text,
     VStack,
     useColorModeValue,
 } from '@chakra-ui/react';
 import React from 'react';
 import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'react-icons/fi';
+import { BiSolidBellRing } from 'react-icons/bi';
+import { PulsingIcon } from '@/components/pulsing-icon';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -69,12 +78,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
             </Text>
 
             <HStack spacing={{ base: '0', md: '6' }}>
-                <IconButton
-                    size='lg'
-                    variant='ghost'
-                    aria-label='open menu'
-                    icon={<FiBell />}
-                />
+                <Popover
+                    placement='bottom-start'
+                    isLazy
+                >
+                    <PopoverTrigger>
+                        <IconButton
+                            rounded={'full'}
+                            size='lg'
+                            variant='ghost'
+                            aria-label='Mostrar notificações'
+                            color={'blue.400'}
+                            icon={1 === 1 ? <FiBell /> : <BiSolidBellRing />}
+                        />
+                    </PopoverTrigger>
+                    <PopoverContent _focus={{ boxShadown: 'none' }}>
+                        <PopoverArrow />
+                        <PopoverCloseButton />
+                        <PopoverHeader fontWeight='bold'>Notificações</PopoverHeader>
+                        <PopoverBody w='full'>
+                            <Text>Nenhuma notificação</Text>
+                            <Text>A instância hduhudsu2312 mudou de status para ativa</Text>
+                        </PopoverBody>
+                    </PopoverContent>
+                </Popover>
                 <Flex alignItems={'center'}>
                     <Menu>
                         <MenuButton
