@@ -18,7 +18,9 @@ export function Auth({ stack, app }: sst.StackContext) {
     const userPool = new UserPool(stack, 'UserPool', {
         accountRecovery: AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
         advancedSecurityMode: AdvancedSecurityMode.AUDIT,
-        removalPolicy: stagesWhereUserPoolIsRetained.includes(app.stage) ? RemovalPolicy.RETAIN : RemovalPolicy.DESTROY,
+        removalPolicy: stagesWhereUserPoolIsRetained.includes(app.stage)
+            ? RemovalPolicy.RETAIN
+            : RemovalPolicy.DESTROY,
         mfa: Mfa.OPTIONAL,
         mfaSecondFactor: {
             otp: true,
@@ -44,7 +46,8 @@ export function Auth({ stack, app }: sst.StackContext) {
         },
         userInvitation: {
             emailSubject: 'You are invited to join the Virtual Lab',
-            emailBody: 'Your username is <strong>{username}</strong> and temporary password is <strong>{####}</strong>',
+            emailBody:
+                'Your username is <strong>{username}</strong> and temporary password is <strong>{####}</strong>',
         },
         userVerification: {
             emailStyle: VerificationEmailStyle.CODE,
