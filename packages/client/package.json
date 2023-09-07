@@ -7,7 +7,7 @@
         "node": "18"
     },
     "scripts": {
-        "dev": "vite",
+        "dev": "AWS_PROFILE=virtual-lab sst bind vite",
         "build": "tsc && vite build",
         "preview": "vite preview"
     },

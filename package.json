@@ -8,10 +8,10 @@
     },
     "scripts": {
         "postinstall": "cd packages/web && npm install",
-        "dev": "sst dev",
+        "dev": "AWS_PROFILE=virtual-lab sst dev",
         "build": "sst build",
         "deploy": "sst deploy",
-        "remove": "sst remove",
+        "remove": "AWS_PROFILE=virtual-lab sst remove",
         "console": "sst console",
         "typecheck": "tsc --noEmit",
         "format": "prettier --write .",

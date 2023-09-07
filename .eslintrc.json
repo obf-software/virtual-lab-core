@@ -23,7 +23,7 @@
     },
     "overrides": [
         {
-            "files": ["packages/web/**/*"],
+            "files": ["packages/client/**/*"],
             "env": { "browser": true, "es2020": true },
             "plugins": ["react-refresh"],
             "extends": [
