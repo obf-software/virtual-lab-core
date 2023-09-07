@@ -4,8 +4,8 @@ import { Tracer } from '@aws-lambda-powertools/tracer';
 import { PT_VERSION } from '@aws-lambda-powertools/commons/lib/version';
 
 const defaultValues = {
-    region: process.env.AWS_REGION || 'N/A',
-    executionEnv: process.env.AWS_EXECUTION_ENV || 'N/A',
+    region: process.env.AWS_REGION ?? 'N/A',
+    executionEnv: process.env.AWS_EXECUTION_ENV ?? 'N/A',
 };
 
 const logger = new Logger({

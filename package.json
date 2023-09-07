@@ -13,16 +13,23 @@
         "remove": "sst remove",
         "console": "sst console",
         "typecheck": "tsc --noEmit",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
     },
     "devDependencies": {
         "@tsconfig/node18": "1.0.3",
         "@types/aws-lambda": "^8.10.119",
         "@types/node": "^18.17.13",
+        "@typescript-eslint/eslint-plugin": "^6.6.0",
+        "@typescript-eslint/parser": "^6.6.0",
         "aws-cdk-lib": "2.91.0",
         "constructs": "10.2.69",
+        "eslint": "^8.48.0",
+        "eslint-plugin-react": "^7.33.2",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-react-refresh": "^0.4.3",
         "prettier": "^3.0.3",
-        "sst": "2.24.22",
+        "sst": "2.24.25",
         "typescript": "^5.2.2"
     },
     "workspaces": [

@@ -117,7 +117,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ status, connectionTy
                         ['CPU', cpu],
                         ['Memória', memory],
                         ['Armazenamento', storage],
-                        ['Conexão', connectionType || 'SSH'],
+                        ['Conexão', connectionType ?? 'SSH'],
                         ['Criada em', dayjs(createdAt).format('DD/MM/YYYY')],
                     ].map(([label, value]) => (
                         <Stack

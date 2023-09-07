@@ -25,7 +25,6 @@ import {
 import React from 'react';
 import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'react-icons/fi';
 import { BiSolidBellRing } from 'react-icons/bi';
-import { PulsingIcon } from '@/components/pulsing-icon';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -44,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
         role: string;
     }>;
 
-    const name = attributes.name || attributes.email || user.username || 'Usuário';
-    const role = attributes.role || 'Usuário';
+    const name = attributes.name ?? attributes.email ?? user.username ?? 'Usuário';
+    const role = attributes.role ?? 'Usuário';
     const profileImageUrl = attributes.profile;
 
     return (
@@ -89,6 +88,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                             variant='ghost'
                             aria-label='Mostrar notificações'
                             color={'blue.400'}
+                            // eslint-disable-next-line no-constant-condition
                             icon={1 === 1 ? <FiBell /> : <BiSolidBellRing />}
                         />
                     </PopoverTrigger>

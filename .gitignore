@@ -10,7 +10,9 @@ node_modules
 .next
 out
 build
-next-env.d.ts
+dist
+dist-ssr
+*.local
 
 # misc
 .DS_Store
@@ -26,3 +28,5 @@ _dev
 
 # debug
 npm-debug.log*
+logs
+*.log

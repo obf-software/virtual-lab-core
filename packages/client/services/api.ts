@@ -3,16 +3,16 @@ import { UserRole } from '@/models/api/user-role';
 type UrlPath = `/${string}`;
 type AuthorizationHeader = `Bearer ${string}`;
 
-type Paginated<T> = {
+interface Paginated<T> {
     data: T[];
     totalItems: number | null;
     cursor: string | null;
-};
+}
 
-type ApiResponse<T> = {
+interface ApiResponse<T> {
     data?: T;
     error?: string;
-};
+}
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -37,6 +37,7 @@ const executeRequest = async <T>(props: {
             });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const response = await fetch(url, {
             method: props.method,
             body: props.body !== undefined ? JSON.stringify(props.body) : undefined,
