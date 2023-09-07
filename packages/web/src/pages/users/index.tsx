@@ -11,14 +11,21 @@ import {
     InputLeftElement,
     InputRightElement,
     IconButton,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { UsersTable } from './users-table';
 import { FiChevronsDown, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenu } from '../../contexts/menu/use-menu';
+import { CreateUserModal } from './create-user-modal';
 
 export const UsersPage: React.FC = () => {
     const { setActiveMenuItem } = useMenu();
+    const {
+        isOpen: isCreateUserModalOpen,
+        onClose: onCreateUserModalClose,
+        onOpen: onCreateUserModalOpen,
+    } = useDisclosure();
 
     useEffect(() => {
         setActiveMenuItem('USERS');
@@ -28,6 +35,10 @@ export const UsersPage: React.FC = () => {
     return (
         <Box>
             <Container maxW={'6xl'}>
+                <CreateUserModal
+                    isOpen={isCreateUserModalOpen}
+                    onClose={onCreateUserModalClose}
+                />
                 <Stack
                     pb={10}
                     maxW={'6xl'}
@@ -53,6 +64,7 @@ export const UsersPage: React.FC = () => {
                         variant={'solid'}
                         colorScheme='blue'
                         leftIcon={<FiPlus />}
+                        onClick={onCreateUserModalOpen}
                     >
                         Adicionar usuário
                     </Button>
@@ -70,7 +82,7 @@ export const UsersPage: React.FC = () => {
                         />
                         <InputRightElement>
                             <IconButton
-                                aria-label='Limpas pesquisa'
+                                aria-label='Limpar pesquisa'
                                 variant={'ghost'}
                                 size={'sm'}
                                 icon={<FiX />}
