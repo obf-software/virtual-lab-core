@@ -4,7 +4,7 @@ import { Auth } from './stacks/Auth';
 import { Client } from './stacks/Client';
 
 export default {
-    config(_input) {
+    config() {
         return {
             name: 'virtual-lab-core',
             region: 'us-east-1',

@@ -75,7 +75,6 @@ export function Auth({ stack, app }: sst.StackContext) {
             scopes: [OAuthScope.OPENID, OAuthScope.EMAIL, OAuthScope.PROFILE],
             flows: {
                 authorizationCodeGrant: true,
-                clientCredentials: true,
                 implicitCodeGrant: true,
             },
 

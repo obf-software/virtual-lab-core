@@ -6,22 +6,23 @@ export function Client({ stack, app }: sst.StackContext) {
     const { api } = sst.use(Api);
     const { userPool, userPoolClient } = sst.use(Auth);
 
-    const client = new sst.NextjsSite(stack, 'Client', {
+    const staticSite = new sst.StaticSite(stack, 'StaticSite', {
         path: 'packages/client',
-        runtime: 'nodejs18.x',
+        buildCommand: 'npm run build',
+        buildOutput: 'dist',
         environment: {
-            NEXT_PUBLIC_AWS_REGION: app.region,
-            NEXT_PUBLIC_AWS_USER_POOL_ID: userPool.userPoolId,
-            NEXT_PUBLIC_AWS_USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
-            NEXT_PUBLIC_API_URL: api.url,
+            VITE_APP_AWS_REGION: app.region,
+            VITE_APP_AWS_USER_POOL_ID: userPool.userPoolId,
+            VITE_APP_AWS_USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
+            VITE_APP_API_URL: api.url,
         },
     });
 
     stack.addOutputs({
-        clientUrl: client.url,
+        staticSiteUrl: staticSite.url,
     });
 
     return {
-        client,
+        staticSite,
     };
 }

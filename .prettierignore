@@ -1,3 +1,4 @@
 .sst
 .build
 .open-next
+sst-env.d.ts
