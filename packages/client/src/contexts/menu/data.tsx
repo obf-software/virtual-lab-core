@@ -18,22 +18,22 @@ export const menuItemsMap: {
     [key in keyof typeof MenuItems]: MenuItemData;
 } = {
     HOME: {
-        icon: FiHome,
+        icon: FiHome as IconType,
         label: 'Início',
         href: '/',
     },
     INSTANCES: {
-        icon: FiMonitor,
+        icon: FiMonitor as IconType,
         label: 'Instâncias',
         href: '/instances',
     },
     USERS: {
-        icon: FiUser,
+        icon: FiUser as IconType,
         label: 'Usuários',
         href: '/users',
     },
     GROUPS: {
-        icon: FiUsers,
+        icon: FiUsers as IconType,
         label: 'Grupos',
         href: '/groups',
     },

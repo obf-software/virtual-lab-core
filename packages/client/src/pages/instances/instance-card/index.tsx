@@ -19,6 +19,7 @@ import dayjs from 'dayjs';
 import React from 'react';
 import { FiMoreVertical, FiPlay } from 'react-icons/fi';
 import { FaLinux, FaWindows } from 'react-icons/fa';
+import { IconType } from 'react-icons';
 
 enum InstanceStatus {
     PENDENTE = 'PENDENTE',
@@ -103,7 +104,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ status, connectionTy
                     mb={5}
                 >
                     <Icon
-                        as={so === 'LINUX' ? FaLinux : FaWindows}
+                        as={(so === 'LINUX' ? FaLinux : FaWindows) as IconType}
                         boxSize={'40px'}
                     />
                     <Heading size={'lg'}>{soVersion}</Heading>

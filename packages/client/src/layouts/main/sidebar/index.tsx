@@ -3,6 +3,7 @@ import { Box, BoxProps, CloseButton, Flex, Icon, Text, useColorModeValue } from 
 import { Link } from 'react-router-dom';
 import { useMenu } from '../../../contexts/menu/use-menu';
 import { menuItemsMap } from '../../../contexts/menu/data';
+import { IconType } from 'react-icons';
 
 interface SidebarProps extends BoxProps {
     onClose: () => void;
@@ -77,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                             _groupHover={{
                                 color: 'white',
                             }}
-                            as={item.icon}
+                            as={item.icon as IconType}
                         />
 
                         <Text>{item.label}</Text>

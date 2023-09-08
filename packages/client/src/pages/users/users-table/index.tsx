@@ -23,7 +23,7 @@ interface UsersTableProps {}
 
 export const UsersTable: React.FC<UsersTableProps> = () => {
     const users: { username: string; role: string; createdAt: string; lastLoginAt: string }[] =
-        Array.from({ length: 5 }).map((_, index) => ({
+        Array.from({ length: 5 }).map(() => ({
             username: 'a194808',
             createdAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString(),

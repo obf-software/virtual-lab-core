@@ -22,7 +22,6 @@ const executeRequest = async <T>(props: {
             });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const response = await fetch(url, {
             method: props.method,
             body: props.body !== undefined ? JSON.stringify(props.body) : undefined,
