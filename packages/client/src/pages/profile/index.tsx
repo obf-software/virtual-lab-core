@@ -1,4 +1,3 @@
-import { Text } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { useMenu } from '../../contexts/menu/use-menu';
 

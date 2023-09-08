@@ -22,7 +22,7 @@ dayjs.locale('pt-br');
 
 interface GroupsTableProps {}
 
-export const GroupsTable: React.FC<GroupsTableProps> = (props) => {
+export const GroupsTable: React.FC<GroupsTableProps> = () => {
     const groups: {
         name: string;
         description: string;

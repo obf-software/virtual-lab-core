@@ -174,9 +174,9 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
                                     <FormLabel htmlFor='role'>Cargo</FormLabel>
 
                                     <MultiSelect<
-                                        MultiSelectGroups,
+                                        SingleSelectRole,
                                         false,
-                                        GroupBase<MultiSelectGroups>
+                                        GroupBase<SingleSelectRole>
                                     >
                                         id='role'
                                         name={field.name}

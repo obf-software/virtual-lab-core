@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { IconType } from 'react-icons';
 import { FiHome, FiMonitor, FiUser, FiUsers } from 'react-icons/fi';
 

@@ -1,5 +1,5 @@
 {
-    "name": "@virtual-lab-core/web",
+    "name": "@virtual-lab-core/client",
     "private": true,
     "version": "0.0.0",
     "type": "module",

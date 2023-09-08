@@ -36,7 +36,10 @@
             "parserOptions": {
                 "ecmaVersion": "latest",
                 "sourceType": "module",
-                "project": ["./packages/web/tsconfig.json", "./packages/web/tsconfig.node.json"]
+                "project": [
+                    "./packages/client/tsconfig.json",
+                    "./packages/client/tsconfig.node.json"
+                ]
             },
             "rules": {
                 "react-refresh/only-export-components": [
