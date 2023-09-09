@@ -11,10 +11,29 @@ import {
 } from 'aws-cdk-lib/aws-cognito';
 import { Duration, RemovalPolicy } from 'aws-cdk-lib/core';
 import * as sst from 'sst/constructs';
+import { Config } from './Config';
 
 const stagesWhereUserPoolIsRetained = ['production'];
 
 export function Auth({ stack, app }: sst.StackContext) {
+    const { DATABASE_URL } = sst.use(Config);
+
+    const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
+        handler: 'packages/api/modules/auth/handlers.preTokenGenerationTrigger',
+        runtime: 'nodejs18.x',
+        environment: {
+            DATABASE_URL,
+        },
+    });
+
+    const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
+        handler: 'packages/api/modules/auth/handlers.postConfirmationTrigger',
+        runtime: 'nodejs18.x',
+        environment: {
+            DATABASE_URL,
+        },
+    });
+
     const userPool = new UserPool(stack, 'UserPool', {
         accountRecovery: AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
         advancedSecurityMode: AdvancedSecurityMode.AUDIT,
@@ -28,8 +47,8 @@ export function Auth({ stack, app }: sst.StackContext) {
         },
         selfSignUpEnabled: false,
         lambdaTriggers: {
-            // TODO: preTokenGeneration
-            // TODO: postConfirmation
+            preTokenGeneration: preTokenGenerationTrigger,
+            postConfirmation: postConfirmationTrigger,
         },
         passwordPolicy: {
             minLength: 8,

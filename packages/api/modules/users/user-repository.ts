@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, User } from '@prisma/client';
+import { Prisma, PrismaClient, User, UserRole } from '@prisma/client';
 import { Paginated } from '../../model/paginated';
 
 export class UserRepository {
@@ -6,6 +6,54 @@ export class UserRepository {
 
     constructor(prismaClient: PrismaClient) {
         this.prismaClient = prismaClient;
+    }
+
+    async create(props: Pick<User, 'username' | 'role' | 'groupIds'>): Promise<User> {
+        const newUser = this.prismaClient.user.create({
+            data: {
+                username: props.username,
+                role: props.role,
+                quotas: {
+                    maxGroups: 100,
+                    maxInstances: 2,
+                },
+                groups:
+                    props.groupIds.length > 0
+                        ? { connect: props.groupIds.map((groupId) => ({ id: groupId })) }
+                        : undefined,
+            },
+        });
+
+        return newUser;
+    }
+
+    async exists(username: string): Promise<boolean> {
+        const result = await this.prismaClient.user.findUnique({
+            where: { username },
+            select: {
+                username: true,
+            },
+        });
+
+        return result !== null;
+    }
+
+    async updateLastLoginAt(username: string): Promise<void> {
+        await this.prismaClient.user.update({
+            where: { username },
+            data: { lastLoginAt: new Date().toISOString() },
+        });
+    }
+
+    async getRole(username: string): Promise<UserRole | undefined> {
+        const user = await this.prismaClient.user.findUnique({
+            where: { username },
+            select: {
+                role: true,
+            },
+        });
+
+        return user?.role;
     }
 
     async findById(id: string) {

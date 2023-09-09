@@ -1,9 +1,11 @@
 import { IdentitySource } from 'aws-cdk-lib/aws-apigateway';
 import * as sst from 'sst/constructs';
 import { Auth } from './Auth';
+import { Config } from './Config';
 
 export function Api({ stack }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
+    const { DATABASE_URL } = sst.use(Config);
 
     const api = new sst.Api(stack, 'Api', {
         cors: true,
