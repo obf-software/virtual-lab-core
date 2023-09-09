@@ -33,6 +33,10 @@ export const AppSyncApi = ({ stack }: sst.StackContext) => {
         },
     });
 
+    stack.addOutputs({
+        appSyncApiUrl: appSyncApi.url,
+    });
+
     return {
         appSyncApi,
     };

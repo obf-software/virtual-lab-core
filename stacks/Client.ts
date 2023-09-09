@@ -19,7 +19,7 @@ export function Client({ stack, app }: sst.StackContext) {
     });
 
     stack.addOutputs({
-        staticSiteUrl: staticSite.url,
+        staticSiteUrl: staticSite.url ?? 'N/A',
     });
 
     return {
