@@ -26,6 +26,7 @@ import React from 'react';
 import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'react-icons/fi';
 import { BiSolidBellRing } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
+import { parseSessionData } from '../../../services/helpers';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -36,17 +37,7 @@ interface NavbarProps extends FlexProps {
  */
 export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
     const { user, signOut } = useAuthenticator((context) => [context.user]);
-
-    const attributes = user.attributes as Partial<{
-        email: string;
-        name: string;
-        profile: string;
-        role: string;
-    }>;
-
-    const name = attributes.name ?? attributes.email ?? user.username ?? 'Usuário';
-    const role = attributes.role ?? 'Usuário';
-    const profileImageUrl = attributes.profile;
+    const { displayName, displayRole } = parseSessionData(user);
 
     return (
         <Flex
@@ -113,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                             <HStack>
                                 <Avatar
                                     size={'sm'}
-                                    src={profileImageUrl}
+                                    src={undefined}
                                 />
                                 <VStack
                                     display={{ base: 'none', md: 'flex' }}
@@ -121,12 +112,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                                     spacing='1px'
                                     ml='2'
                                 >
-                                    <Text fontSize='sm'>{name}</Text>
+                                    <Text fontSize='sm'>{displayName}</Text>
                                     <Text
                                         fontSize='xs'
                                         color='gray.600'
                                     >
-                                        {role}
+                                        {displayRole}
                                     </Text>
                                 </VStack>
                                 <Box display={{ base: 'none', md: 'flex' }}>

@@ -7,9 +7,16 @@ import dayjs from 'dayjs';
 
 const { DATABASE_URL } = process.env;
 
-export const handler = createHandler<Handler<{ params: Record<string, never> }, void>>(async () => {
+export const handler = createHandler<
+    Handler<{ params: { appMode: 'dev' | 'deploy' | 'remove' } }, void>
+>(async (event) => {
     logger.info(`Database migration started`);
     const startDate = dayjs();
+
+    if (event.params.appMode === 'dev') {
+        logger.info(`Skipping database migration because app mode is 'dev'`);
+        return;
+    }
 
     const client = postgres(DATABASE_URL, { max: 1 });
     const database = drizzle(client);

@@ -25,7 +25,7 @@ export class UserRepository {
             columns: { id: true },
         });
 
-        return user !== null;
+        return user !== undefined;
     }
 
     async updateLastLoginAt(username: string): Promise<void> {

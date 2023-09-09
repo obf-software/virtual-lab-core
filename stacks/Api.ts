@@ -3,19 +3,28 @@ import * as sst from 'sst/constructs';
 import { Auth } from './Auth';
 import { Config } from './Config';
 
-export function Api({ stack }: sst.StackContext) {
+export function Api({ stack, app }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL } = sst.use(Config);
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
         onCreate: 'packages/api/scripts/migrate-db.handler',
-        onUpdate: '',
+        onUpdate: 'packages/api/scripts/migrate-db.handler',
         defaults: {
             function: {
                 environment: {
                     DATABASE_URL,
                 },
+                copyFiles: [
+                    {
+                        from: 'packages/api/drizzle',
+                        to: 'drizzle',
+                    },
+                ],
             },
+        },
+        params: {
+            appMode: app.mode,
         },
     });
 

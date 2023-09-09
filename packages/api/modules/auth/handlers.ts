@@ -18,6 +18,12 @@ export const preTokenGenerationTrigger = createHandler<PreTokenGenerationTrigger
             const responseEvent = { ...event };
 
             const role = (await userService.getRole(event.userName)) ?? 'NONE';
+            logger.debug(`User "${event.userName}" role is "${role}"`);
+
+            if (role !== 'NONE') {
+                await userService.updateLastLoginAt(event.userName);
+                logger.debug(`Updated user "${event.userName}" last login at`);
+            }
 
             responseEvent.response = {
                 claimsOverrideDetails: {
@@ -26,10 +32,12 @@ export const preTokenGenerationTrigger = createHandler<PreTokenGenerationTrigger
                     },
                 },
             };
+
+            return responseEvent;
         } catch (error) {
             const reason = error instanceof Error ? error.message : 'Unknown error';
             logger.error(`Could not get user "${event.userName}" role: ${reason}`, { error });
-            throw error;
+            return error;
         }
     },
 );
