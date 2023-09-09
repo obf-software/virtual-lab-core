@@ -7,6 +7,18 @@ export function Api({ stack }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL } = sst.use(Config);
 
+    const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
+        onCreate: 'packages/api/scripts/migrate-db.handler',
+        onUpdate: '',
+        defaults: {
+            function: {
+                environment: {
+                    DATABASE_URL,
+                },
+            },
+        },
+    });
+
     const api = new sst.Api(stack, 'Api', {
         cors: true,
         authorizers: {
@@ -34,5 +46,6 @@ export function Api({ stack }: sst.StackContext) {
 
     return {
         api,
+        migrateDbScript,
     };
 }

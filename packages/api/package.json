@@ -2,10 +2,6 @@
     "name": "@virtual-lab-core/api",
     "version": "0.0.0",
     "type": "module",
-    "scripts": {
-        "prisma:generate": "prisma generate",
-        "prisma:push": "prisma db push"
-    },
     "dependencies": {
         "@aws-lambda-powertools/logger": "^1.12.1",
         "@aws-lambda-powertools/metrics": "^1.12.1",
@@ -13,13 +9,14 @@
         "@middy/core": "^4.6.1",
         "@middy/http-cors": "^4.6.1",
         "@middy/http-error-handler": "^4.6.1",
-        "@prisma/client": "^5.2.0",
         "dayjs": "^1.11.9",
+        "drizzle-orm": "^0.28.6",
         "http-errors": "^2.0.0",
+        "postgres": "^3.3.5",
         "zod": "^3.22.2"
     },
     "devDependencies": {
         "@types/http-errors": "^2.0.1",
-        "prisma": "^5.2.0"
+        "drizzle-kit": "^0.19.13"
     }
 }

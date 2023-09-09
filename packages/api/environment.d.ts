@@ -4,5 +4,6 @@ namespace NodeJS {
         IS_LOCAL?: string;
         AWS_REGION: string;
         AWS_EXECUTION_ENV: string;
+        DATABASE_URL: string;
     }
 }

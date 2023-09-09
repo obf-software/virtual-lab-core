@@ -7,9 +7,7 @@
         "node": "18"
     },
     "scripts": {
-        "postinstall": "npm run setup:client && npm run setup:api",
-        "setup:client": "cd packages/client && npm install",
-        "setup:api": "cd packages/api && npm run prisma:generate",
+        "postinstall": "cd packages/client && npm install",
         "dev": "AWS_PROFILE=virtual-lab sst dev",
         "build": "sst build",
         "deploy": "sst deploy",
