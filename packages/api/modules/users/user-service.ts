@@ -1,5 +1,5 @@
-import { User, UserRole } from '@prisma/client';
 import { UserRepository } from './user-repository';
+import * as schema from '../../drizzle/schema';
 
 export class UserService {
     private userRepository: UserRepository;
@@ -12,15 +12,20 @@ export class UserService {
         return this.userRepository.exists(username);
     }
 
-    async create(props: Pick<User, 'username' | 'role' | 'groupIds'>): Promise<User> {
-        return this.userRepository.create(props);
+    async create(props: Pick<typeof schema.user.$inferInsert, 'username' | 'role'>) {
+        const user = this.userRepository.create({
+            username: props.username,
+            role: props.role,
+        });
+
+        return user;
     }
 
-    async getRole(username: string): Promise<UserRole | undefined> {
+    async getRole(username: string) {
         return this.userRepository.getRole(username);
     }
 
-    async updateLastLoginAt(username: string): Promise<void> {
+    async updateLastLoginAt(username: string) {
         return this.userRepository.updateLastLoginAt(username);
     }
 }

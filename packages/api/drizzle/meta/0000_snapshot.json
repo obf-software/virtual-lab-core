@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "1b8d6108-bc75-4e74-b71e-353c3f35670f",
+  "id": "1f821389-1612-439c-83cc-17188791266b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "group": {
@@ -135,7 +135,7 @@
           "name": "last_login_at",
           "type": "date",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},

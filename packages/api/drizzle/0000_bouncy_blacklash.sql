@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS "user" (
 	"role" "user_role" NOT NULL,
 	"created_at" date DEFAULT now() NOT NULL,
 	"updated_at" date DEFAULT now() NOT NULL,
-	"last_login_at" date NOT NULL,
+	"last_login_at" date,
 	CONSTRAINT "user_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint

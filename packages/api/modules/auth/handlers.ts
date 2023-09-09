@@ -2,9 +2,14 @@ import { PostConfirmationTriggerHandler, PreTokenGenerationTriggerHandler } from
 import { createHandler, logger } from '../../integrations/powertools';
 import { UserService } from '../users/user-service';
 import { UserRepository } from '../users/user-repository';
-import { PrismaClient } from '@prisma/client';
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import * as schema from '../../drizzle/schema';
 
-const userRepository = new UserRepository(new PrismaClient());
+const { DATABASE_URL } = process.env;
+
+const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+const userRepository = new UserRepository(dbClient);
 const userService = new UserService(userRepository);
 
 export const preTokenGenerationTrigger = createHandler<PreTokenGenerationTriggerHandler>(
@@ -41,11 +46,7 @@ export const postConfirmationTrigger = createHandler<PostConfirmationTriggerHand
             );
 
             if (!userExists) {
-                const user = await userService.create({
-                    username: event.userName,
-                    role: 'USER',
-                    groupIds: [],
-                });
+                const user = await userService.create({ username: event.userName, role: 'USER' });
                 logger.info(`Created user "${user.username}"`);
             }
         } catch (error) {

@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                             _groupHover={{
                                 color: 'white',
                             }}
-                            as={item.icon as IconType}
+                            as={item.icon}
                         />
 
                         <Text>{item.label}</Text>

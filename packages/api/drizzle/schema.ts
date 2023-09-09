@@ -22,7 +22,7 @@ export const user = pgTable('user', {
     role: userRole('role').notNull(),
     createdAt: date('created_at').defaultNow().notNull(),
     updatedAt: date('updated_at').defaultNow().notNull(),
-    lastLoginAt: date('last_login_at').notNull(),
+    lastLoginAt: date('last_login_at'),
 });
 
 export const quota = pgTable('quota', {
