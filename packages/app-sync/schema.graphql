@@ -1,0 +1,16 @@
+type Channel @aws_cognito_user_pools @aws_iam {
+    name: String!
+    data: AWSJSON!
+}
+
+type Subscription @aws_cognito_user_pools {
+    subscribe(name: String!): Channel @aws_subscribe(mutations: ["publish"])
+}
+
+type Query @aws_cognito_user_pools @aws_iam {
+    getChannel: Channel
+}
+
+type Mutation {
+    publish(name: String!, data: AWSJSON!): Channel @aws_iam
+}

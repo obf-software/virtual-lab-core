@@ -3,6 +3,7 @@ import { Api } from './stacks/Api';
 import { Auth } from './stacks/Auth';
 import { Client } from './stacks/Client';
 import { Config } from './stacks/Config';
+import { AppSyncApi } from './stacks/AppSyncApi';
 
 export default {
     config() {
@@ -14,6 +15,7 @@ export default {
     async stacks(app) {
         await app.stack(Config);
         app.stack(Auth);
+        app.stack(AppSyncApi);
         app.stack(Api);
         app.stack(Client);
     },

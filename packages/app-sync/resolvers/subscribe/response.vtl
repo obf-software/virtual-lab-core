@@ -1,0 +1,5 @@
+#if(${context.identity.username} != ${context.arguments.name})
+    $utils.unauthorized()
+#else
+    $util.toJson($context.result)
+#end
