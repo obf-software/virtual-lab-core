@@ -1,4 +1,4 @@
-import { ApiResponse, AuthorizationHeader, Paginated, UrlPath, UserRole } from './protocols';
+import { ApiResponse, AuthorizationHeader, SeekPaginated, UrlPath, User } from './protocols';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -31,37 +31,32 @@ const executeRequest = async <T>(props: {
         if (response.ok === false) {
             const reason = await response.text();
             console.log(`API ${response.url} returned "${response.status}" "${reason}"`);
-            return { error: reason };
+            return { error: reason, data: undefined };
         }
 
         return {
             data: (await response.json()) as T,
+            error: undefined,
         };
     } catch (error) {
         const reason = error instanceof Error ? error.message : 'Unknown error';
         console.log(`Error while fetching CMS data: ${reason}`);
-        return { error: reason };
+        return { error: reason, data: undefined };
     }
 };
 
-export const listUsers = (props: { authToken: string; take: number; cursor?: string }) =>
-    executeRequest<
-        Paginated<{
-            id: string;
-            username: string;
-            role: UserRole;
-            createdAt: string;
-            updatedAt: string;
-            lastLoginAt?: string;
-        }>
-    >({
+export const listUsers = async (
+    idToken: string,
+    pagination: { resultsPerPage: number; page: number },
+) =>
+    executeRequest<SeekPaginated<User>>({
         path: '/api/v1/users',
         method: 'GET',
         headers: {
-            Authorization: `Bearer ${props.authToken}`,
+            Authorization: `Bearer ${idToken}`,
         },
         queryParams: {
-            take: props.take,
-            cursor: props.cursor,
+            resultsPerPage: pagination.resultsPerPage,
+            page: pagination.page,
         },
     });

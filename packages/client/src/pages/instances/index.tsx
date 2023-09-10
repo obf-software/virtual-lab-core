@@ -2,10 +2,10 @@ import { Box, Container, Heading, VStack, Text, Button, Stack } from '@chakra-ui
 import { FiPlus } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { InstanceCard } from './instance-card';
-import { useMenu } from '../../contexts/menu/use-menu';
+import { useMenuContext } from '../../contexts/menu/hook';
 
 export const InstancesPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenu();
+    const { setActiveMenuItem } = useMenuContext();
 
     useEffect(() => {
         setActiveMenuItem('INSTANCES');

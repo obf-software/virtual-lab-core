@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import { useMenu } from '../../contexts/menu/use-menu';
+import { useMenuContext } from '../../contexts/menu/hook';
 
 export const SettingsPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenu();
+    const { setActiveMenuItem } = useMenuContext();
 
     useEffect(() => {
         setActiveMenuItem(undefined);

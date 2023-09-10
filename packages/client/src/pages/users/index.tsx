@@ -14,24 +14,33 @@ import {
     useDisclosure,
 } from '@chakra-ui/react';
 import { UsersTable } from './users-table';
-import { FiChevronsDown, FiPlus, FiSearch, FiX } from 'react-icons/fi';
-import React, { useEffect } from 'react';
-import { useMenu } from '../../contexts/menu/use-menu';
+import { FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import React, { useEffect, useState } from 'react';
+import { useMenuContext } from '../../contexts/menu/hook';
 import { CreateUserModal } from './create-user-modal';
+import { useUsersContext } from '../../contexts/users/hook';
+import { Paginator } from '../../components/paginator';
+
+const RESULTS_PER_PAGE = 20;
 
 export const UsersPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenu();
+    const { setActiveMenuItem } = useMenuContext();
     const {
         isOpen: isCreateUserModalOpen,
         onClose: onCreateUserModalClose,
         onOpen: onCreateUserModalOpen,
     } = useDisclosure();
+    const usersContext = useUsersContext();
+    const [activePage, setActivePage] = useState<number>(1);
 
     useEffect(() => {
         setActiveMenuItem('USERS');
+
+        if (usersContext.isLoading === false) {
+            usersContext.loadUsersPage(1, RESULTS_PER_PAGE).catch(console.error);
+        }
     }, []);
 
-    const count = 10;
     return (
         <Box>
             <Container maxW={'6xl'}>
@@ -56,7 +65,7 @@ export const UsersPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${count} usuários encontrados`}
+                            {`${usersContext.numberOfResults} usuários encontrados`}
                         </Text>
                     </VStack>
 
@@ -93,16 +102,14 @@ export const UsersPage: React.FC = () => {
 
                 <UsersTable />
 
-                <Box pt={5}>
-                    <Button
-                        variant={'outline'}
-                        colorScheme='blue'
-                        leftIcon={<FiChevronsDown />}
-                        isDisabled={false}
-                    >
-                        Carregar mais
-                    </Button>
-                </Box>
+                <Paginator
+                    activePage={activePage}
+                    totalPages={usersContext.numberOfPages}
+                    onPageChange={(page) => {
+                        setActivePage(page);
+                        usersContext.loadUsersPage(page, RESULTS_PER_PAGE).catch(console.error);
+                    }}
+                />
             </Container>
         </Box>
     );

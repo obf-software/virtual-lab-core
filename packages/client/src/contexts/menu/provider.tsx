@@ -1,7 +1,6 @@
-/* eslint-disable react/prop-types */
-import { PropsWithChildren, useState } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 import { MenuContext } from './context';
-import { MenuItems, menuItemsMap } from './data';
+import { MenuItems, menuItemsMap } from './protocol';
 
 export const MenuProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const [activeItem, setActiveItem] = useState<keyof typeof MenuItems | undefined>(undefined);

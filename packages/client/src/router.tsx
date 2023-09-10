@@ -7,6 +7,7 @@ import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
 import { SettingsPage } from './pages/settings';
 import { ProfilePage } from './pages/profile';
+import { UsersProvider } from './contexts/users/provider';
 
 /**
  * TODO: Filter routes based on user's authorization
@@ -27,7 +28,11 @@ export const Router: React.FC = () => {
                 },
                 {
                     path: 'users',
-                    element: <UsersPage />,
+                    element: (
+                        <UsersProvider>
+                            <UsersPage />
+                        </UsersProvider>
+                    ),
                 },
                 {
                     path: 'groups',

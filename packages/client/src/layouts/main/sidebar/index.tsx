@@ -1,16 +1,15 @@
 /* eslint-disable react/prop-types */
 import { Box, BoxProps, CloseButton, Flex, Icon, Text, useColorModeValue } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
-import { useMenu } from '../../../contexts/menu/use-menu';
-import { menuItemsMap } from '../../../contexts/menu/data';
-import { IconType } from 'react-icons';
+import { useMenuContext } from '../../../contexts/menu/hook';
+import { menuItemsMap } from '../../../contexts/menu/protocol';
 
 interface SidebarProps extends BoxProps {
     onClose: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
-    const { getActiveMenuItem, setActiveMenuItem } = useMenu();
+    const { getActiveMenuItem, setActiveMenuItem } = useMenuContext();
 
     const menuItems = [...Object.entries(menuItemsMap)];
 

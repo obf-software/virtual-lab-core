@@ -2,6 +2,9 @@
     "name": "@virtual-lab-core/api",
     "version": "0.0.0",
     "type": "module",
+    "engines": {
+        "node": "18"
+    },
     "dependencies": {
         "@aws-lambda-powertools/logger": "^1.12.1",
         "@aws-lambda-powertools/metrics": "^1.12.1",

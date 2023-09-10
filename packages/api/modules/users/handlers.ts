@@ -21,8 +21,8 @@ export const listUsers = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer
 
     const query = z
         .object({
-            resultsPerPage: z.number().int().positive().default(10),
-            page: z.number().int().positive().default(1),
+            resultsPerPage: z.string().default('10').transform(Number),
+            page: z.string().default('1').transform(Number),
         })
         .safeParse({ ...event.queryStringParameters });
 

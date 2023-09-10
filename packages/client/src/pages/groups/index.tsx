@@ -14,11 +14,11 @@ import {
 } from '@chakra-ui/react';
 import { FiChevronsDown, FiPlus, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect } from 'react';
-import { useMenu } from '../../contexts/menu/use-menu';
+import { useMenuContext } from '../../contexts/menu/hook';
 import { GroupsTable } from './groups-table';
 
 export const GroupsPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenu();
+    const { setActiveMenuItem } = useMenuContext();
 
     useEffect(() => {
         setActiveMenuItem('GROUPS');

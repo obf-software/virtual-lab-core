@@ -66,6 +66,7 @@ export class UserRepository {
             data: users,
             numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
             resultsPerPage: pagination.resultsPerPage,
+            numberOfResults: countResult.count,
         } satisfies SeekPaginated<typeof schema.user.$inferInsert>;
     }
 }
