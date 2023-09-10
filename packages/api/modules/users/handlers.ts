@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { createHandler } from '../../integrations/powertools';
 import { getUserPoolJwtClaims, hasUserRoleOrAbove } from '../auth/authorization';
-import { InsufficientRoleError, InvalidQueryParamsError } from './errors';
+import { InsufficientRoleError, InvalidQueryParamsError } from '../../protocols/errors';
 import { UserRepository } from './user-repository';
 import { UserService } from './user-service';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -25,8 +25,8 @@ export const listUsers = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer
             page: z.string().default('1').transform(Number),
         })
         .safeParse({ ...event.queryStringParameters });
-
     if (!query.success) throw InvalidQueryParamsError(query.error.message);
+
     const { resultsPerPage, page } = query.data;
     const result = await userService.list({ resultsPerPage, page });
 

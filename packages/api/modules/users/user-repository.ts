@@ -17,6 +17,14 @@ export class UserRepository {
             throw new Error('Could not create user');
         }
 
+        await this.dbClient
+            .insert(schema.quota)
+            .values({
+                userId: newUser[0].id,
+                maxInstances: 5,
+            })
+            .execute();
+
         return newUser[0];
     }
 
@@ -48,9 +56,7 @@ export class UserRepository {
 
     async list(pagination: { resultsPerPage: number; page: number }) {
         const [countResult] = await this.dbClient
-            .select({
-                count: sql`count(*)`.mapWith(Number).as('count'),
-            })
+            .select({ count: sql`count(*)`.mapWith(Number).as('count') })
             .from(schema.user)
             .execute();
 
@@ -67,6 +73,6 @@ export class UserRepository {
             numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
             resultsPerPage: pagination.resultsPerPage,
             numberOfResults: countResult.count,
-        } satisfies SeekPaginated<typeof schema.user.$inferInsert>;
+        } satisfies SeekPaginated<typeof schema.user.$inferSelect>;
     }
 }

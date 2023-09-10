@@ -55,6 +55,15 @@ export function Api({ stack, app }: sst.StackContext) {
                     },
                 },
             },
+
+            'GET /api/v1/groups': {
+                function: {
+                    handler: 'packages/api/modules/groups/handlers.listGroups',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
         },
     });
 

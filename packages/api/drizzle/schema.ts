@@ -27,7 +27,7 @@ export const user = pgTable('user', {
 
 export const quota = pgTable('quota', {
     id: serial('id').primaryKey().notNull(),
-    userId: serial('user_id')
+    userId: integer('user_id')
         .notNull()
         .references(() => user.id),
     maxInstances: integer('max_instances').default(2).notNull(),

@@ -48,3 +48,12 @@ export interface User {
     updatedAt: string;
     lastLoginAt: string | null;
 }
+
+export interface Group {
+    id: string;
+    name: string;
+    description: string;
+    portfolioId: string;
+    createdAt: string;
+    updatedAt: string;
+}

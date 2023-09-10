@@ -1,4 +1,4 @@
-import { ApiResponse, AuthorizationHeader, SeekPaginated, UrlPath, User } from './protocols';
+import { ApiResponse, AuthorizationHeader, Group, SeekPaginated, UrlPath, User } from './protocols';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -52,11 +52,17 @@ export const listUsers = async (
     executeRequest<SeekPaginated<User>>({
         path: '/api/v1/users',
         method: 'GET',
-        headers: {
-            Authorization: `Bearer ${idToken}`,
-        },
-        queryParams: {
-            resultsPerPage: pagination.resultsPerPage,
-            page: pagination.page,
-        },
+        headers: { Authorization: `Bearer ${idToken}` },
+        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
+export const listGroups = async (
+    idToken: string,
+    pagination: { resultsPerPage: number; page: number },
+) =>
+    executeRequest<SeekPaginated<Group>>({
+        path: '/api/v1/groups',
+        method: 'GET',
+        headers: { Authorization: `Bearer ${idToken}` },
+        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });

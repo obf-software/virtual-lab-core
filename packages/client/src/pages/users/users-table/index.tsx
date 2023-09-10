@@ -21,9 +21,7 @@ import { useUsersContext } from '../../../contexts/users/hook';
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
-interface UsersTableProps {}
-
-export const UsersTable: React.FC<UsersTableProps> = () => {
+export const UsersTable: React.FC = () => {
     const { isLoading, users } = useUsersContext();
 
     return (
