@@ -1,6 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as schema from '../../drizzle/schema';
-import { DatabaseClient } from '../../model/db';
+import { DatabaseClient } from '../../protocols/db';
+import { SeekPaginated } from '../../protocols/pagination';
 
 export class UserRepository {
     private dbClient: DatabaseClient;
@@ -45,40 +46,26 @@ export class UserRepository {
         return user?.role;
     }
 
-    // async findById(id: string) {
-    //     return this.prismaClient.user.findUnique({
-    //         where: { id },
-    //     });
-    // }
+    async list(pagination: { resultsPerPage: number; page: number }) {
+        const [countResult] = await this.dbClient
+            .select({
+                count: sql`count(*)`.mapWith(Number).as('count'),
+            })
+            .from(schema.user)
+            .execute();
 
-    // async listUsers(props: {
-    //     where: Prisma.UserWhereInput;
-    //     take: number;
-    //     cursor?: string;
-    // }): Promise<Paginated<User>> {
-    //     const skip = props.cursor !== undefined ? 1 : 0;
-    //     const cursor: Prisma.UserWhereUniqueInput | undefined =
-    //         props.cursor !== undefined ? { id: props.cursor } : undefined;
+        const users = await this.dbClient.query.user
+            .findMany({
+                limit: pagination.resultsPerPage,
+                offset: pagination.resultsPerPage * (pagination.page - 1),
+                orderBy: (user, builder) => builder.desc(user.createdAt),
+            })
+            .execute();
 
-    //     const [numberOfUsers, users] = await Promise.all([
-    //         this.prismaClient.user.count({
-    //             where: props.where,
-    //         }),
-    //         this.prismaClient.user.findMany({
-    //             take: props.take,
-    //             skip,
-    //             cursor,
-    //             where: props.where,
-    //             orderBy: {
-    //                 createdAt: 'desc',
-    //             },
-    //         }),
-    //     ]);
-
-    //     return {
-    //         data: users,
-    //         cursor: users.length === 0 ? null : users[users.length - 1].id,
-    //         totalItems: numberOfUsers,
-    //     };
-    // }
+        return {
+            data: users,
+            numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
+            resultsPerPage: pagination.resultsPerPage,
+        } satisfies SeekPaginated<typeof schema.user.$inferInsert>;
+    }
 }

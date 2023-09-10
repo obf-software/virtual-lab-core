@@ -1,4 +1,3 @@
-import { IdentitySource } from 'aws-cdk-lib/aws-apigateway';
 import * as sst from 'sst/constructs';
 import { Auth } from './Auth';
 import { Config } from './Config';
@@ -33,8 +32,8 @@ export function Api({ stack, app }: sst.StackContext) {
         authorizers: {
             userPool: {
                 type: 'user_pool',
-                identitySource: [IdentitySource.header('Authorization')],
                 userPool: {
+                    region: userPool.stack.region,
                     id: userPool.userPoolId,
                     clientIds: [userPoolClient.userPoolClientId],
                 },
@@ -46,6 +45,16 @@ export function Api({ stack, app }: sst.StackContext) {
         defaults: {
             authorizer: 'userPool',
             payloadFormatVersion: '2.0',
+        },
+        routes: {
+            'GET /api/v1/users': {
+                function: {
+                    handler: 'packages/api/modules/users/handlers.listUsers',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
         },
     });
 

@@ -28,4 +28,8 @@ export class UserService {
     async updateLastLoginAt(username: string) {
         return this.userRepository.updateLastLoginAt(username);
     }
+
+    async list(pagination: { resultsPerPage: number; page: number }) {
+        return this.userRepository.list(pagination);
+    }
 }
