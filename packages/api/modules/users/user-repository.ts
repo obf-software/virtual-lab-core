@@ -37,21 +37,20 @@ export class UserRepository {
         return user !== undefined;
     }
 
-    async updateLastLoginAt(username: string): Promise<void> {
+    async updateLastLoginAt(userId: number): Promise<void> {
         await this.dbClient
             .update(schema.user)
             .set({ lastLoginAt: new Date().toISOString() })
-            .where(eq(schema.user.username, username))
+            .where(eq(schema.user.id, userId))
             .execute();
     }
 
-    async getRole(username: string) {
+    async getByUsername(username: string) {
         const user = await this.dbClient.query.user.findFirst({
             where: (user, builder) => builder.eq(user.username, username),
-            columns: { role: true },
         });
 
-        return user?.role;
+        return user;
     }
 
     async list(pagination: { resultsPerPage: number; page: number }) {
@@ -74,5 +73,34 @@ export class UserRepository {
             resultsPerPage: pagination.resultsPerPage,
             numberOfResults: countResult.count,
         } satisfies SeekPaginated<typeof schema.user.$inferSelect>;
+    }
+
+    async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
+        const [countResult] = await this.dbClient
+            .select({ count: sql`count(*)`.mapWith(Number).as('count') })
+            .from(schema.userToGroup)
+            .where(eq(schema.userToGroup.userId, userId))
+            .execute();
+
+        const groups = await this.dbClient.query.group
+            .findMany({
+                limit: pagination.resultsPerPage,
+                offset: pagination.resultsPerPage * (pagination.page - 1),
+                orderBy: (group, builder) => builder.desc(group.createdAt),
+                with: {
+                    userToGroup: {
+                        where: (userToGroup, builder) => builder.eq(userToGroup.userId, userId),
+                        columns: { groupId: false, userId: false },
+                    },
+                },
+            })
+            .execute();
+
+        return {
+            data: groups,
+            numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
+            resultsPerPage: pagination.resultsPerPage,
+            numberOfResults: countResult.count,
+        } satisfies SeekPaginated<typeof schema.group.$inferSelect>;
     }
 }

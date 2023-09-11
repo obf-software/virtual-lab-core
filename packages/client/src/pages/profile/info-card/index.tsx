@@ -14,10 +14,12 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { IconType } from 'react-icons';
-import { FiCheck } from 'react-icons/fi';
+import { FiCheck, FiClock } from 'react-icons/fi';
+import { parseSessionData } from '../../../services/helpers';
 
 export const ProfileInfoCard: React.FC = () => {
     const { user } = useAuthenticator((context) => [context.user]);
+    const { displayRole, name, email, emailVerified } = parseSessionData(user);
 
     return (
         <VStack
@@ -54,7 +56,7 @@ export const ProfileInfoCard: React.FC = () => {
                         <Input
                             id='role'
                             type='text'
-                            value={'Administrador'}
+                            value={displayRole}
                             isReadOnly
                         />
                     </FormControl>
@@ -66,6 +68,7 @@ export const ProfileInfoCard: React.FC = () => {
                         id='name'
                         type='text'
                         placeholder='Insira seu nome'
+                        value={name}
                     />
                 </FormControl>
 
@@ -76,11 +79,12 @@ export const ProfileInfoCard: React.FC = () => {
                             id='email'
                             type='email'
                             placeholder='Insira seu email'
+                            value={email}
                         />
                         <InputRightElement>
                             <Icon
-                                as={FiCheck as IconType}
-                                color={'green.500'}
+                                as={(emailVerified ? FiCheck : FiClock) as IconType}
+                                color={emailVerified ? 'green.500' : 'yellow.500'}
                             />
                         </InputRightElement>
                     </InputGroup>

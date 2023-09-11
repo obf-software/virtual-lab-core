@@ -1,17 +1,13 @@
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Box, Button, Container, Heading, Stack, Text, VStack } from '@chakra-ui/react';
-import { FiCheck, FiSave } from 'react-icons/fi';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../services/helpers';
+import { FiSave } from 'react-icons/fi';
 import { ProfileQuotaCard } from './quota-card';
 import { ProfileInfoCard } from './info-card';
 import { ProfileGroupsCard } from './groups-card';
 
 export const ProfilePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const { user } = useAuthenticator((context) => [context.user]);
-    // const { displayName, displayRole } = parseSessionData(user);
 
     useEffect(() => {
         setActiveMenuItem(undefined);

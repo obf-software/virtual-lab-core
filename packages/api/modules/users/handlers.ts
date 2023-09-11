@@ -36,3 +36,40 @@ export const listUsers = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer
         headers: { 'Content-Type': 'application/json' },
     };
 }, true);
+
+export const listUserGroups = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
+    async (event) => {
+        const { role, userId } = getUserPoolJwtClaims(event);
+        if (!hasUserRoleOrAbove('USER', role)) throw InsufficientRoleError(role, 'USER');
+
+        const userIdPathParam = event.pathParameters?.userId;
+        const userIdPathParamNumber = Number(userIdPathParam);
+        let userIdToUse = userId;
+
+        if (
+            hasUserRoleOrAbove('ADMIN', role) &&
+            userIdPathParam !== 'me' &&
+            !Number.isNaN(userIdPathParamNumber)
+        ) {
+            userIdToUse = userIdPathParamNumber;
+        }
+
+        const query = z
+            .object({
+                resultsPerPage: z.string().default('10').transform(Number),
+                page: z.string().default('1').transform(Number),
+            })
+            .safeParse({ ...event.queryStringParameters });
+        if (!query.success) throw InvalidQueryParamsError(query.error.message);
+
+        const { resultsPerPage, page } = query.data;
+        const result = await userService.listGroups(userIdToUse, { resultsPerPage, page });
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(result),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    true,
+);

@@ -55,6 +55,14 @@ export function Api({ stack, app }: sst.StackContext) {
                     },
                 },
             },
+            'GET /api/v1/users/{userId}/groups': {
+                function: {
+                    handler: 'packages/api/modules/users/handlers.listUserGroups',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
 
             'GET /api/v1/groups': {
                 function: {

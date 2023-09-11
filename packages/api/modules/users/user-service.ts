@@ -21,15 +21,19 @@ export class UserService {
         return user;
     }
 
-    async getRole(username: string) {
-        return this.userRepository.getRole(username);
+    async getByUsername(username: string) {
+        return this.userRepository.getByUsername(username);
     }
 
-    async updateLastLoginAt(username: string) {
-        return this.userRepository.updateLastLoginAt(username);
+    async updateLastLoginAt(userId: number) {
+        return this.userRepository.updateLastLoginAt(userId);
     }
 
     async list(pagination: { resultsPerPage: number; page: number }) {
         return this.userRepository.list(pagination);
+    }
+
+    async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
+        return this.userRepository.listGroups(userId, pagination);
     }
 }

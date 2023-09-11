@@ -1,15 +1,25 @@
 import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
 import { UserPoolJwtClaims } from './protocols';
 import { UserRole } from '../users/protocols';
+import { InvalidUserPoolJwtClaimsError } from './errors';
 
 export const getUserPoolJwtClaims = (
     event: APIGatewayProxyEventV2WithJWTAuthorizer,
 ): UserPoolJwtClaims => {
-    const { 'cognito:username': username, 'custom:role': roleString } =
-        event.requestContext.authorizer.jwt.claims;
+    const {
+        'cognito:username': username,
+        'custom:role': roleString,
+        'custom:userId': userIdString,
+    } = event.requestContext.authorizer.jwt.claims;
 
     if (typeof username !== 'string') {
-        throw new Error('Username is not a string');
+        throw InvalidUserPoolJwtClaimsError('Invalid "username"');
+    }
+
+    const userId = Number(userIdString.toString() ?? '');
+
+    if (typeof userId !== 'number') {
+        throw InvalidUserPoolJwtClaimsError('Invalid "userId"');
     }
 
     let role: keyof typeof UserRole = 'NONE';
@@ -19,7 +29,7 @@ export const getUserPoolJwtClaims = (
             : 'NONE';
     }
 
-    return { username, role };
+    return { username, role, userId };
 };
 
 export const hasUserRoleOrAbove = (

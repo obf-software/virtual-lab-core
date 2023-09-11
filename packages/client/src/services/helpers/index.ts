@@ -4,6 +4,7 @@ type SessionData = Partial<{
     idToken: string;
     username: string;
     role: string;
+    userId: number;
     email: string;
     emailVerified: boolean;
     name: string;
@@ -22,6 +23,7 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
     const claims = user.getSignInUserSession()?.getIdToken().payload as Partial<{
         'cognito:username': string;
         'custom:role': string;
+        'custom:userId': string;
     }>;
 
     const roleToDisplayMap: Record<string, string | undefined> = {
@@ -32,10 +34,15 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
 
     const displayRole = roleToDisplayMap[claims?.['custom:role'] ?? ''] ?? 'Desconhecido';
 
+    const userId = !Number.isNaN(Number(claims?.['custom:userId']))
+        ? Number(claims?.['custom:userId'])
+        : undefined;
+
     return {
         idToken: user.getSignInUserSession()?.getIdToken().getJwtToken(),
         username: user.username ?? claims?.['cognito:username'],
         role: claims?.['custom:role'],
+        userId,
         email: attributes?.email,
         emailVerified: attributes?.email_verified,
         name: attributes?.name,

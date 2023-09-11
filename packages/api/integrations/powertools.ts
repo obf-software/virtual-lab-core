@@ -1,5 +1,5 @@
 import { Logger, injectLambdaContext } from '@aws-lambda-powertools/logger';
-import { Metrics, logMetrics } from '@aws-lambda-powertools/metrics';
+import { Metrics } from '@aws-lambda-powertools/metrics';
 import { Tracer, captureLambdaHandler } from '@aws-lambda-powertools/tracer';
 import { PT_VERSION } from '@aws-lambda-powertools/commons/lib/version';
 import { Handler } from 'aws-lambda';
@@ -25,7 +25,7 @@ export const createHandler = <T extends Handler>(handler: T, http = false) => {
     const isLocal = process.env.IS_LOCAL === 'true';
 
     const middyHandler = middy(handler);
-    middyHandler.use(logMetrics(metrics, { throwOnEmptyMetrics: false }));
+    // middyHandler.use(logMetrics(metrics, { throwOnEmptyMetrics: false }));
     if (http) middyHandler.use(httpCors());
     middyHandler.use(injectLambdaContext(logger, { logEvent: !isLocal }));
     middyHandler.use(captureLambdaHandler(tracer, { captureResponse: false }));

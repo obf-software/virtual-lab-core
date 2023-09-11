@@ -16,19 +16,15 @@ export const preTokenGenerationTrigger = createHandler<PreTokenGenerationTrigger
     async (event) => {
         try {
             const responseEvent = { ...event };
-
-            const role = (await userService.getRole(event.userName)) ?? 'NONE';
-            logger.debug(`User "${event.userName}" role is "${role}"`);
-
-            if (role !== 'NONE') {
-                await userService.updateLastLoginAt(event.userName);
-                logger.debug(`Updated user "${event.userName}" last login at`);
-            }
+            const user = await userService.getByUsername(event.userName);
+            if (!user) throw new Error(`The user "${event.userName}" does not exist`);
+            await userService.updateLastLoginAt(user.id);
 
             responseEvent.response = {
                 claimsOverrideDetails: {
                     claimsToAddOrOverride: {
-                        'custom:role': role,
+                        'custom:role': user.role,
+                        'custom:userId': user.id.toString(),
                     },
                 },
             };
@@ -36,8 +32,8 @@ export const preTokenGenerationTrigger = createHandler<PreTokenGenerationTrigger
             return responseEvent;
         } catch (error) {
             const reason = error instanceof Error ? error.message : 'Unknown error';
-            logger.error(`Could not get user "${event.userName}" role: ${reason}`, { error });
-            return error;
+            logger.error(`Failed to generate token: ${reason}`, { error });
+            return event;
         }
     },
 );
