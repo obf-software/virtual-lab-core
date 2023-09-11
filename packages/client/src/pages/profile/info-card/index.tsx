@@ -17,9 +17,17 @@ import { IconType } from 'react-icons';
 import { FiCheck, FiClock } from 'react-icons/fi';
 import { parseSessionData } from '../../../services/helpers';
 
-export const ProfileInfoCard: React.FC = () => {
+interface ProfileInfoCardProps {
+    currentName: string;
+    onCurrentNameChange: (newName: string) => void;
+}
+
+export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
+    currentName,
+    onCurrentNameChange,
+}) => {
     const { user } = useAuthenticator((context) => [context.user]);
-    const { displayRole, name, email, emailVerified } = parseSessionData(user);
+    const { displayRole, email, emailVerified } = parseSessionData(user);
 
     return (
         <VStack
@@ -68,7 +76,8 @@ export const ProfileInfoCard: React.FC = () => {
                         id='name'
                         type='text'
                         placeholder='Insira seu nome'
-                        value={name}
+                        value={currentName}
+                        onChange={(e) => onCurrentNameChange(e.target.value)}
                     />
                 </FormControl>
 
@@ -78,8 +87,8 @@ export const ProfileInfoCard: React.FC = () => {
                         <Input
                             id='email'
                             type='email'
-                            placeholder='Insira seu email'
                             value={email}
+                            isReadOnly
                         />
                         <InputRightElement>
                             <Icon
@@ -89,7 +98,7 @@ export const ProfileInfoCard: React.FC = () => {
                         </InputRightElement>
                     </InputGroup>
                     <FormHelperText>
-                        Inserindo um email válido, você será capaz de recuperar sua senha
+                        Com o email verificado, você pode recuperar sua senha.
                     </FormHelperText>
                 </FormControl>
             </Box>

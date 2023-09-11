@@ -7,23 +7,25 @@ import middy from '@middy/core';
 import httpCors from '@middy/http-cors';
 import httpErrorHandler from '@middy/http-error-handler';
 
+const isLocal = process.env.IS_LOCAL === 'true';
+
 const defaultValues = {
     region: process.env.AWS_REGION ?? 'N/A',
     executionEnv: process.env.AWS_EXECUTION_ENV ?? 'N/A',
 };
 
 export const logger = new Logger({
-    persistentLogAttributes: {
-        ...defaultValues,
-        logger: { name: '@aws-lambda-powertools/logger', version: PT_VERSION },
-    },
+    persistentLogAttributes: !isLocal
+        ? {
+              ...defaultValues,
+              logger: { name: '@aws-lambda-powertools/logger', version: PT_VERSION },
+          }
+        : undefined,
 });
 export const metrics = new Metrics({ defaultDimensions: defaultValues });
 export const tracer = new Tracer();
 
 export const createHandler = <T extends Handler>(handler: T, http = false) => {
-    const isLocal = process.env.IS_LOCAL === 'true';
-
     const middyHandler = middy(handler);
     // middyHandler.use(logMetrics(metrics, { throwOnEmptyMetrics: false }));
     if (http) middyHandler.use(httpCors());

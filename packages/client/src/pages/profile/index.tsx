@@ -1,13 +1,20 @@
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { Box, Button, Container, Heading, Stack, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Container, Heading, Stack, Text, VStack, useToast } from '@chakra-ui/react';
 import { FiSave } from 'react-icons/fi';
 import { ProfileQuotaCard } from './quota-card';
 import { ProfileInfoCard } from './info-card';
 import { ProfileGroupsCard } from './groups-card';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { parseSessionData } from '../../services/helpers';
 
 export const ProfilePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
+    const { user } = useAuthenticator((context) => [context.user]);
+    const { name } = parseSessionData(user);
+    const [currentName, setCurrentName] = React.useState<string>(name ?? '');
+    const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    const toast = useToast();
 
     useEffect(() => {
         setActiveMenuItem(undefined);
@@ -41,12 +48,53 @@ export const ProfilePage: React.FC = () => {
                         variant={'solid'}
                         colorScheme='blue'
                         leftIcon={<FiSave />}
+                        isLoading={isLoading}
+                        isDisabled={name === currentName}
+                        onClick={() => {
+                            if (name === currentName) {
+                                alert('Nada a atualizar');
+                                return;
+                            }
+
+                            setIsLoading(true);
+
+                            user.updateAttributes(
+                                [{ Name: 'name', Value: currentName }],
+                                (error) => {
+                                    setIsLoading(false);
+
+                                    if (error) {
+                                        toast({
+                                            title: 'Erro ao atualizar perfil!',
+                                            status: 'error',
+                                            duration: 3000,
+                                            colorScheme: 'red',
+                                            variant: 'left-accent',
+                                            description: `${error.message}`,
+                                            position: 'bottom-left',
+                                        });
+                                    } else {
+                                        toast({
+                                            title: 'Perfil atualizado com sucesso!',
+                                            status: 'success',
+                                            duration: 3000,
+                                            colorScheme: 'green',
+                                            variant: 'left-accent',
+                                            position: 'top',
+                                        });
+                                    }
+                                },
+                            );
+                        }}
                     >
                         Salvar
                     </Button>
                 </Stack>
 
-                <ProfileInfoCard />
+                <ProfileInfoCard
+                    currentName={currentName}
+                    onCurrentNameChange={(newName) => setCurrentName(newName)}
+                />
                 <ProfileQuotaCard />
                 <ProfileGroupsCard />
             </Container>
