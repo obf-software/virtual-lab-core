@@ -1,8 +1,19 @@
-/* eslint-disable react/prop-types */
-import { Box, BoxProps, CloseButton, Flex, Icon, Text, useColorModeValue } from '@chakra-ui/react';
+import {
+    Badge,
+    Box,
+    BoxProps,
+    CloseButton,
+    Flex,
+    Icon,
+    Text,
+    useColorModeValue,
+} from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 import { useMenuContext } from '../../../contexts/menu/hook';
 import { menuItemsMap } from '../../../contexts/menu/protocol';
+import { useAuthenticator } from '@aws-amplify/ui-react';
+import { parseSessionData } from '../../../services/helpers';
+import React from 'react';
 
 interface SidebarProps extends BoxProps {
     onClose: () => void;
@@ -10,12 +21,12 @@ interface SidebarProps extends BoxProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
     const { getActiveMenuItem, setActiveMenuItem } = useMenuContext();
+    const { user } = useAuthenticator((context) => [context.user]);
+    const { role } = parseSessionData(user);
 
     const menuItems = [...Object.entries(menuItemsMap)];
 
-    const activeIndex = menuItems.findIndex(
-        ([, item]) => item.label === getActiveMenuItem()?.data.label,
-    );
+    const activeIndex = menuItems.findIndex(([id]) => id === getActiveMenuItem()?.id);
 
     return (
         <Box
@@ -48,42 +59,59 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                 />
             </Flex>
 
-            {menuItems.map(([id, item], index) => (
-                <Link
-                    key={`nav-item-${item.label}`}
-                    to={item.href}
-                    style={{ textDecoration: 'none' }}
-                    // _focus={{ boxShadow: 'none' }}
-                    onClick={() => {
-                        setActiveMenuItem(id as keyof typeof menuItemsMap);
-                    }}
-                >
-                    <Flex
-                        align='center'
-                        p='4'
-                        mx='4'
-                        borderRadius='lg'
-                        role='group'
-                        cursor='pointer'
-                        _hover={{
-                            bg: 'blue.400',
-                            color: 'white',
+            {menuItems
+                .filter(([, item]) => (role === 'ADMIN' ? true : !item.adminOnly))
+                .map(([id, item], index) => (
+                    <Link
+                        key={`nav-item-${item.label}`}
+                        to={item.href}
+                        style={{ textDecoration: 'none' }}
+                        // _focus={{ boxShadow: 'none' }}
+                        onClick={() => {
+                            setActiveMenuItem(id as keyof typeof menuItemsMap);
                         }}
-                        color={activeIndex === index ? 'blue.400' : undefined}
                     >
-                        <Icon
-                            mr='4'
-                            fontSize='16'
-                            _groupHover={{
+                        <Flex
+                            align='center'
+                            p='4'
+                            mx='4'
+                            borderRadius='lg'
+                            role='group'
+                            cursor='pointer'
+                            _hover={{
+                                bg: 'blue.400',
                                 color: 'white',
                             }}
-                            as={item.icon}
-                        />
+                            color={activeIndex === index ? 'blue.400' : undefined}
+                        >
+                            <Icon
+                                mr='4'
+                                fontSize='16'
+                                _groupHover={{
+                                    color: 'white',
+                                }}
+                                as={item.icon}
+                            />
 
-                        <Text>{item.label}</Text>
-                    </Flex>
-                </Link>
-            ))}
+                            <Text>{item.label}</Text>
+
+                            {item.adminOnly && (
+                                <Badge
+                                    ml='4'
+                                    colorScheme='blue'
+                                    variant={'solid'}
+                                    _groupHover={{
+                                        colorScheme: 'whiteAlpha',
+                                        color: 'blue.500',
+                                        bgColor: 'white',
+                                    }}
+                                >
+                                    ADM
+                                </Badge>
+                            )}
+                        </Flex>
+                    </Link>
+                ))}
         </Box>
     );
 };

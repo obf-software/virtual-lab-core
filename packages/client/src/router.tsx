@@ -28,20 +28,8 @@ export const Router: React.FC = () => {
                     element: <InstancesPage />,
                 },
                 {
-                    path: 'users',
-                    element: (
-                        <UsersProvider>
-                            <UsersPage />
-                        </UsersProvider>
-                    ),
-                },
-                {
-                    path: 'groups',
-                    element: (
-                        <GroupsProvider>
-                            <GroupsPage />
-                        </GroupsProvider>
-                    ),
+                    path: 'my-groups',
+                    element: <>WIP</>,
                 },
                 {
                     path: 'settings',
@@ -50,6 +38,27 @@ export const Router: React.FC = () => {
                 {
                     path: 'profile',
                     element: <ProfilePage />,
+                },
+
+                {
+                    path: 'admin/users',
+                    element: (
+                        <UsersProvider>
+                            <UsersPage />
+                        </UsersProvider>
+                    ),
+                },
+                {
+                    path: 'admin/groups',
+                    element: (
+                        <GroupsProvider>
+                            <GroupsPage />
+                        </GroupsProvider>
+                    ),
+                },
+                {
+                    path: 'admin/portfolios',
+                    element: <>WIP</>,
                 },
             ],
             // errorElement: <div>error</div>,

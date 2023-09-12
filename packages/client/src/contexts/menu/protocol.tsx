@@ -1,17 +1,20 @@
 import { IconType } from 'react-icons';
-import { FiHome, FiMonitor, FiUser, FiUsers } from 'react-icons/fi';
+import { FiHome, FiMonitor, FiShoppingBag, FiUser, FiUsers } from 'react-icons/fi';
 
 export enum MenuItems {
     HOME = 'HOME',
     INSTANCES = 'INSTANCES',
-    USERS = 'USERS',
-    GROUPS = 'GROUPS',
+    MY_GROUPS = 'MY_GROUPS',
+    ADMIN_USERS = 'ADMIN_USERS',
+    ADMIN_GROUPS = 'ADMIN_GROUPS',
+    ADMIN_PORTFOLIOS = 'ADMIN_PORTFOLIOS',
 }
 
 interface MenuItemData {
     icon: IconType;
     label: string;
     href: string;
+    adminOnly: boolean;
 }
 
 export const menuItemsMap: {
@@ -21,21 +24,42 @@ export const menuItemsMap: {
         icon: FiHome as IconType,
         label: 'Início',
         href: '/',
+        adminOnly: false,
     },
     INSTANCES: {
         icon: FiMonitor as IconType,
         label: 'Instâncias',
         href: '/instances',
+        adminOnly: false,
     },
-    USERS: {
+    MY_GROUPS: {
+        icon: FiUsers as IconType,
+        label: 'Meus Grupos',
+        href: '/my-groups',
+        adminOnly: false,
+    },
+
+    /**
+     * Admin menu items
+     */
+
+    ADMIN_USERS: {
         icon: FiUser as IconType,
         label: 'Usuários',
-        href: '/users',
+        href: '/admin/users',
+        adminOnly: true,
     },
-    GROUPS: {
+    ADMIN_GROUPS: {
         icon: FiUsers as IconType,
         label: 'Grupos',
-        href: '/groups',
+        href: '/admin/groups',
+        adminOnly: true,
+    },
+    ADMIN_PORTFOLIOS: {
+        icon: FiShoppingBag as IconType,
+        label: 'Portfólios',
+        href: '/admin/portfolios',
+        adminOnly: true,
     },
 };
 
