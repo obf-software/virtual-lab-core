@@ -1,5 +1,5 @@
 DO $$ BEGIN
- CREATE TYPE "user_role" AS ENUM('USER', 'ADMIN');
+ CREATE TYPE "user_role" AS ENUM('PENDING', 'USER', 'ADMIN');
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS "group" (
 --> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "quota" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" serial NOT NULL,
+	"user_id" integer NOT NULL,
 	"max_instances" integer DEFAULT 2 NOT NULL
 );
 --> statement-breakpoint

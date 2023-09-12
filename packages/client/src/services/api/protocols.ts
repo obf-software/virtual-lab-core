@@ -36,6 +36,7 @@ export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 // ENTITIES
 
 export enum UserRole {
+    PENDING = 'PENDING',
     USER = 'USER',
     ADMIN = 'ADMIN',
 }

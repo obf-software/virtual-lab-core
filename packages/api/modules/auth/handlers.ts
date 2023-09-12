@@ -50,7 +50,10 @@ export const postConfirmationTrigger = createHandler<PostConfirmationTriggerHand
             );
 
             if (!userExists) {
-                const user = await userService.create({ username: event.userName, role: 'USER' });
+                const user = await userService.create({
+                    username: event.userName,
+                    role: 'PENDING',
+                });
                 logger.info(`Created user "${user.username}"`);
             }
         } catch (error) {

@@ -12,7 +12,7 @@ import {
 
 // ENUMS
 
-export const userRole = pgEnum('user_role', ['USER', 'ADMIN']);
+export const userRole = pgEnum('user_role', ['PENDING', 'USER', 'ADMIN']);
 
 // TABLES
 

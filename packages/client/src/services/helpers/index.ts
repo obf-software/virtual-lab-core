@@ -27,6 +27,7 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
     }>;
 
     const roleToDisplayMap: Record<string, string | undefined> = {
+        PENDING: 'Pendente',
         ADMIN: 'Administrador',
         USER: 'Usuário',
         NONE: 'Nenhum cargo',

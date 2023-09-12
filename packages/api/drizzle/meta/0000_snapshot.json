@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "1f821389-1612-439c-83cc-17188791266b",
+  "id": "c92c12e5-02c7-4e28-a3c1-d79a215d586a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "group": {
@@ -64,7 +64,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "serial",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -213,6 +213,7 @@
     "user_role": {
       "name": "user_role",
       "values": {
+        "PENDING": "PENDING",
         "USER": "USER",
         "ADMIN": "ADMIN"
       }

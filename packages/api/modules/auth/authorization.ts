@@ -40,6 +40,11 @@ export const hasUserRoleOrAbove = (
     minimumRole: keyof typeof UserRole,
     role: keyof typeof UserRole,
 ): boolean => {
-    const rolePrecedenceMap: Record<keyof typeof UserRole, number> = { NONE: 0, USER: 1, ADMIN: 2 };
+    const rolePrecedenceMap: Record<keyof typeof UserRole, number> = {
+        NONE: 0,
+        PENDING: 1,
+        USER: 2,
+        ADMIN: 3,
+    };
     return rolePrecedenceMap[role] >= rolePrecedenceMap[minimumRole];
 };
