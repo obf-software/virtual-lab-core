@@ -56,6 +56,18 @@ export const listUsers = async (
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });
 
+export const listUserGroups = async (
+    idToken: string,
+    userId: string | undefined,
+    pagination: { resultsPerPage: number; page: number },
+) =>
+    executeRequest<SeekPaginated<Group>>({
+        path: `/api/v1/users/${userId ?? 'me'}/groups`,
+        method: 'GET',
+        headers: { Authorization: `Bearer ${idToken}` },
+        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
 export const listGroups = async (
     idToken: string,
     pagination: { resultsPerPage: number; page: number },
