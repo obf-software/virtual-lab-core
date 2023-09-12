@@ -14,18 +14,20 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { Group } from '../../../../services/api/protocols';
+import { FiEdit } from 'react-icons/fi';
 import dayjs from 'dayjs';
-import { FiMaximize } from 'react-icons/fi';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/pt-br';
+import { useMyGroupsContext } from '../../../contexts/my-groups/hook';
 
-export const ProfileGroupsCardTable: React.FC = () => {
-    const isLoading = false;
-    const groups: Group[] = [];
+dayjs.extend(relativeTime);
+dayjs.locale('pt-br');
+
+export const MyGroupsTable: React.FC = () => {
+    const { isLoading, myGroups } = useMyGroupsContext();
 
     return (
         <TableContainer
-            maxW={'6xl'}
-            w={'full'}
             bgColor={'white'}
             p={4}
             borderRadius={12}
@@ -36,8 +38,8 @@ export const ProfileGroupsCardTable: React.FC = () => {
                 variant='simple'
                 colorScheme='blue'
             >
-                {groups.length === 0 && isLoading === false ? (
-                    <TableCaption>Você não está em nenhum grupo</TableCaption>
+                {myGroups.length === 0 && isLoading === false ? (
+                    <TableCaption>Nenhum grupo encontrado</TableCaption>
                 ) : null}
 
                 {isLoading !== false ? (
@@ -63,7 +65,7 @@ export const ProfileGroupsCardTable: React.FC = () => {
                 </Thead>
                 <Tbody>
                     {isLoading === false &&
-                        groups.map((group, index) => (
+                        myGroups.map((group, index) => (
                             <Tr key={`tr-${index}`}>
                                 <Td>{group.name}</Td>
                                 <Td>
@@ -80,7 +82,7 @@ export const ProfileGroupsCardTable: React.FC = () => {
                                     <ButtonGroup>
                                         <IconButton
                                             aria-label='Abrir detalhes'
-                                            icon={<FiMaximize />}
+                                            icon={<FiEdit />}
                                             variant='outline'
                                             colorScheme='blue'
                                             size='sm'

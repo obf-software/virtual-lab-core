@@ -90,7 +90,6 @@ export class UserRepository {
                 with: {
                     userToGroup: {
                         where: (userToGroup, builder) => builder.eq(userToGroup.userId, userId),
-                        columns: { groupId: false, userId: false },
                     },
                 },
             })

@@ -4,7 +4,6 @@ import { Box, Button, Container, Heading, Stack, Text, VStack, useToast } from '
 import { FiSave } from 'react-icons/fi';
 import { ProfileQuotaCard } from './quota-card';
 import { ProfileInfoCard } from './info-card';
-import { ProfileGroupsCard } from './groups-card';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { parseSessionData } from '../../services/helpers';
 
@@ -96,7 +95,6 @@ export const ProfilePage: React.FC = () => {
                     onCurrentNameChange={(newName) => setCurrentName(newName)}
                 />
                 <ProfileQuotaCard />
-                <ProfileGroupsCard />
             </Container>
         </Box>
     );

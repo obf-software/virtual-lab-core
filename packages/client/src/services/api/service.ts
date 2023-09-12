@@ -58,7 +58,7 @@ export const listUsers = async (
 
 export const listUserGroups = async (
     idToken: string,
-    userId: string | undefined,
+    userId: string | number | undefined,
     pagination: { resultsPerPage: number; page: number },
 ) =>
     executeRequest<SeekPaginated<Group>>({
