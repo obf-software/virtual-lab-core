@@ -1,25 +1,16 @@
 import {
-    ButtonGroup,
-    IconButton,
     Spinner,
     Table,
     TableCaption,
     TableContainer,
     Tbody,
-    Td,
     Th,
     Thead,
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FiEdit } from 'react-icons/fi';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import 'dayjs/locale/pt-br';
 import { useUsersContext } from '../../../contexts/users/hook';
-
-dayjs.extend(relativeTime);
-dayjs.locale('pt-br');
+import { UsersTableRow } from './row';
 
 export const UsersTable: React.FC = () => {
     const { isLoading, users } = useUsersContext();
@@ -64,23 +55,10 @@ export const UsersTable: React.FC = () => {
                 <Tbody>
                     {isLoading === false &&
                         users.map((user, index) => (
-                            <Tr key={`tr-${index}`}>
-                                <Td>{user.username}</Td>
-                                <Td>{user.role.toUpperCase()}</Td>
-                                <Td>{dayjs(user.createdAt).format('DD/MM/YYYY')}</Td>
-                                <Td>{dayjs(user.lastLoginAt).fromNow(false)}</Td>
-                                <Td isNumeric>
-                                    <ButtonGroup>
-                                        <IconButton
-                                            aria-label='Abrir detalhes'
-                                            icon={<FiEdit />}
-                                            variant='outline'
-                                            colorScheme='blue'
-                                            size='sm'
-                                        />
-                                    </ButtonGroup>
-                                </Td>
-                            </Tr>
+                            <UsersTableRow
+                                key={`users-table-row-${index}`}
+                                user={user}
+                            />
                         ))}
                 </Tbody>
             </Table>
