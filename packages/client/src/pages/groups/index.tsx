@@ -27,7 +27,7 @@ export const GroupsPage: React.FC = () => {
     const [activePage, setActivePage] = useState<number>(1);
 
     useEffect(() => {
-        setActiveMenuItem('GROUPS');
+        setActiveMenuItem('ADMIN_GROUPS');
 
         if (groupsContext.isLoading === false) {
             groupsContext.loadGroupsPage(1, RESULTS_PER_PAGE).catch(console.error);

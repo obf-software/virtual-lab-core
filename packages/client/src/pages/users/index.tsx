@@ -34,7 +34,7 @@ export const UsersPage: React.FC = () => {
     const [activePage, setActivePage] = useState<number>(1);
 
     useEffect(() => {
-        setActiveMenuItem('USERS');
+        setActiveMenuItem('ADMIN_USERS');
 
         if (usersContext.isLoading === false) {
             usersContext.loadUsersPage(1, RESULTS_PER_PAGE).catch(console.error);

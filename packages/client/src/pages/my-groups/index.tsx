@@ -10,8 +10,9 @@ import {
     InputLeftElement,
     InputRightElement,
     IconButton,
+    Button,
 } from '@chakra-ui/react';
-import { FiSearch, FiX } from 'react-icons/fi';
+import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { MyGroupsTable } from './table';
@@ -57,6 +58,21 @@ export const MyGroupsPage: React.FC = () => {
                             {`${myGroupsContext.numberOfResults} grupos encontrados`}
                         </Text>
                     </VStack>
+                    <Button
+                        variant={'solid'}
+                        colorScheme='blue'
+                        leftIcon={<FiRefreshCw />}
+                        isLoading={myGroupsContext.isLoading}
+                        onClick={() => {
+                            if (!myGroupsContext.isLoading) {
+                                myGroupsContext
+                                    .loadMyGroupsPage(activePage, RESULTS_PER_PAGE)
+                                    .catch(console.error);
+                            }
+                        }}
+                    >
+                        Recarregar
+                    </Button>
                 </Stack>
 
                 <Stack pb={5}>

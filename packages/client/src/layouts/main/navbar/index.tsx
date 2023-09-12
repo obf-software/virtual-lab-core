@@ -112,7 +112,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                                     spacing='1px'
                                     ml='2'
                                 >
-                                    <Text fontSize='sm'>{displayName}</Text>
+                                    <Text fontSize='sm'>
+                                        {displayName.length <= 30
+                                            ? displayName
+                                            : `${displayName.slice(0, 30)}...`}
+                                    </Text>
                                     <Text
                                         fontSize='xs'
                                         color='gray.600'
