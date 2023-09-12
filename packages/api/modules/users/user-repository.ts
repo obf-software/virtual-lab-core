@@ -2,6 +2,7 @@ import { eq, sql } from 'drizzle-orm';
 import * as schema from '../../drizzle/schema';
 import { DatabaseClient } from '../../protocols/db';
 import { SeekPaginated } from '../../protocols/pagination';
+import { UserRole } from './protocols';
 
 export class UserRepository {
     private dbClient: DatabaseClient;
@@ -101,5 +102,13 @@ export class UserRepository {
             resultsPerPage: pagination.resultsPerPage,
             numberOfResults: countResult.count,
         } satisfies SeekPaginated<typeof schema.group.$inferSelect>;
+    }
+
+    async updateRole(userId: number, role: keyof typeof UserRole) {
+        await this.dbClient
+            .update(schema.user)
+            .set({ role })
+            .where(eq(schema.user.id, userId))
+            .execute();
     }
 }

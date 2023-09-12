@@ -36,6 +36,7 @@ export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 // ENTITIES
 
 export enum UserRole {
+    NONE = 'NONE',
     PENDING = 'PENDING',
     USER = 'USER',
     ADMIN = 'ADMIN',
@@ -44,7 +45,7 @@ export enum UserRole {
 export interface User {
     id: string;
     username: string;
-    role: UserRole;
+    role: keyof typeof UserRole;
     createdAt: string;
     updatedAt: string;
     lastLoginAt: string | null;

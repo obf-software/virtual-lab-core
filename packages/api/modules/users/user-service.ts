@@ -1,5 +1,6 @@
 import { UserRepository } from './user-repository';
 import * as schema from '../../drizzle/schema';
+import { UserRole } from './protocols';
 
 export class UserService {
     private userRepository: UserRepository;
@@ -35,5 +36,9 @@ export class UserService {
 
     async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
         return this.userRepository.listGroups(userId, pagination);
+    }
+
+    async updateRole(userId: number, role: keyof typeof UserRole) {
+        return this.userRepository.updateRole(userId, role);
     }
 }

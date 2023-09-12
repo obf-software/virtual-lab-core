@@ -1,13 +1,19 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { createHandler } from '../../integrations/powertools';
 import { getUserPoolJwtClaims, hasUserRoleOrAbove } from '../auth/authorization';
-import { InsufficientRoleError, InvalidQueryParamsError } from '../../protocols/errors';
+import {
+    InsufficientRoleError,
+    InvalidBodyError,
+    InvalidPathParamsError,
+    InvalidQueryParamsError,
+} from '../../protocols/errors';
 import { UserRepository } from './user-repository';
 import { UserService } from './user-service';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../../drizzle/schema';
 import { z } from 'zod';
+import { UserRole } from './protocols';
 
 const { DATABASE_URL } = process.env;
 
@@ -68,6 +74,34 @@ export const listUserGroups = createHandler<APIGatewayProxyHandlerV2WithJWTAutho
         return {
             statusCode: 200,
             body: JSON.stringify(result),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    true,
+);
+
+export const updateUserRole = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
+    async (event) => {
+        const { role } = getUserPoolJwtClaims(event);
+        if (!hasUserRoleOrAbove('ADMIN', role)) throw InsufficientRoleError(role, 'ADMIN');
+
+        const userIdPathParam = event.pathParameters?.userId;
+        const userIdPathParamNumber = Number(userIdPathParam);
+
+        if (Number.isNaN(userIdPathParamNumber)) {
+            throw InvalidPathParamsError('userId must be a number');
+        }
+
+        const body = z
+            .object({ role: z.nativeEnum(UserRole) })
+            .safeParse(JSON.parse(event.body ?? '{}'));
+        if (!body.success) throw InvalidBodyError(body.error.message);
+
+        await userService.updateRole(userIdPathParamNumber, body.data.role);
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: 'User role updated successfully' }),
             headers: { 'Content-Type': 'application/json' },
         };
     },

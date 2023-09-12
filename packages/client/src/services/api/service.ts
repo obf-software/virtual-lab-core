@@ -1,8 +1,16 @@
-import { ApiResponse, AuthorizationHeader, Group, SeekPaginated, UrlPath, User } from './protocols';
+import {
+    ApiResponse,
+    AuthorizationHeader,
+    Group,
+    SeekPaginated,
+    UrlPath,
+    User,
+    UserRole,
+} from './protocols';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     body?: Record<string, unknown>;
     queryParams?: Record<string, string | number | undefined>;
     headers: {
@@ -66,6 +74,18 @@ export const listUserGroups = async (
         method: 'GET',
         headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
+export const updateUserRole = async (
+    idToken: string,
+    userId: string | number,
+    role: keyof typeof UserRole,
+) =>
+    executeRequest({
+        path: `/api/v1/users/${userId}/role`,
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${idToken}` },
+        body: { role },
     });
 
 export const listGroups = async (

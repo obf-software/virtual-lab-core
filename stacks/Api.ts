@@ -63,6 +63,14 @@ export function Api({ stack, app }: sst.StackContext) {
                     },
                 },
             },
+            'PATCH /api/v1/users/{userId}/role': {
+                function: {
+                    handler: 'packages/api/modules/users/handlers.updateUserRole',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
 
             'GET /api/v1/groups': {
                 function: {

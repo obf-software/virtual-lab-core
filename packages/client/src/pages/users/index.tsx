@@ -13,8 +13,8 @@ import {
     IconButton,
     useDisclosure,
 } from '@chakra-ui/react';
-import { UsersTable } from './users-table';
-import { FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import { UsersTable } from './table';
+import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { CreateUserModal } from './create-user-modal';
@@ -25,11 +25,11 @@ const RESULTS_PER_PAGE = 20;
 
 export const UsersPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const {
-        isOpen: isCreateUserModalOpen,
-        onClose: onCreateUserModalClose,
-        onOpen: onCreateUserModalOpen,
-    } = useDisclosure();
+    // const {
+    //     isOpen: isCreateUserModalOpen,
+    //     onClose: onCreateUserModalClose,
+    //     onOpen: onCreateUserModalOpen,
+    // } = useDisclosure();
     const usersContext = useUsersContext();
     const [activePage, setActivePage] = useState<number>(1);
 
@@ -44,10 +44,10 @@ export const UsersPage: React.FC = () => {
     return (
         <Box>
             <Container maxW={'6xl'}>
-                <CreateUserModal
+                {/* <CreateUserModal
                     isOpen={isCreateUserModalOpen}
                     onClose={onCreateUserModalClose}
-                />
+                /> */}
                 <Stack
                     pb={10}
                     maxW={'6xl'}
@@ -72,10 +72,17 @@ export const UsersPage: React.FC = () => {
                     <Button
                         variant={'solid'}
                         colorScheme='blue'
-                        leftIcon={<FiPlus />}
-                        onClick={onCreateUserModalOpen}
+                        leftIcon={<FiRefreshCw />}
+                        isLoading={usersContext.isLoading}
+                        onClick={() => {
+                            if (usersContext.isLoading === false) {
+                                usersContext
+                                    .loadUsersPage(1, RESULTS_PER_PAGE)
+                                    .catch(console.error);
+                            }
+                        }}
                     >
-                        Adicionar usuário
+                        Recarregar
                     </Button>
                 </Stack>
 
