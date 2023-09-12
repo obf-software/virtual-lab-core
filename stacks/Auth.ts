@@ -45,7 +45,7 @@ export function Auth({ stack, app }: sst.StackContext) {
             otp: true,
             sms: true,
         },
-        selfSignUpEnabled: false,
+        selfSignUpEnabled: true,
         lambdaTriggers: {
             preTokenGeneration: preTokenGenerationTrigger,
             postConfirmation: postConfirmationTrigger,
@@ -106,6 +106,7 @@ export function Auth({ stack, app }: sst.StackContext) {
         writeAttributes: new ClientAttributes().withStandardAttributes({
             preferredUsername: true,
             fullname: true,
+            email: true,
         }),
     });
 

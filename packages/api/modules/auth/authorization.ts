@@ -16,6 +16,10 @@ export const getUserPoolJwtClaims = (
         throw InvalidUserPoolJwtClaimsError('Invalid "username"');
     }
 
+    if (!userIdString) {
+        throw InvalidUserPoolJwtClaimsError('Invalid "userId"');
+    }
+
     const userId = Number(userIdString.toString() ?? '');
 
     if (typeof userId !== 'number') {

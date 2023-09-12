@@ -19,7 +19,6 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         <Authenticator
             initialState='signIn'
             loginMechanisms={['username', 'email']}
-            hideSignUp
             variation='modal'
             components={{
                 Header: () => {
