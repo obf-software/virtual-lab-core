@@ -15,7 +15,7 @@
         "plugin:@typescript-eslint/recommended-type-checked",
         "plugin:@typescript-eslint/stylistic-type-checked"
     ],
-    "ignorePatterns": ["node_modules/", "dist/", "build/", ".sst/", "_dev/"],
+    "ignorePatterns": ["node_modules/", "dist/", "build/", ".sst/", "_dev/", "*.js"],
     "rules": {
         "@typescript-eslint/triple-slash-reference": "off",
         "@typescript-eslint/no-unused-vars": "warn",

@@ -7,7 +7,9 @@
         "node": "18"
     },
     "scripts": {
-        "postinstall": "cd packages/client && npm install",
+        "postinstall": "npm run install:client && npm run install:websocket-server",
+        "install:client": "cd packages/client && npm install",
+        "install:websocket-server": "cd packages/websocket-server && npm install",
         "dev": "AWS_PROFILE=virtual-lab sst dev",
         "build": "sst build",
         "deploy": "sst deploy",
@@ -35,7 +37,6 @@
         "typescript": "^5.2.2"
     },
     "workspaces": [
-        "packages/api",
-        "packages/websocket-server"
+        "packages/api"
     ]
 }
