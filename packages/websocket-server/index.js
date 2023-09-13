@@ -3,7 +3,7 @@ const { createLogger, transports, format } = require('winston');
 const { combine, splat, timestamp, printf } = format;
 
 const PORT = process.env.PORT || 8080;
-const CRYPT_SECRET = process.env.CRYPT_SECRET;
+const CRYPT_SECRET = process.env.CRYPT_SECRET; // 32 bytes for AES-256
 const CRYPT_CYPHER = 'AES-256-CBC';
 const GUACD_HOST = '127.0.0.1';
 const GUACD_PORT = 4822;
