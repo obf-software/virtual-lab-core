@@ -36,7 +36,7 @@ export function Auth({ stack, app }: sst.StackContext) {
 
     const userPool = new UserPool(stack, 'UserPool', {
         accountRecovery: AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
-        advancedSecurityMode: AdvancedSecurityMode.AUDIT,
+        advancedSecurityMode: AdvancedSecurityMode.OFF,
         removalPolicy: stagesWhereUserPoolIsRetained.includes(app.stage)
             ? RemovalPolicy.RETAIN
             : RemovalPolicy.DESTROY,

@@ -21,7 +21,7 @@
         "chakra-react-select": "^4.7.0",
         "dayjs": "^1.11.9",
         "framer-motion": "^10.16.4",
-        "guacamole-client": "github:utfpr-virtual-lab/guacamole-client#8fe0a71",
+        "guacamole-client": "github:utfpr-virtual-lab/guacamole-client#8fe0a7133af8a4ff51b835173be690c3d8d460ac",
         "localforage": "^1.10.0",
         "match-sorter": "^6.3.1",
         "react": "^18.2.0",
@@ -32,6 +32,7 @@
         "sort-by": "^1.2.0"
     },
     "devDependencies": {
+        "@types/guacamole-client": "^1.0.5",
         "@types/react": "^18.2.15",
         "@types/react-dom": "^18.2.7",
         "@vitejs/plugin-react-swc": "^3.3.2",

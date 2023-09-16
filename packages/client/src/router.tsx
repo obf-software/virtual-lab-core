@@ -11,6 +11,7 @@ import { UsersProvider } from './contexts/users/provider';
 import { GroupsProvider } from './contexts/groups/provider';
 import { MyGroupsProvider } from './contexts/my-groups/provider';
 import { MyGroupsPage } from './pages/my-groups';
+import { ConnectionPage } from './pages/connection';
 
 /**
  * TODO: Filter routes based on user's authorization
@@ -68,6 +69,10 @@ export const Router: React.FC = () => {
                 },
             ],
             // errorElement: <div>error</div>,
+        },
+        {
+            path: 'connection',
+            element: <ConnectionPage />,
         },
     ]);
 

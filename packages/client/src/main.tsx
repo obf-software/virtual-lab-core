@@ -6,13 +6,16 @@ import { theme } from './styles/theme';
 import { MenuProvider } from './contexts/menu/provider.tsx';
 import { AuthProvider } from './contexts/auth/provider.tsx';
 import { Router } from './router.tsx';
+import { ConnectionProvider } from './contexts/connection/provider.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ChakraProvider theme={theme}>
             <AuthProvider>
                 <MenuProvider>
-                    <Router />
+                    <ConnectionProvider>
+                        <Router />
+                    </ConnectionProvider>
                 </MenuProvider>
             </AuthProvider>
         </ChakraProvider>
