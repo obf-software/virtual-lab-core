@@ -76,13 +76,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ status, connectionTy
     const soVersion = 'Ubuntu 20.04';
     const softwares = ['Node.js 14.17.0', 'Nginx 1.18.0', 'MongoDB 4.4.6'];
 
-    const { connect, bindControls, unbindControls, disconnect } = useConnectionContext();
+    const { connect, disconnect, connectionState } = useConnectionContext();
 
     const navigate = useNavigate();
 
     useEffect(() => {
-        unbindControls();
-        disconnect();
+        if (connectionState !== 'IDDLE') {
+            disconnect();
+        }
     }, []);
 
     return (
@@ -183,7 +184,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ status, connectionTy
                             );
 
                             if (success) {
-                                bindControls();
                                 navigate('/connection');
                             } else {
                                 alert('Erro ao conectar');
