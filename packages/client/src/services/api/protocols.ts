@@ -61,12 +61,21 @@ export enum InstanceConnectionType {
     RDP = 'RDP',
 }
 
+export enum InstanceState {
+    'pending' = 'pending',
+    'running' = 'running',
+    'shutting-down' = 'shutting-down',
+    'stopped' = 'stopped',
+    'stopping' = 'stopping',
+    'terminated' = 'terminated',
+}
+
 export interface Instance {
     id: number;
     userId: number;
     awsInstanceId: string;
     name: string;
-    description?: string;
+    description: string | null;
     connectionType: keyof typeof InstanceConnectionType;
     platform: string;
     distribution: string;
@@ -74,14 +83,14 @@ export interface Instance {
     cpu: string;
     memoryInGb: string;
     storageInGb: string;
-    tags?: string;
+    tags: string | null;
     createdAt: string;
-    lastConnectionAt: string;
+    lastConnectionAt: string | null;
 
     /**
      * This property is not stored in the database. It is added by the API.
      * If the value is undefined, ti means the instance is not running or the
      * API has not been able to fetch the status from AWS.
      */
-    state?: 'pending' | 'running' | 'shutting-down' | 'stopped' | 'stopping' | 'terminated';
+    state?: keyof typeof InstanceState;
 }

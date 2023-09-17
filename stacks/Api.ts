@@ -66,6 +66,7 @@ export function Api({ stack, app }: sst.StackContext) {
             'GET /api/v1/users/{userId}/instances': {
                 function: {
                     handler: 'packages/api/modules/instance/handlers.listUserInstances',
+                    permissions: ['ec2:*'], // TODO: restrict permissions
                     environment: {
                         DATABASE_URL,
                     },
