@@ -57,7 +57,15 @@ export function Api({ stack, app }: sst.StackContext) {
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
-                    handler: 'packages/api/modules/users/handlers.listUserGroups',
+                    handler: 'packages/api/modules/users/handlers.listUserGroups', // TODO: Refactor deprecation
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'GET /api/v1/users/{userId}/instances': {
+                function: {
+                    handler: 'packages/api/modules/instance/handlers.listUserInstances',
                     environment: {
                         DATABASE_URL,
                     },

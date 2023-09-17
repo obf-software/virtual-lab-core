@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "277ec5f4-563a-42a7-8bd0-2eef8a8a36b3",
+  "id": "acfbc8b3-5a7d-4d9b-9a0f-293e8d0ad8e3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "group": {
@@ -26,22 +26,22 @@
           "primaryKey": false,
           "notNull": true
         },
-        "portfolio_id": {
-          "name": "portfolio_id",
-          "type": "varchar(100)",
+        "aws_portfolio_id": {
+          "name": "aws_portfolio_id",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
         "created_at": {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -49,6 +49,121 @@
       },
       "indexes": {},
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "instance": {
+      "name": "instance",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "aws_instance_id": {
+          "name": "aws_instance_id",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "connection_type": {
+          "name": "connection_type",
+          "type": "instance_connection_type",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "platform": {
+          "name": "platform",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "distribution": {
+          "name": "distribution",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instance_type": {
+          "name": "instance_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cpu_size_in_gb": {
+          "name": "cpu_size_in_gb",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memory_in_gb": {
+          "name": "memory_in_gb",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_in_gb": {
+          "name": "storage_in_gb",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_connection_at": {
+          "name": "last_connection_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "instance_user_id_user_id_fk": {
+          "name": "instance_user_id_user_id_fk",
+          "tableFrom": "instance",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
@@ -119,21 +234,21 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "last_login_at": {
           "name": "last_login_at",
-          "type": "date",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         }
@@ -210,6 +325,14 @@
     }
   },
   "enums": {
+    "instance_connection_type": {
+      "name": "instance_connection_type",
+      "values": {
+        "SSH": "SSH",
+        "VNC": "VNC",
+        "RDP": "RDP"
+      }
+    },
     "user_role": {
       "name": "user_role",
       "values": {
