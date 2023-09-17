@@ -24,11 +24,10 @@ export class AwsEc2Integration {
         return instances[0];
     }
 
-    async getInstanceStatus(instanceId: string) {
-        const command = new DescribeInstanceStatusCommand({ InstanceIds: [instanceId] });
+    async getInstanceStatuses(instanceIds: string[]) {
+        const command = new DescribeInstanceStatusCommand({ InstanceIds: instanceIds });
         const { InstanceStatuses } = await this.client.send(command);
-        if (InstanceStatuses === undefined || InstanceStatuses.length === 0) return undefined;
-        return InstanceStatuses[0];
+        return InstanceStatuses ?? [];
     }
 
     async getImageDescription(imageId: string) {

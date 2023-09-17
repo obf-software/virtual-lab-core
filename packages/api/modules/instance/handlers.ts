@@ -8,12 +8,14 @@ import { InstanceRepository } from './repository';
 import { InstanceService } from './service';
 import { AuthService } from '../auth/service';
 import { InvalidQueryParamsError } from '../core/errors';
+import { AwsEc2Integration } from '../../integrations/aws-ec2/service';
 
 const { DATABASE_URL } = process.env;
 
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+const awsEc2Integration = new AwsEc2Integration();
 const instanceRepository = new InstanceRepository(dbClient);
-const instanceService = new InstanceService(instanceRepository);
+const instanceService = new InstanceService(instanceRepository, awsEc2Integration);
 const authService = new AuthService();
 
 export const listUserInstances = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(

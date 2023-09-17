@@ -16,11 +16,6 @@ export interface KeysetPaginated<T> {
     nextCursor: string | null;
 }
 
-export interface ApiResponsex<T> {
-    data?: T;
-    error?: string;
-}
-
 interface SuccessResponse<T> {
     data: T;
     error: undefined;
@@ -58,4 +53,35 @@ export interface Group {
     portfolioId: string;
     createdAt: string;
     updatedAt: string;
+}
+
+export enum InstanceConnectionType {
+    SSH = 'SSH',
+    VNC = 'VNC',
+    RDP = 'RDP',
+}
+
+export interface Instance {
+    id: number;
+    userId: number;
+    awsInstanceId: string;
+    name: string;
+    description?: string;
+    connectionType: keyof typeof InstanceConnectionType;
+    platform: string;
+    distribution: string;
+    instanceType: string;
+    cpu: string;
+    memoryInGb: string;
+    storageInGb: string;
+    tags?: string;
+    createdAt: string;
+    lastConnectionAt: string;
+
+    /**
+     * This property is not stored in the database. It is added by the API.
+     * If the value is undefined, ti means the instance is not running or the
+     * API has not been able to fetch the status from AWS.
+     */
+    state?: 'pending' | 'running' | 'shutting-down' | 'stopped' | 'stopping' | 'terminated';
 }

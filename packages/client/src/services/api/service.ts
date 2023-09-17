@@ -2,6 +2,7 @@ import {
     ApiResponse,
     AuthorizationHeader,
     Group,
+    Instance,
     SeekPaginated,
     UrlPath,
     User,
@@ -71,6 +72,18 @@ export const listUserGroups = async (
 ) =>
     executeRequest<SeekPaginated<Group>>({
         path: `/api/v1/users/${userId ?? 'me'}/groups`,
+        method: 'GET',
+        headers: { Authorization: `Bearer ${idToken}` },
+        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
+export const listUserInstances = async (
+    idToken: string,
+    userId: string | number | undefined,
+    pagination: { resultsPerPage: number; page: number },
+) =>
+    executeRequest<SeekPaginated<Instance>>({
+        path: `/api/v1/users/${userId ?? 'me'}/instances`,
         method: 'GET',
         headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
