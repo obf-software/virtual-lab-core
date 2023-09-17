@@ -4,20 +4,17 @@ import {
     Heading,
     VStack,
     Text,
-    Button,
     Stack,
     InputGroup,
     Input,
     InputLeftElement,
     InputRightElement,
     IconButton,
-    useDisclosure,
 } from '@chakra-ui/react';
 import { UsersTable } from './table';
-import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
+import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { CreateUserModal } from './create-user-modal';
 import { useUsersContext } from '../../contexts/users/hook';
 import { Paginator } from '../../components/paginator';
 
@@ -25,11 +22,6 @@ const RESULTS_PER_PAGE = 20;
 
 export const UsersPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    // const {
-    //     isOpen: isCreateUserModalOpen,
-    //     onClose: onCreateUserModalClose,
-    //     onOpen: onCreateUserModalOpen,
-    // } = useDisclosure();
     const usersContext = useUsersContext();
     const [activePage, setActivePage] = useState<number>(1);
 
@@ -44,10 +36,6 @@ export const UsersPage: React.FC = () => {
     return (
         <Box>
             <Container maxW={'6xl'}>
-                {/* <CreateUserModal
-                    isOpen={isCreateUserModalOpen}
-                    onClose={onCreateUserModalClose}
-                /> */}
                 <Stack
                     pb={10}
                     maxW={'6xl'}
@@ -69,21 +57,19 @@ export const UsersPage: React.FC = () => {
                         </Text>
                     </VStack>
 
-                    <Button
-                        variant={'solid'}
+                    <IconButton
+                        aria-label='Recarregar'
+                        variant={'outline'}
                         colorScheme='blue'
-                        leftIcon={<FiRefreshCw />}
                         isLoading={usersContext.isLoading}
                         onClick={() => {
-                            if (usersContext.isLoading === false) {
-                                usersContext
-                                    .loadUsersPage(1, RESULTS_PER_PAGE)
-                                    .catch(console.error);
-                            }
+                            usersContext
+                                .loadUsersPage(activePage, RESULTS_PER_PAGE)
+                                .catch(console.error);
                         }}
                     >
-                        Recarregar
-                    </Button>
+                        <FiRefreshCw />
+                    </IconButton>
                 </Stack>
 
                 <Stack pb={5}>

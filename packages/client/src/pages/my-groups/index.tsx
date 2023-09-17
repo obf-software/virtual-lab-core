@@ -10,7 +10,6 @@ import {
     InputLeftElement,
     InputRightElement,
     IconButton,
-    Button,
 } from '@chakra-ui/react';
 import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
@@ -58,21 +57,20 @@ export const MyGroupsPage: React.FC = () => {
                             {`${myGroupsContext.numberOfResults} grupos encontrados`}
                         </Text>
                     </VStack>
-                    <Button
-                        variant={'solid'}
+
+                    <IconButton
+                        aria-label='Recarregar'
+                        variant={'outline'}
                         colorScheme='blue'
-                        leftIcon={<FiRefreshCw />}
                         isLoading={myGroupsContext.isLoading}
                         onClick={() => {
-                            if (!myGroupsContext.isLoading) {
-                                myGroupsContext
-                                    .loadMyGroupsPage(activePage, RESULTS_PER_PAGE)
-                                    .catch(console.error);
-                            }
+                            myGroupsContext
+                                .loadMyGroupsPage(activePage, RESULTS_PER_PAGE)
+                                .catch(console.error);
                         }}
                     >
-                        Recarregar
-                    </Button>
+                        <FiRefreshCw />
+                    </IconButton>
                 </Stack>
 
                 <Stack pb={5}>

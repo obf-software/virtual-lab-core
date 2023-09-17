@@ -1,5 +1,16 @@
-import { Box, Container, Heading, VStack, Text, Button, Stack } from '@chakra-ui/react';
-import { FiPlus } from 'react-icons/fi';
+import {
+    Box,
+    Container,
+    Heading,
+    VStack,
+    Text,
+    Button,
+    Stack,
+    ButtonGroup,
+    IconButton,
+    Spinner,
+} from '@chakra-ui/react';
+import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { InstanceCard } from './instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
@@ -57,20 +68,39 @@ export const InstancesPage: React.FC = () => {
                         </Text>
                     </VStack>
 
-                    <Button
-                        variant={'solid'}
-                        colorScheme='blue'
-                        leftIcon={<FiPlus />}
-                        isLoading={isLoading}
-                    >
-                        Nova instância
-                    </Button>
+                    <ButtonGroup>
+                        <IconButton
+                            aria-label='Recarregar'
+                            variant={'outline'}
+                            colorScheme='blue'
+                            isLoading={isLoading}
+                            onClick={() => {
+                                loadInstancesPage(1, RESULTS_PER_PAGE).catch(console.error);
+                            }}
+                        >
+                            <FiRefreshCw />
+                        </IconButton>
+                        <Button
+                            variant={'solid'}
+                            colorScheme='blue'
+                            leftIcon={<FiPlus />}
+                            isDisabled={isLoading}
+                        >
+                            Nova instância
+                        </Button>
+                    </ButtonGroup>
                 </Stack>
 
-                {instances.length === 0 ? (
-                    <Box>
+                {instances.length === 0 && !isLoading ? (
+                    <Box
+                        height={'50vh'}
+                        display={'flex'}
+                        justifyContent={'center'}
+                        alignItems={'center'}
+                    >
                         <Text
-                            fontSize='md'
+                            align={'center'}
+                            fontSize='xl'
                             color='gray.600'
                         >
                             Nenhuma instância encontrada
@@ -78,22 +108,42 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {instances.map((instance) => (
+                {isLoading ? (
                     <Box
-                        pb={10}
-                        key={`instance-${instance.awsInstanceId}`}
+                        height={'50vh'}
+                        display={'flex'}
+                        justifyContent={'center'}
+                        alignItems={'center'}
                     >
-                        <InstanceCard instance={instance} />
+                        <Spinner
+                            size={'xl'}
+                            speed={'1s'}
+                            thickness={'4px'}
+                            color={'blue.500'}
+                            emptyColor={'gray.200'}
+                        />
                     </Box>
-                ))}
+                ) : null}
 
-                <Paginator
-                    activePage={activePage}
-                    totalPages={numberOfPages}
-                    onPageChange={(page) => {
-                        loadInstancesPage(page, RESULTS_PER_PAGE).catch(console.error);
-                    }}
-                />
+                {!isLoading &&
+                    instances.map((instance) => (
+                        <Box
+                            pb={10}
+                            key={`instance-${instance.awsInstanceId}`}
+                        >
+                            <InstanceCard instance={instance} />
+                        </Box>
+                    ))}
+
+                {!isLoading && instances.length > 0 ? (
+                    <Paginator
+                        activePage={activePage}
+                        totalPages={numberOfPages}
+                        onPageChange={(page) => {
+                            loadInstancesPage(page, RESULTS_PER_PAGE).catch(console.error);
+                        }}
+                    />
+                ) : null}
             </Container>
         </Box>
     );

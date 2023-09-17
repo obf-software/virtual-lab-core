@@ -11,8 +11,9 @@ import {
     InputLeftElement,
     InputRightElement,
     IconButton,
+    ButtonGroup,
 } from '@chakra-ui/react';
-import { FiPlus, FiSearch, FiX } from 'react-icons/fi';
+import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { GroupsTable } from './groups-table';
@@ -58,13 +59,30 @@ export const GroupsPage: React.FC = () => {
                         </Text>
                     </VStack>
 
-                    <Button
-                        variant={'solid'}
-                        colorScheme='blue'
-                        leftIcon={<FiPlus />}
-                    >
-                        Adicionar grupo
-                    </Button>
+                    <ButtonGroup>
+                        <IconButton
+                            aria-label='Recarregar'
+                            variant={'outline'}
+                            colorScheme='blue'
+                            isLoading={groupsContext.isLoading}
+                            onClick={() => {
+                                groupsContext
+                                    .loadGroupsPage(activePage, RESULTS_PER_PAGE)
+                                    .catch(console.error);
+                            }}
+                        >
+                            <FiRefreshCw />
+                        </IconButton>
+
+                        <Button
+                            variant={'solid'}
+                            colorScheme='blue'
+                            leftIcon={<FiPlus />}
+                            isDisabled={groupsContext.isLoading}
+                        >
+                            Adicionar grupo
+                        </Button>
+                    </ButtonGroup>
                 </Stack>
 
                 <Stack pb={5}>
