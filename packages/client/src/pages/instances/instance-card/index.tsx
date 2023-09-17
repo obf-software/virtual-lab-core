@@ -120,14 +120,18 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     spacing={{ base: 5, md: 10 }}
                 >
                     <Heading size='xl'>{instance.name}</Heading>
-                    <Tag colorScheme={stateStyle.colorScheme}>
+                    <Tag
+                        colorScheme={stateStyle.colorScheme}
+                        size={'lg'}
+                        variant={'subtle'}
+                    >
                         <Stack
                             direction='row'
-                            spacing={1}
+                            spacing={2}
                             align='center'
                         >
-                            <Text>{stateStyle.label}</Text>
-                            {stateStyle.hasSpinner && <Spinner size='xs' />}
+                            <Text fontWeight={'black'}>{stateStyle.label}</Text>
+                            {stateStyle.hasSpinner && <Spinner size='sm' />}
                         </Stack>
                     </Tag>
                 </Stack>
@@ -192,6 +196,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                                 key={`tag-${tag}-${index}`}
                                 colorScheme='blue'
                                 size='md'
+                                fontWeight={'black'}
+                                variant={'outline'}
                             >
                                 {tag}
                             </Tag>
