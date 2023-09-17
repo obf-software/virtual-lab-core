@@ -37,4 +37,8 @@ export class UserService {
     async updateRole(userId: number, role: keyof typeof UserRole) {
         return this.userRepository.updateRole(userId, role);
     }
+
+    async getUserById(userId: number) {
+        return this.userRepository.getUserById(userId);
+    }
 }

@@ -10,6 +10,10 @@ export class InstanceService {
         this.awsEc2Integration = awsEc2Integration;
     }
 
+    async getInstanceByAwsInstanceId(awsInstanceId: string) {
+        return this.instanceRepository.getInstanceByAwsInstanceId(awsInstanceId);
+    }
+
     async listUserInstances(
         userId: number,
         pagination: {

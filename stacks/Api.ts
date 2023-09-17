@@ -1,10 +1,12 @@
 import * as sst from 'sst/constructs';
 import { Auth } from './Auth';
 import { Config } from './Config';
+import { AppSyncApi } from './AppSyncApi';
 
 export function Api({ stack, app }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL } = sst.use(Config);
+    const { appSyncApi } = sst.use(AppSyncApi);
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
         onCreate: 'packages/api/modules/core/handlers.migrateDatabase',
@@ -66,7 +68,7 @@ export function Api({ stack, app }: sst.StackContext) {
             'GET /api/v1/users/{userId}/instances': {
                 function: {
                     handler: 'packages/api/modules/instance/handlers.listUserInstances',
-                    permissions: ['ec2:*'], // TODO: restrict permissions
+                    permissions: ['ec2:*'],
                     environment: {
                         DATABASE_URL,
                     },
@@ -91,12 +93,39 @@ export function Api({ stack, app }: sst.StackContext) {
         },
     });
 
+    const apiEventBus = new sst.EventBus(stack, 'ApiEventBus', {
+        rules: {
+            onEc2InstanceStateChange: {
+                pattern: {
+                    detailType: ['EC2 Instance State-change Notification'],
+                    source: ['aws.ec2'],
+                },
+                targets: {
+                    lambda: {
+                        type: 'function',
+                        function: {
+                            handler:
+                                'packages/api/modules/instance/handlers.onEc2InstanceStateChange',
+                            permissions: ['ec2:*', 'appsync:GraphQL'],
+                            environment: {
+                                APP_SYNC_API_URL: appSyncApi.url,
+                                DATABASE_URL,
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+
     stack.addOutputs({
         apiUrl: api.url,
+        apiEventBusName: apiEventBus.eventBusName,
     });
 
     return {
         api,
+        apiEventBus,
         migrateDbScript,
     };
 }

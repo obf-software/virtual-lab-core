@@ -88,4 +88,12 @@ export class UserRepository {
             .where(eq(schema.user.id, userId))
             .execute();
     }
+
+    async getUserById(userId: number) {
+        const user = await this.dbClient.query.user.findFirst({
+            where: (user, builder) => builder.eq(user.id, userId),
+        });
+
+        return user;
+    }
 }
