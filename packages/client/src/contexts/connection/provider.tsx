@@ -57,7 +57,6 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
         setClient(newClient);
         setElement(
             <Box
-                bgColor={'blackAlpha.700'}
                 w={'100%'}
                 h={'100vh'}
                 justifyContent={'center'}

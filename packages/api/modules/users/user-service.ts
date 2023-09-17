@@ -34,6 +34,9 @@ export class UserService {
         return this.userRepository.list(pagination);
     }
 
+    /**
+     * @deprecated Use listGroups instead from groups module
+     */
     async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
         return this.userRepository.listGroups(userId, pagination);
     }

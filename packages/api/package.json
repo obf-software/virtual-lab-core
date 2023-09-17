@@ -9,6 +9,7 @@
         "@aws-lambda-powertools/logger": "^1.12.1",
         "@aws-lambda-powertools/metrics": "^1.12.1",
         "@aws-lambda-powertools/tracer": "^1.12.1",
+        "@aws-sdk/client-ec2": "^3.414.0",
         "@middy/core": "^4.6.1",
         "@middy/http-cors": "^4.6.1",
         "@middy/http-error-handler": "^4.6.1",
