@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useEffect, useState } from 'react';
+import React, { PropsWithChildren, useState } from 'react';
 import { ConnectionContext } from './context';
 import Guacamole from 'guacamole-client';
 import { ConnectionState, stateMap } from './protocol';
@@ -9,11 +9,41 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
     const [client, setClient] = useState<Guacamole.Client>();
     const [element, setElement] = useState<JSX.Element>();
     const [lastSync, setLastSync] = useState<number>();
-    const [, setKeyboard] = useState<Guacamole.Keyboard>();
-    const [, setMouse] = useState<Guacamole.Mouse>();
+    const [keyboard, setKeyboard] = useState<Guacamole.Keyboard>();
+    const [mouse, setMouse] = useState<Guacamole.Mouse>();
     const toast = useToast();
 
-    const createFreshState = () => {
+    const reset = () => {
+        setConnectionState('IDDLE');
+
+        if (client !== undefined) {
+            client.onerror = null;
+            client.onstatechange = null;
+            client.onsync = null;
+            client.disconnect();
+            setClient(undefined);
+        }
+
+        setElement(undefined);
+        setLastSync(undefined);
+
+        if (keyboard !== undefined) {
+            keyboard.onkeydown = null;
+            keyboard.onkeyup = null;
+            setKeyboard(undefined);
+        }
+
+        if (mouse !== undefined) {
+            mouse.onmousedown = null;
+            mouse.onmouseup = null;
+            mouse.onmousemove = null;
+            setMouse(undefined);
+        }
+    };
+
+    const connect = (connectionString: string) => {
+        reset();
+
         const tunnel = new Guacamole.WebSocketTunnel('ws://localhost:8080/');
         const newClient = new Guacamole.Client(tunnel);
 
@@ -45,6 +75,10 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
             } else {
                 toast({ ...newState.toast, id: toastId });
             }
+
+            if (newState.state === 'DISCONNECTED') {
+                reset();
+            }
         };
 
         newClient.onsync = (timestamp) => {
@@ -52,9 +86,6 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
         };
 
         const element = newClient.getDisplay().getElement();
-
-        setConnectionState('IDDLE');
-        setClient(newClient);
         setElement(
             <Box
                 w={'100%'}
@@ -67,88 +98,24 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
                 }}
             />,
         );
-        setLastSync(undefined);
-        setKeyboard(new Guacamole.Keyboard(document));
-        setMouse(new Guacamole.Mouse(element));
-    };
 
-    useEffect(() => {
-        createFreshState();
+        const newKeyboard = new Guacamole.Keyboard(document);
+        newKeyboard.onkeydown = (keysym) => newClient.sendKeyEvent(1, keysym);
+        newKeyboard.onkeyup = (keysym) => newClient.sendKeyEvent(0, keysym);
+        setKeyboard(newKeyboard);
 
-        return () => {
-            setClient(undefined);
-            setElement(undefined);
-            setLastSync(undefined);
-            setKeyboard(undefined);
-            setMouse(undefined);
-        };
-    }, []);
+        const newMouse = new Guacamole.Mouse(element);
+        newMouse.onmousedown = (mouseState) => newClient.sendMouseState(mouseState);
+        newMouse.onmouseup = (mouseState) => newClient.sendMouseState(mouseState);
+        newMouse.onmousemove = (mouseState) => newClient.sendMouseState(mouseState);
+        setMouse(newMouse);
 
-    const connect = (connectionString: string) => {
-        if (client === undefined) {
-            console.log(`Failed to connect: client is undefined`);
-            return false;
-        }
-
-        client.connect(connectionString);
-
-        setKeyboard((currentKeyboard) => {
-            if (currentKeyboard === undefined) {
-                console.log(`Failed to bind keyboard`);
-                return undefined;
-            }
-
-            currentKeyboard.onkeydown = (keysym) => client.sendKeyEvent(1, keysym);
-            currentKeyboard.onkeyup = (keysym) => client.sendKeyEvent(0, keysym);
-            return currentKeyboard;
-        });
-
-        setMouse((currentMouse) => {
-            if (currentMouse === undefined) {
-                console.log(`Failed to bind mouse`);
-                return undefined;
-            }
-
-            currentMouse.onmousedown = (mouseState) => client.sendMouseState(mouseState);
-            currentMouse.onmouseup = (mouseState) => client.sendMouseState(mouseState);
-            currentMouse.onmousemove = (mouseState) => client.sendMouseState(mouseState);
-            return currentMouse;
-        });
-
-        return true;
+        newClient.connect(connectionString);
+        setClient(newClient);
     };
 
     const disconnect = () => {
-        if (client === undefined) {
-            console.log(`Failed to disconnect: client is undefined`);
-            return;
-        }
-
-        setKeyboard((currentKeyboard) => {
-            if (currentKeyboard === undefined) {
-                console.log(`Failed to unbind keyboard`);
-                return undefined;
-            }
-
-            currentKeyboard.onkeydown = null;
-            currentKeyboard.onkeyup = null;
-            return currentKeyboard;
-        });
-
-        setMouse((currentMouse) => {
-            if (currentMouse === undefined) {
-                console.log(`Failed to unbind mouse`);
-                return undefined;
-            }
-
-            currentMouse.onmousedown = null;
-            currentMouse.onmouseup = null;
-            currentMouse.onmousemove = null;
-            return currentMouse;
-        });
-
-        client.disconnect();
-        createFreshState();
+        client?.disconnect();
     };
 
     return (
@@ -156,6 +123,7 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
             value={{
                 connect,
                 disconnect,
+                reset,
                 element,
                 connectionState,
                 lastSync,

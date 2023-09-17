@@ -66,8 +66,9 @@ export const stateMap: Record<
 };
 
 export interface ConnectionContextData {
-    connect: (connectionString: string) => boolean;
+    connect: (connectionString: string) => void;
     disconnect: () => void;
+    reset: () => void;
     element?: JSX.Element;
     connectionState: keyof typeof ConnectionState;
     lastSync?: number;

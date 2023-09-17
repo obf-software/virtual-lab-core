@@ -106,8 +106,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
         platformStyle = instancePlatformStyleMap.WINDOWS;
     }
 
-    console.log(`lastConnectionAt: ${instance.state}`);
-
     const tags = instance.tags?.split(',') ?? [];
 
     return (
@@ -213,13 +211,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         onClick={() => {
                             getConnectionString(instance.id)
                                 .then((connectionString) => {
-                                    const success = connect(connectionString);
-
-                                    if (success) {
-                                        navigate('/connection');
-                                    } else {
-                                        alert('Erro ao conectar');
-                                    }
+                                    connect(connectionString);
+                                    navigate('/connection');
                                 })
                                 .catch((error) => {
                                     alert(`Erro ao obter string de conexão: ${error}`);
