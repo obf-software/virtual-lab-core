@@ -1,4 +1,4 @@
-import { UserRepository } from './user-repository';
+import { UserRepository } from './repository';
 import * as schema from '../../drizzle/schema';
 import { UserRole } from './protocols';
 
@@ -7,10 +7,6 @@ export class UserService {
 
     constructor(userRepository: UserRepository) {
         this.userRepository = userRepository;
-    }
-
-    async exists(username: string): Promise<boolean> {
-        return this.userRepository.exists(username);
     }
 
     async create(props: Pick<typeof schema.user.$inferInsert, 'username' | 'role'>) {
@@ -22,23 +18,20 @@ export class UserService {
         return user;
     }
 
-    async getByUsername(username: string) {
-        return this.userRepository.getByUsername(username);
+    async exists(username: string): Promise<boolean> {
+        return this.userRepository.exists(username);
     }
 
     async updateLastLoginAt(userId: number) {
         return this.userRepository.updateLastLoginAt(userId);
     }
 
-    async list(pagination: { resultsPerPage: number; page: number }) {
-        return this.userRepository.list(pagination);
+    async getByUsername(username: string) {
+        return this.userRepository.getByUsername(username);
     }
 
-    /**
-     * @deprecated Use listGroups instead from groups module
-     */
-    async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
-        return this.userRepository.listGroups(userId, pagination);
+    async listUsers(pagination: { resultsPerPage: number; page: number }) {
+        return this.userRepository.listUsers(pagination);
     }
 
     async updateRole(userId: number, role: keyof typeof UserRole) {

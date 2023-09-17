@@ -1,7 +1,7 @@
 import { PostConfirmationTriggerHandler, PreTokenGenerationTriggerHandler } from 'aws-lambda';
 import { createHandler, logger } from '../../integrations/powertools';
-import { UserService } from '../users/user-service';
-import { UserRepository } from '../users/user-repository';
+import { UserService } from '../user/service';
+import { UserRepository } from '../user/repository';
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from '../../drizzle/schema';

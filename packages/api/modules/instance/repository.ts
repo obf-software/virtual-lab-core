@@ -1,7 +1,6 @@
-import { DatabaseClient } from '../../protocols/db';
 import * as schema from '../../drizzle/schema';
 import { eq, sql } from 'drizzle-orm';
-import { SeekPaginated } from '../../protocols/pagination';
+import { DatabaseClient, SeekPaginated } from '../core/protocols';
 
 export class InstanceRepository {
     private dbClient: DatabaseClient;

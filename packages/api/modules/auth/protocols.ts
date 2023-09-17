@@ -1,4 +1,4 @@
-import { UserRole } from '../users/protocols';
+import { UserRole } from '../user/protocols';
 
 export interface UserPoolJwtClaims {
     username: string;

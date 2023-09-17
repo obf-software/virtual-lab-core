@@ -7,8 +7,8 @@ export function Api({ stack, app }: sst.StackContext) {
     const { DATABASE_URL } = sst.use(Config);
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
-        onCreate: 'packages/api/scripts/migrate-db.handler',
-        onUpdate: 'packages/api/scripts/migrate-db.handler',
+        onCreate: 'packages/api/modules/core/handlers.migrateDatabase',
+        onUpdate: 'packages/api/modules/core/handlers.migrateDatabase',
         defaults: {
             function: {
                 environment: {
@@ -49,7 +49,7 @@ export function Api({ stack, app }: sst.StackContext) {
         routes: {
             'GET /api/v1/users': {
                 function: {
-                    handler: 'packages/api/modules/users/handlers.listUsers',
+                    handler: 'packages/api/modules/user/handlers.listUsers',
                     environment: {
                         DATABASE_URL,
                     },
@@ -57,7 +57,7 @@ export function Api({ stack, app }: sst.StackContext) {
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
-                    handler: 'packages/api/modules/users/handlers.listUserGroups', // TODO: Refactor deprecation
+                    handler: 'packages/api/modules/group/handlers.listUserGroups',
                     environment: {
                         DATABASE_URL,
                     },
@@ -73,16 +73,15 @@ export function Api({ stack, app }: sst.StackContext) {
             },
             'PATCH /api/v1/users/{userId}/role': {
                 function: {
-                    handler: 'packages/api/modules/users/handlers.updateUserRole',
+                    handler: 'packages/api/modules/user/handlers.updateUserRole',
                     environment: {
                         DATABASE_URL,
                     },
                 },
             },
-
             'GET /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/groups/handlers.listGroups',
+                    handler: 'packages/api/modules/group/handlers.listGroups',
                     environment: {
                         DATABASE_URL,
                     },

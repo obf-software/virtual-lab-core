@@ -1,8 +1,11 @@
 import { eq, sql } from 'drizzle-orm';
 import * as schema from '../../drizzle/schema';
-import { DatabaseClient } from '../../protocols/db';
-import { SeekPaginated } from '../../protocols/pagination';
 import { UserRole } from './protocols';
+import { DatabaseClient, SeekPaginated } from '../core/protocols';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 export class UserRepository {
     private dbClient: DatabaseClient;
@@ -39,9 +42,10 @@ export class UserRepository {
     }
 
     async updateLastLoginAt(userId: number): Promise<void> {
+        const date = dayjs.utc().toDate();
         await this.dbClient
             .update(schema.user)
-            .set({ lastLoginAt: new Date().toISOString() })
+            .set({ lastLoginAt: date, updatedAt: date })
             .where(eq(schema.user.id, userId))
             .execute();
     }
@@ -54,19 +58,20 @@ export class UserRepository {
         return user;
     }
 
-    async list(pagination: { resultsPerPage: number; page: number }) {
-        const [countResult] = await this.dbClient
-            .select({ count: sql`count(*)`.mapWith(Number).as('count') })
-            .from(schema.user)
-            .execute();
-
-        const users = await this.dbClient.query.user
-            .findMany({
-                limit: pagination.resultsPerPage,
-                offset: pagination.resultsPerPage * (pagination.page - 1),
-                orderBy: (user, builder) => builder.desc(user.createdAt),
-            })
-            .execute();
+    async listUsers(pagination: { resultsPerPage: number; page: number }) {
+        const [[countResult], users] = await Promise.all([
+            this.dbClient
+                .select({ count: sql`count(*)`.mapWith(Number).as('count') })
+                .from(schema.user)
+                .execute(),
+            this.dbClient.query.user
+                .findMany({
+                    limit: pagination.resultsPerPage,
+                    offset: pagination.resultsPerPage * (pagination.page - 1),
+                    orderBy: (user, builder) => builder.desc(user.createdAt),
+                })
+                .execute(),
+        ]);
 
         return {
             data: users,
@@ -76,38 +81,10 @@ export class UserRepository {
         } satisfies SeekPaginated<typeof schema.user.$inferSelect>;
     }
 
-    async listGroups(userId: number, pagination: { resultsPerPage: number; page: number }) {
-        const [countResult] = await this.dbClient
-            .select({ count: sql`count(*)`.mapWith(Number).as('count') })
-            .from(schema.userToGroup)
-            .where(eq(schema.userToGroup.userId, userId))
-            .execute();
-
-        const groups = await this.dbClient.query.group
-            .findMany({
-                limit: pagination.resultsPerPage,
-                offset: pagination.resultsPerPage * (pagination.page - 1),
-                orderBy: (group, builder) => builder.desc(group.createdAt),
-                with: {
-                    userToGroup: {
-                        where: (userToGroup, builder) => builder.eq(userToGroup.userId, userId),
-                    },
-                },
-            })
-            .execute();
-
-        return {
-            data: groups,
-            numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
-            resultsPerPage: pagination.resultsPerPage,
-            numberOfResults: countResult.count,
-        } satisfies SeekPaginated<typeof schema.group.$inferSelect>;
-    }
-
     async updateRole(userId: number, role: keyof typeof UserRole) {
         await this.dbClient
             .update(schema.user)
-            .set({ role })
+            .set({ role, updatedAt: dayjs.utc().toDate() })
             .where(eq(schema.user.id, userId))
             .execute();
     }
