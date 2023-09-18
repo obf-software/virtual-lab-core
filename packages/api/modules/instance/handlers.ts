@@ -75,5 +75,11 @@ export const onEc2InstanceStateChange = createHandler<
         return;
     }
 
-    await appSyncIntegration.publishEc2InstanceStateChanged(user.username, instanceId, state);
+    await appSyncIntegration.publishEc2InstanceStateChanged({
+        username: user.username,
+        id: instance.id,
+        awsInstanceId: instance.awsInstanceId,
+        name: instance.name,
+        state,
+    });
 });

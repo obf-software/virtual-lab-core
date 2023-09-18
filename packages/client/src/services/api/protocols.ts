@@ -1,5 +1,4 @@
 export type UrlPath = `/${string}`;
-export type AuthorizationHeader = `Bearer ${string}`;
 
 // TRANSACTIONAL TYPES
 

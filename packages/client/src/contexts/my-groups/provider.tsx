@@ -18,11 +18,9 @@ export const MyGroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
         try {
             setIsLoading(true);
 
-            const { idToken, userId } = parseSessionData(user);
-            if (idToken === undefined) throw new Error('idToken is undefined');
-            if (userId === undefined) throw new Error('userId is undefined');
+            const { userId } = parseSessionData(user);
 
-            const response = await listUserGroups(idToken, userId, { page, resultsPerPage });
+            const response = await listUserGroups(userId, { page, resultsPerPage });
             if (response.error !== undefined) throw new Error(response.error);
             const { data, numberOfPages, numberOfResults } = response.data;
 

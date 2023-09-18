@@ -1,23 +1,12 @@
-import {
-    ApiResponse,
-    AuthorizationHeader,
-    Group,
-    Instance,
-    SeekPaginated,
-    UrlPath,
-    User,
-    UserRole,
-} from './protocols';
+import { Auth } from 'aws-amplify';
+import { ApiResponse, Group, Instance, SeekPaginated, UrlPath, User, UserRole } from './protocols';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     body?: Record<string, unknown>;
     queryParams?: Record<string, string | number | undefined>;
-    headers: {
-        Authorization: AuthorizationHeader;
-        [key: string]: string;
-    };
+    headers?: Record<string, string>;
 }): Promise<ApiResponse<T>> => {
     try {
         const origin = new URL(import.meta.env.VITE_APP_API_URL).origin;
@@ -31,10 +20,16 @@ const executeRequest = async <T>(props: {
             });
         }
 
+        const session = await Auth.currentSession();
+        const idToken = session.getIdToken().getJwtToken();
+
         const response = await fetch(url, {
             method: props.method,
             body: props.body !== undefined ? JSON.stringify(props.body) : undefined,
-            headers: props.headers,
+            headers: {
+                ...(props.headers ?? {}),
+                Authorization: `Bearer ${idToken}`,
+            },
         });
 
         if (response.ok === false) {
@@ -54,60 +49,43 @@ const executeRequest = async <T>(props: {
     }
 };
 
-export const listUsers = async (
-    idToken: string,
-    pagination: { resultsPerPage: number; page: number },
-) =>
+export const listUsers = async (pagination: { resultsPerPage: number; page: number }) =>
     executeRequest<SeekPaginated<User>>({
         path: '/api/v1/users',
         method: 'GET',
-        headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });
 
 export const listUserGroups = async (
-    idToken: string,
     userId: string | number | undefined,
     pagination: { resultsPerPage: number; page: number },
 ) =>
     executeRequest<SeekPaginated<Group>>({
         path: `/api/v1/users/${userId ?? 'me'}/groups`,
         method: 'GET',
-        headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });
 
 export const listUserInstances = async (
-    idToken: string,
     userId: string | number | undefined,
     pagination: { resultsPerPage: number; page: number },
 ) =>
     executeRequest<SeekPaginated<Instance>>({
         path: `/api/v1/users/${userId ?? 'me'}/instances`,
         method: 'GET',
-        headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });
 
-export const updateUserRole = async (
-    idToken: string,
-    userId: string | number,
-    role: keyof typeof UserRole,
-) =>
+export const updateUserRole = async (userId: string | number, role: keyof typeof UserRole) =>
     executeRequest({
         path: `/api/v1/users/${userId}/role`,
         method: 'PATCH',
-        headers: { Authorization: `Bearer ${idToken}` },
         body: { role },
     });
 
-export const listGroups = async (
-    idToken: string,
-    pagination: { resultsPerPage: number; page: number },
-) =>
+export const listGroups = async (pagination: { resultsPerPage: number; page: number }) =>
     executeRequest<SeekPaginated<Group>>({
         path: '/api/v1/groups',
         method: 'GET',
-        headers: { Authorization: `Bearer ${idToken}` },
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
     });

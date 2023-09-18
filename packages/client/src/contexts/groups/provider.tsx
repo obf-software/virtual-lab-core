@@ -1,13 +1,10 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { GroupsContext } from './context';
 import { Group } from '../../services/api/protocols';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../services/helpers';
 import { useToast } from '@chakra-ui/react';
 import { listGroups } from '../../services/api/service';
 
 export const GroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const { user } = useAuthenticator((context) => [context.user]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [numberOfPages, setNumberOfPages] = useState<number>(0);
     const [numberOfResults, setNumberOfResults] = useState<number>(0);
@@ -18,10 +15,7 @@ export const GroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
         try {
             setIsLoading(true);
 
-            const { idToken } = parseSessionData(user);
-            if (idToken === undefined) throw new Error('idToken is undefined');
-
-            const response = await listGroups(idToken, { page, resultsPerPage });
+            const response = await listGroups({ page, resultsPerPage });
             if (response.error !== undefined) throw new Error(response.error);
             const { data, numberOfPages, numberOfResults } = response.data;
 

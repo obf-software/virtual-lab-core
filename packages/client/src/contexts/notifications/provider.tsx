@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import React, { PropsWithChildren, useEffect, useState } from 'react';
 import { NotificationsContext } from './context';
 import { useAuthenticator } from '@aws-amplify/ui-react';
@@ -8,6 +6,7 @@ import {
     NotificationPayload,
     NotificationType,
     NotificationTypeMap,
+    ReadableNotification,
 } from './protocol';
 import type { ZenObservable } from 'zen-observable-ts';
 import { API, graphqlOperation } from 'aws-amplify';
@@ -18,7 +17,8 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
     const { user } = useAuthenticator((context) => [context.user]);
     const [, setSubscription] = useState<ZenObservable.Subscription>();
     const [handlers, setHandlers] =
-        useState<Record<string, Record<string, (data: any) => void> | undefined>>();
+        useState<Record<string, Record<string, (data: unknown) => void> | undefined>>();
+    const [notifications, setNotifications] = useState<ReadableNotification[]>([]);
     const toast = useToast();
 
     useEffect(() => {
@@ -37,8 +37,25 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
         ).subscribe({
             next: (payload: NotificationPayload) => {
                 const data = JSON.parse(payload.value.data.subscribe.data) as NotificationData;
-
                 console.log(`Received notification for ${data.type}`, data);
+
+                setNotifications((currentNotifications) => {
+                    if (data.type === 'EC2_INSTANCE_STATE_CHANGED') {
+                        const typedData = data as NotificationTypeMap['EC2_INSTANCE_STATE_CHANGED'];
+
+                        const newNotification: ReadableNotification = {
+                            id: v4(),
+                            viewed: false,
+                            text: `Instância ${typedData.name} mudou de estado para ${typedData.state}`,
+                        };
+
+                        console.log('New notification', newNotification);
+
+                        return [newNotification, ...currentNotifications];
+                    }
+
+                    return currentNotifications;
+                });
 
                 const handlersForType = Object.entries(handlers?.[data.type] ?? {});
 
@@ -79,7 +96,7 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                 ...currentHandlers,
                 [type]: {
                     ...currentHandlers?.[type],
-                    [id]: handler,
+                    [id]: handler as (data: unknown) => void,
                 },
             };
         });
@@ -122,6 +139,17 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
         setHandlers(undefined);
     };
 
+    const markNotificationAsViewed = (id: string) => {
+        console.log(`Marking notification with id ${id} as viewed`);
+
+        setNotifications((currentNotifications) => {
+            return currentNotifications.map((notification) => ({
+                ...notification,
+                viewed: notification.id === id ? true : notification.viewed,
+            }));
+        });
+    };
+
     return (
         <NotificationsContext.Provider
             value={{
@@ -129,6 +157,8 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                 unregisterHandlerById,
                 unregisterHandlerByType,
                 unregisterAllHandlers,
+                notifications,
+                markNotificationAsViewed,
             }}
         >
             {children}

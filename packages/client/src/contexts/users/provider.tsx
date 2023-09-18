@@ -1,13 +1,10 @@
 import React, { PropsWithChildren, useState } from 'react';
 import { UsersContext } from './context';
 import { User, UserRole } from '../../services/api/protocols';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../services/helpers';
 import { useToast } from '@chakra-ui/react';
 import * as apiService from '../../services/api/service';
 
 export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
-    const { user } = useAuthenticator((context) => [context.user]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isUpdating, setIsUpdating] = useState<boolean>(false);
     const [numberOfPages, setNumberOfPages] = useState<number>(0);
@@ -19,10 +16,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
         try {
             setIsLoading(true);
 
-            const { idToken } = parseSessionData(user);
-            if (idToken === undefined) throw new Error('idToken is undefined');
-
-            const response = await apiService.listUsers(idToken, { page, resultsPerPage });
+            const response = await apiService.listUsers({ page, resultsPerPage });
             if (response.error !== undefined) throw new Error(response.error);
             const { data, numberOfPages, numberOfResults } = response.data;
 
@@ -50,10 +44,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
         try {
             setIsUpdating(true);
 
-            const { idToken } = parseSessionData(user);
-            if (idToken === undefined) throw new Error('idToken is undefined');
-
-            const response = await apiService.updateUserRole(idToken, userId, role);
+            const response = await apiService.updateUserRole(userId, role);
             if (response.error !== undefined) throw new Error(response.error);
 
             setUsers((currentUsers) => {

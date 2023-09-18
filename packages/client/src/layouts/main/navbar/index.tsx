@@ -1,6 +1,7 @@
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import {
     Avatar,
+    Badge,
     Box,
     Flex,
     FlexProps,
@@ -18,6 +19,7 @@ import {
     PopoverContent,
     PopoverHeader,
     PopoverTrigger,
+    Stack,
     Text,
     VStack,
     useColorModeValue,
@@ -27,6 +29,8 @@ import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'rea
 import { BiSolidBellRing } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import { parseSessionData } from '../../../services/helpers';
+import { useNotificationsContext } from '../../../contexts/notifications/hook';
+import { PulsingDot } from './pulsing-dot';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -38,6 +42,11 @@ interface NavbarProps extends FlexProps {
 export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
     const { user, signOut } = useAuthenticator((context) => [context.user]);
     const { displayName, displayRole } = parseSessionData(user);
+    const { notifications, markNotificationAsViewed } = useNotificationsContext();
+
+    const numberOfUnreadNotifications = notifications.filter(
+        (notification) => notification.viewed === false,
+    ).length;
 
     return (
         <Flex
@@ -73,24 +82,82 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                     placement='bottom-start'
                     isLazy
                 >
-                    <PopoverTrigger>
-                        <IconButton
-                            rounded={'full'}
-                            size='lg'
-                            variant='ghost'
-                            aria-label='Mostrar notificações'
-                            color={'blue.400'}
-                            // eslint-disable-next-line no-constant-condition
-                            icon={1 === 1 ? <FiBell /> : <BiSolidBellRing />}
-                        />
-                    </PopoverTrigger>
-                    <PopoverContent _focus={{ boxShadown: 'none' }}>
+                    <Box position='relative'>
+                        <PopoverTrigger>
+                            <IconButton
+                                rounded={'full'}
+                                size='lg'
+                                variant='ghost'
+                                aria-label='Mostrar notificações'
+                                color={'blue.400'}
+                                icon={
+                                    notifications.some(
+                                        (notification) => notification.viewed === false,
+                                    ) ? (
+                                        <BiSolidBellRing />
+                                    ) : (
+                                        <FiBell />
+                                    )
+                                }
+                            />
+                        </PopoverTrigger>
+
+                        {numberOfUnreadNotifications > 0 ? (
+                            <Badge
+                                borderRadius={'50%'}
+                                variant='solid'
+                                pos={'absolute'}
+                                colorScheme='red'
+                                bottom={'0'}
+                                right={'0'}
+                            >
+                                {numberOfUnreadNotifications}
+                            </Badge>
+                        ) : null}
+                    </Box>
+
+                    <PopoverContent
+                        _focus={{ boxShadown: 'none' }}
+                        w={{ base: '100vw', md: 'lg' }}
+                    >
                         <PopoverArrow />
-                        <PopoverCloseButton />
+                        <PopoverCloseButton size={'md'} />
                         <PopoverHeader fontWeight='bold'>Notificações</PopoverHeader>
-                        <PopoverBody w='full'>
-                            <Text>Nenhuma notificação</Text>
-                            <Text>A instância hduhudsu2312 mudou de status para ativa</Text>
+                        <PopoverBody
+                            maxH={'50vh'}
+                            overflowY={'auto'}
+                        >
+                            {notifications.length === 0 ? <Text>Nenhuma notificação</Text> : null}
+
+                            {notifications.map((notification) => (
+                                <Box
+                                    key={notification.id}
+                                    onClick={() => markNotificationAsViewed(notification.id)}
+                                    _hover={{
+                                        cursor: 'pointer',
+                                        bg: useColorModeValue('gray.100', 'gray.700'),
+                                    }}
+                                    py={2}
+                                    px={3}
+                                    borderBottom={'1px'}
+                                    borderBottomColor={useColorModeValue('gray.200', 'gray.700')}
+                                >
+                                    <Stack
+                                        direction='row'
+                                        justifyContent='space-between'
+                                        alignItems='center'
+                                    >
+                                        <Text>{notification.text}</Text>
+                                        <PulsingDot
+                                            w={3}
+                                            h={3}
+                                            bgColor={
+                                                notification.viewed ? 'transparent' : 'green.400'
+                                            }
+                                        />
+                                    </Stack>
+                                </Box>
+                            ))}
                         </PopoverBody>
                     </PopoverContent>
                 </Popover>

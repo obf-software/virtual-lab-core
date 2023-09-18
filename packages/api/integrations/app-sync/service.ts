@@ -60,11 +60,19 @@ export class AppSyncIntegration {
         logger.info(`AppSyncIntegration.publishMutation: ${responseBody} ${response.status}`);
     }
 
-    async publishEc2InstanceStateChanged(username: string, instanceId: string, state: string) {
-        await this.publishMutation(username, {
+    async publishEc2InstanceStateChanged(props: {
+        username: string;
+        id: number;
+        awsInstanceId: string;
+        name: string;
+        state: string;
+    }) {
+        await this.publishMutation(props.username, {
             type: 'EC2_INSTANCE_STATE_CHANGED',
-            instanceId,
-            state,
+            id: props.id,
+            awsInstanceId: props.awsInstanceId,
+            name: props.name,
+            state: props.state,
         });
     }
 }
