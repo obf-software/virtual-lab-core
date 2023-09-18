@@ -66,3 +66,31 @@ export const updateUserRole = createHandler<APIGatewayProxyHandlerV2WithJWTAutho
     },
     true,
 );
+
+export const getUserQuota = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
+    async (event) => {
+        const { role, userId } = authService.getUserPoolJwtClaims(event);
+        authService.throwIfInsufficientRole('USER', role);
+
+        const userIdPathParam = event.pathParameters?.userId;
+        const userIdPathParamNumber = Number(userIdPathParam);
+        let userIdToUse = userId;
+
+        if (
+            authService.hasUserRoleOrAbove('ADMIN', role) &&
+            userIdPathParam !== 'me' &&
+            !Number.isNaN(userIdPathParamNumber)
+        ) {
+            userIdToUse = userIdPathParamNumber;
+        }
+
+        const quota = await userService.getUserQuota(userIdToUse);
+
+        return {
+            statusCode: 200,
+            body: JSON.stringify(quota),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    true,
+);

@@ -41,4 +41,8 @@ export class UserService {
     async getUserById(userId: number) {
         return this.userRepository.getUserById(userId);
     }
+
+    async getUserQuota(userId: number) {
+        return this.userRepository.getUserQuota(userId);
+    }
 }

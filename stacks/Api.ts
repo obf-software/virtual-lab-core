@@ -76,6 +76,11 @@ export function Api({ stack, app }: sst.StackContext) {
                     handler: 'packages/api/modules/user/handlers.updateUserRole',
                 },
             },
+            'GET /api/v1/users/{userId}/quota': {
+                function: {
+                    handler: 'packages/api/modules/user/handlers.getUserQuota',
+                },
+            },
             'GET /api/v1/groups': {
                 function: {
                     handler: 'packages/api/modules/group/handlers.listGroups',

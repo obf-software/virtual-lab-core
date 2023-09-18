@@ -1,5 +1,14 @@
 import { Auth } from 'aws-amplify';
-import { ApiResponse, Group, Instance, SeekPaginated, UrlPath, User, UserRole } from './protocols';
+import {
+    ApiResponse,
+    Group,
+    Instance,
+    SeekPaginated,
+    UrlPath,
+    User,
+    UserQuota,
+    UserRole,
+} from './protocols';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -88,4 +97,10 @@ export const listGroups = async (pagination: { resultsPerPage: number; page: num
         path: '/api/v1/groups',
         method: 'GET',
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
+export const getUserQuota = async (userId: string | number | undefined) =>
+    executeRequest<UserQuota>({
+        path: `/api/v1/users/${userId ?? 'me'}/quota`,
+        method: 'GET',
     });

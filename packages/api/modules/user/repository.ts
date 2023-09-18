@@ -96,4 +96,12 @@ export class UserRepository {
 
         return user;
     }
+
+    async getUserQuota(userId: number) {
+        const quota = await this.dbClient.query.quota.findFirst({
+            where: (quota, builder) => builder.eq(quota.userId, userId),
+        });
+
+        return quota;
+    }
 }

@@ -6,10 +6,38 @@ import {
     Heading,
     Input,
     VStack,
+    useToast,
 } from '@chakra-ui/react';
 import React from 'react';
+import { UserQuota } from '../../../services/api/protocols';
+import { getUserQuota } from '../../../services/api/service';
 
 export const ProfileQuotaCard: React.FC = () => {
+    const [quota, setQuota] = React.useState<UserQuota>();
+    const toast = useToast();
+
+    const loadUserQuota = React.useCallback(async () => {
+        const response = await getUserQuota(undefined);
+        if (response.error !== undefined) {
+            toast({
+                title: 'Erro ao carregar quota!',
+                status: 'error',
+                duration: 3000,
+                colorScheme: 'red',
+                variant: 'left-accent',
+                description: `${response.error}`,
+                position: 'bottom-left',
+            });
+            return;
+        }
+
+        setQuota(response.data);
+    }, [getUserQuota, setQuota]);
+
+    React.useEffect(() => {
+        loadUserQuota().catch((error) => console.error(error));
+    }, [loadUserQuota]);
+
     return (
         <VStack
             align={'start'}
@@ -34,7 +62,7 @@ export const ProfileQuotaCard: React.FC = () => {
                     <Input
                         id='instances'
                         type='text'
-                        value={'1'}
+                        value={quota?.maxInstances ?? '-'}
                         isReadOnly={true}
                     />
                     <FormHelperText>

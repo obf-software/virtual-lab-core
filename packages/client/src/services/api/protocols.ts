@@ -37,7 +37,7 @@ export enum UserRole {
 }
 
 export interface User {
-    id: string;
+    id: number;
     username: string;
     role: keyof typeof UserRole;
     createdAt: string;
@@ -45,8 +45,14 @@ export interface User {
     lastLoginAt: string | null;
 }
 
+export interface UserQuota {
+    id: number;
+    userId: number;
+    maxInstances: number;
+}
+
 export interface Group {
-    id: string;
+    id: number;
     name: string;
     description: string;
     portfolioId: string;
