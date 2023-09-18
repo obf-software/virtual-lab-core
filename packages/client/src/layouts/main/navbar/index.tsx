@@ -77,7 +77,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                 Virtual Lab
             </Text>
 
-            <HStack spacing={{ base: '0', md: '6' }}>
+            <HStack spacing={{ base: '4', md: '6' }}>
                 <Popover
                     placement='bottom-start'
                     isLazy
