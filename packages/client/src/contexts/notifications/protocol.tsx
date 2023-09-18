@@ -1,3 +1,5 @@
+import { InstanceState } from '../../services/api/protocols';
+
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 export interface NotificationPayload {
     value: {
@@ -24,7 +26,7 @@ export type NotificationTypeMap = Record<keyof typeof NotificationType, unknown>
         id: number;
         awsInstanceId: string;
         name: string;
-        state: string;
+        state: keyof typeof InstanceState;
     };
 };
 
@@ -38,7 +40,7 @@ export interface NotificationsContextData {
     registerHandler: <T extends keyof typeof NotificationType, K = NotificationTypeMap[T]>(
         type: T,
         handler: (data: K) => void,
-    ) => void;
+    ) => string;
     unregisterHandlerById: (id: string) => void;
     unregisterHandlerByType: (type: keyof typeof NotificationType) => void;
     unregisterAllHandlers: () => void;

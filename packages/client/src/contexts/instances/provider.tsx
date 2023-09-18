@@ -3,6 +3,7 @@ import { InstancesContext } from './context';
 import { Instance } from '../../services/api/protocols';
 import { useToast } from '@chakra-ui/react';
 import { listUserInstances } from '../../services/api/service';
+import { useNotificationsContext } from '../notifications/hook';
 
 export const InstancesProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const [activePage, setActivePage] = useState<number>(1);
@@ -11,7 +12,31 @@ export const InstancesProvider: React.FC<PropsWithChildren> = ({ children }) => 
     const [numberOfResults, setNumberOfResults] = useState<number>(0);
     const [instances, setInstances] = useState<Instance[]>([]);
     const [lastLoadAt, setLastLoadAt] = useState<Date>();
+    const { registerHandler, unregisterHandlerById } = useNotificationsContext();
     const toast = useToast();
+
+    React.useEffect(() => {
+        const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
+            console.log('EC2_INSTANCE_STATE_CHANGED', data);
+
+            setInstances((currentInstances) => {
+                return currentInstances.map((instance) => {
+                    if (instance.id === data.id) {
+                        return {
+                            ...instance,
+                            state: data.state,
+                        };
+                    }
+
+                    return instance;
+                });
+            });
+        });
+
+        return () => {
+            unregisterHandlerById(handlerId);
+        };
+    }, []);
 
     const loadInstancesPage = async (page: number, resultsPerPage: number) => {
         try {

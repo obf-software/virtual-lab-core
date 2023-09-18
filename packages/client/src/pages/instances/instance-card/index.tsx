@@ -97,7 +97,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const { connect } = useConnectionContext();
     const navigate = useNavigate();
 
-    const stateStyle = instanceStateStyleMap[instance.state ?? 'unknown'];
+    const stateStyle = Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
+        ? instanceStateStyleMap[instance.state ?? 'unknown']
+        : instanceStateStyleMap.unknown;
 
     let platformStyle = instancePlatformStyleMap.UNKNOWN;
     if (instance.platform.toLocaleLowerCase().includes('linux')) {
