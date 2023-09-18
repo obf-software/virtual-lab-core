@@ -62,7 +62,7 @@ export class AppSyncIntegration {
 
     async publishEc2InstanceStateChanged(username: string, instanceId: string, state: string) {
         await this.publishMutation(username, {
-            notificationType: 'EC2_INSTANCE_STATE_CHANGED',
+            type: 'EC2_INSTANCE_STATE_CHANGED',
             instanceId,
             state,
         });

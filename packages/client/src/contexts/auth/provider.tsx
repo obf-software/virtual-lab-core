@@ -6,6 +6,9 @@ import { Amplify } from 'aws-amplify';
 import { Box, Heading } from '@chakra-ui/react';
 
 Amplify.configure({
+    aws_appsync_graphqlEndpoint: import.meta.env.VITE_APP_APP_SYNC_API_URL,
+    aws_appsync_region: import.meta.env.VITE_APP_AWS_REGION,
+    aws_appsync_authenticationType: 'AMAZON_COGNITO_USER_POOLS',
     Auth: {
         region: import.meta.env.VITE_APP_AWS_REGION,
         userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
