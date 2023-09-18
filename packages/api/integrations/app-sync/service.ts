@@ -7,15 +7,15 @@ import { logger } from '../powertools';
 
 export class AppSyncIntegration {
     private AWS_REGION: string;
-    private APPSYNC_API_URL: string;
+    private APP_SYNC_API_URL: string;
 
-    constructor(AWS_REGION: string, APPSYNC_API_URL: string | undefined) {
-        if (APPSYNC_API_URL === undefined) {
-            throw new Error('APPSYNC_API_URL is undefined');
+    constructor(AWS_REGION: string, APP_SYNC_API_URL: string | undefined) {
+        if (APP_SYNC_API_URL === undefined) {
+            throw new Error('APP_SYNC_API_URL is undefined');
         }
 
         this.AWS_REGION = AWS_REGION;
-        this.APPSYNC_API_URL = APPSYNC_API_URL;
+        this.APP_SYNC_API_URL = APP_SYNC_API_URL;
     }
 
     private buildMutation(username: string, data: unknown) {
@@ -34,7 +34,7 @@ export class AppSyncIntegration {
 
     private async publishMutation(username: string, data: unknown) {
         const requestBody = this.buildMutation(username, data);
-        const apiUrl = new URL(this.APPSYNC_API_URL);
+        const apiUrl = new URL(this.APP_SYNC_API_URL);
 
         const request = new HttpRequest({
             body: JSON.stringify(requestBody),

@@ -47,47 +47,38 @@ export function Api({ stack, app }: sst.StackContext) {
         defaults: {
             authorizer: 'userPool',
             payloadFormatVersion: '2.0',
+            function: {
+                environment: {
+                    DATABASE_URL,
+                    APP_SYNC_API_URL: appSyncApi.url,
+                },
+            },
         },
         routes: {
             'GET /api/v1/users': {
                 function: {
                     handler: 'packages/api/modules/user/handlers.listUsers',
-                    environment: {
-                        DATABASE_URL,
-                    },
                 },
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
                     handler: 'packages/api/modules/group/handlers.listUserGroups',
-                    environment: {
-                        DATABASE_URL,
-                    },
                 },
             },
             'GET /api/v1/users/{userId}/instances': {
                 function: {
                     handler: 'packages/api/modules/instance/handlers.listUserInstances',
                     permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
                 },
             },
             'PATCH /api/v1/users/{userId}/role': {
                 function: {
                     handler: 'packages/api/modules/user/handlers.updateUserRole',
-                    environment: {
-                        DATABASE_URL,
-                    },
                 },
             },
             'GET /api/v1/groups': {
                 function: {
                     handler: 'packages/api/modules/group/handlers.listGroups',
-                    environment: {
-                        DATABASE_URL,
-                    },
                 },
             },
         },
