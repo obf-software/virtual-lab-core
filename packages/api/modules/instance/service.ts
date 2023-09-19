@@ -52,10 +52,7 @@ export class InstanceService {
         };
     }
 
-    async changeInstanceState(
-        awsInstanceId: string,
-        state: 'start' | 'stop' | 'reboot' | 'terminate',
-    ) {
+    async changeInstanceState(awsInstanceId: string, state: 'start' | 'stop' | 'reboot') {
         switch (state) {
             case 'start':
                 return await this.awsEc2Integration.startInstance(awsInstanceId);
@@ -64,8 +61,6 @@ export class InstanceService {
             case 'reboot':
                 await this.awsEc2Integration.rebootInstance(awsInstanceId);
                 return undefined;
-            case 'terminate':
-                return await this.awsEc2Integration.terminateInstance(awsInstanceId);
         }
     }
 }

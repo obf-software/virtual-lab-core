@@ -14,6 +14,7 @@ import {
     Tag,
     Text,
     Wrap,
+    useToast,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import React from 'react';
@@ -32,6 +33,8 @@ import { useConnectionContext } from '../../../contexts/connection/hook';
 import { Instance, InstanceState } from '../../../services/api/protocols';
 import { useInstancesContext } from '../../../contexts/instances/hook';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { changeInstanceState } from '../../../services/api/service';
+import { useNotificationsContext } from '../../../contexts/notifications/hook';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -101,9 +104,11 @@ interface InstanceCardProps {
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = React.useState(false);
-    const { getConnectionString } = useInstancesContext();
+    const [isLoading, setIsLoading] = React.useState(false);
     const { connect } = useConnectionContext();
+    const { registerHandler, unregisterHandlerById } = useNotificationsContext();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const stateStyle = Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
         ? instanceStateStyleMap[instance.state ?? 'unknown']
@@ -117,6 +122,20 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     }
 
     const tags = instance.tags?.split(',') ?? [];
+
+    React.useEffect(() => {
+        const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
+            console.log('EC2_INSTANCE_STATE_CHANGED', data);
+
+            if (data.id === instance.id) {
+                setIsLoading(false);
+            }
+        });
+
+        return () => {
+            unregisterHandlerById(handlerId);
+        };
+    }, []);
 
     return (
         <Card>
@@ -220,15 +239,16 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='green'
                         hidden={instance.state !== 'pending' && instance.state !== 'running'}
                         isDisabled={instance.state !== 'running'}
+                        isLoading={isLoading}
                         onClick={() => {
-                            getConnectionString(instance.id)
-                                .then((connectionString) => {
-                                    connect(connectionString);
-                                    navigate('/connection');
-                                })
-                                .catch((error) => {
-                                    alert(`Erro ao obter string de conexão: ${error}`);
-                                });
+                            // getConnectionString(instance.id)
+                            //     .then((connectionString) => {
+                            //         connect(connectionString);
+                            //         navigate('/connection');
+                            //     })
+                            //     .catch((error) => {
+                            //         alert(`Erro ao obter string de conexão: ${error}`);
+                            //     });
                         }}
                     >
                         Conectar
@@ -239,6 +259,25 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={instance.state !== 'pending' && instance.state !== 'running'}
                         isDisabled={instance.state !== 'running'}
+                        isLoading={isLoading}
+                        onClick={() => {
+                            setIsLoading(true);
+                            changeInstanceState(undefined, instance.id, 'stop').catch((error) => {
+                                toast({
+                                    title: 'Erro ao desligar instância',
+                                    description:
+                                        error instanceof Error
+                                            ? error.message
+                                            : 'Erro desconhecido',
+                                    status: 'error',
+                                    duration: 5000,
+                                    isClosable: true,
+                                    position: 'bottom-left',
+                                    variant: 'left-accent',
+                                });
+                                setIsLoading(false);
+                            });
+                        }}
                     >
                         Desligar
                     </Button>
@@ -249,6 +288,25 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         transition={'all 1s'}
                         hidden={instance.state !== 'stopped' && instance.state !== 'stopping'}
                         isDisabled={instance.state !== 'stopped'}
+                        isLoading={isLoading}
+                        onClick={() => {
+                            setIsLoading(true);
+                            changeInstanceState(undefined, instance.id, 'start').catch((error) => {
+                                setIsLoading(false);
+                                toast({
+                                    title: 'Erro ao ligar instância',
+                                    description:
+                                        error instanceof Error
+                                            ? error.message
+                                            : 'Erro desconhecido',
+                                    status: 'error',
+                                    duration: 5000,
+                                    isClosable: true,
+                                    position: 'bottom-left',
+                                    variant: 'left-accent',
+                                });
+                            });
+                        }}
                     >
                         Ligar
                     </Button>
@@ -257,7 +315,38 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         leftIcon={<FiRefreshCw />}
                         colorScheme='blackAlpha'
                         hidden={!isMoreOptionsOpen || instance.state !== 'running'}
-                        transition={'all 1s'}
+                        isLoading={isLoading}
+                        onClick={() => {
+                            setIsLoading(true);
+                            changeInstanceState(undefined, instance.id, 'reboot')
+                                .then(() => {
+                                    setIsLoading(false);
+                                    toast({
+                                        title: 'Instância reiniciada',
+                                        description: 'A instância foi reiniciada com sucesso',
+                                        status: 'success',
+                                        duration: 5000,
+                                        isClosable: true,
+                                        position: 'bottom-left',
+                                        variant: 'left-accent',
+                                    });
+                                })
+                                .catch((error) => {
+                                    setIsLoading(false);
+                                    toast({
+                                        title: 'Erro ao reiniciar instância',
+                                        description:
+                                            error instanceof Error
+                                                ? error.message
+                                                : 'Erro desconhecido',
+                                        status: 'error',
+                                        duration: 5000,
+                                        isClosable: true,
+                                        position: 'bottom-left',
+                                        variant: 'left-accent',
+                                    });
+                                });
+                        }}
                     >
                         Reiniciar
                     </Button>
@@ -266,7 +355,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         leftIcon={<FiTrash />}
                         colorScheme='red'
                         hidden={!isMoreOptionsOpen}
-                        transition={'all 1s'}
+                        isLoading={isLoading}
                     >
                         Exluir
                     </Button>

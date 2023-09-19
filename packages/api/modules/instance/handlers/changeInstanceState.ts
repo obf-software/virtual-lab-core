@@ -43,7 +43,7 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
 
     const body = z
         .object({
-            state: z.enum(['start', 'stop', 'reboot', 'terminate']),
+            state: z.enum(['start', 'stop', 'reboot']),
         })
         .safeParse(JSON.parse(event.body ?? '{}'));
     if (!body.success) throw InvalidBodyError(body.error.message);

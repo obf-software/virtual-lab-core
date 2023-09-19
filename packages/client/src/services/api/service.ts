@@ -104,3 +104,14 @@ export const getUserQuota = async (userId: string | number | undefined) =>
         path: `/api/v1/users/${userId ?? 'me'}/quota`,
         method: 'GET',
     });
+
+export const changeInstanceState = async (
+    userId: string | number | undefined,
+    instanceId: number,
+    state: 'start' | 'stop' | 'reboot',
+) =>
+    executeRequest({
+        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}/state`,
+        method: 'POST',
+        body: { state },
+    });
