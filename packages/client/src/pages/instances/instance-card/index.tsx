@@ -17,7 +17,14 @@ import {
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import React from 'react';
-import { FiMoreVertical, FiPlay } from 'react-icons/fi';
+import {
+    FiChevronsLeft,
+    FiMoreVertical,
+    FiPlay,
+    FiPower,
+    FiRefreshCw,
+    FiTrash,
+} from 'react-icons/fi';
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useNavigate } from 'react-router-dom';
@@ -34,7 +41,7 @@ const instanceStateStyleMap: Record<
     { label: string; colorScheme: string; hasSpinner: boolean }
 > = {
     'shutting-down': {
-        label: 'Desligando',
+        label: 'Terminando',
         colorScheme: 'red',
         hasSpinner: true,
     },
@@ -93,6 +100,7 @@ interface InstanceCardProps {
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
+    const [isMoreOptionsOpen, setIsMoreOptionsOpen] = React.useState(false);
     const { getConnectionString } = useInstancesContext();
     const { connect } = useConnectionContext();
     const navigate = useNavigate();
@@ -210,6 +218,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Button
                         leftIcon={<FiPlay />}
                         colorScheme='green'
+                        hidden={instance.state !== 'pending' && instance.state !== 'running'}
+                        isDisabled={instance.state !== 'running'}
                         onClick={() => {
                             getConnectionString(instance.id)
                                 .then((connectionString) => {
@@ -224,11 +234,50 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         Conectar
                     </Button>
 
+                    <Button
+                        leftIcon={<FiPower />}
+                        colorScheme='red'
+                        hidden={instance.state !== 'pending' && instance.state !== 'running'}
+                        isDisabled={instance.state !== 'running'}
+                    >
+                        Desligar
+                    </Button>
+
+                    <Button
+                        leftIcon={<FiPower />}
+                        colorScheme='green'
+                        transition={'all 1s'}
+                        hidden={instance.state !== 'stopped' && instance.state !== 'stopping'}
+                        isDisabled={instance.state !== 'stopped'}
+                    >
+                        Ligar
+                    </Button>
+
+                    <Button
+                        leftIcon={<FiRefreshCw />}
+                        colorScheme='blackAlpha'
+                        hidden={!isMoreOptionsOpen || instance.state !== 'running'}
+                        transition={'all 1s'}
+                    >
+                        Reiniciar
+                    </Button>
+
+                    <Button
+                        leftIcon={<FiTrash />}
+                        colorScheme='red'
+                        hidden={!isMoreOptionsOpen}
+                        transition={'all 1s'}
+                    >
+                        Exluir
+                    </Button>
+
                     <IconButton
                         aria-label='Mais opções'
                         variant={'outline'}
-                        colorScheme='gray'
-                        icon={<FiMoreVertical />}
+                        colorScheme='blue'
+                        hidden={instance.state === 'stopping' || instance.state === 'pending'}
+                        icon={isMoreOptionsOpen ? <FiChevronsLeft /> : <FiMoreVertical />}
+                        onClick={() => setIsMoreOptionsOpen(!isMoreOptionsOpen)}
                     />
                 </ButtonGroup>
             </CardFooter>
