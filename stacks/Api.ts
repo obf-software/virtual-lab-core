@@ -2,6 +2,7 @@ import * as sst from 'sst/constructs';
 import { Auth } from './Auth';
 import { Config } from './Config';
 import { AppSyncApi } from './AppSyncApi';
+import { EventBus } from 'aws-cdk-lib/aws-events';
 
 export function Api({ stack, app }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
@@ -90,6 +91,9 @@ export function Api({ stack, app }: sst.StackContext) {
     });
 
     const apiEventBus = new sst.EventBus(stack, 'ApiEventBus', {
+        cdk: {
+            eventBus: EventBus.fromEventBusName(stack, 'DefaultEventBus', 'default'),
+        },
         rules: {
             onEc2InstanceStateChange: {
                 pattern: {
