@@ -25,7 +25,10 @@ export class AwsEc2Integration {
     }
 
     async getInstanceStatuses(instanceIds: string[]) {
-        const command = new DescribeInstanceStatusCommand({ InstanceIds: instanceIds });
+        const command = new DescribeInstanceStatusCommand({
+            InstanceIds: instanceIds,
+            IncludeAllInstances: true,
+        });
         const { InstanceStatuses } = await this.client.send(command);
         return InstanceStatuses ?? [];
     }
