@@ -76,11 +76,11 @@ export const getUserQuota = createHandler<APIGatewayProxyHandlerV2WithJWTAuthori
         const userIdPathParamNumber = Number(userIdPathParam);
         let userIdToUse = userId;
 
-        if (
-            authService.hasUserRoleOrAbove('ADMIN', role) &&
-            userIdPathParam !== 'me' &&
-            !Number.isNaN(userIdPathParamNumber)
-        ) {
+        if (authService.hasUserRoleOrAbove('ADMIN', role) && userIdPathParam !== 'me') {
+            if (Number.isNaN(userIdPathParamNumber)) {
+                throw InvalidPathParamsError('userId must be a number');
+            }
+
             userIdToUse = userIdPathParamNumber;
         }
 

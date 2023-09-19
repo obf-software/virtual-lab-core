@@ -1,6 +1,5 @@
 import { InstanceState } from '../../services/api/protocols';
 
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
 export interface NotificationPayload {
     value: {
         data: {

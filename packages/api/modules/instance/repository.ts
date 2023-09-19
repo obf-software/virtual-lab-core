@@ -19,6 +19,14 @@ export class InstanceRepository {
         return instance;
     }
 
+    async getInstanceById(instanceId: number) {
+        const instance = await this.dbClient.query.instance
+            .findFirst({ where: (instance, builder) => builder.eq(instance.id, instanceId) })
+            .execute();
+
+        return instance;
+    }
+
     async listUserInstances(
         userId: number,
         pagination: {

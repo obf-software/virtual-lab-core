@@ -7,7 +7,7 @@ import { createHandler } from '../../integrations/powertools';
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { z } from 'zod';
 import { AuthService } from '../auth/service';
-import { InvalidQueryParamsError } from '../core/errors';
+import { InvalidPathParamsError, InvalidQueryParamsError } from '../core/errors';
 
 const { DATABASE_URL } = process.env;
 
@@ -50,11 +50,11 @@ export const listUserGroups = createHandler<APIGatewayProxyHandlerV2WithJWTAutho
         const userIdPathParamNumber = Number(userIdPathParam);
         let userIdToUse = userId;
 
-        if (
-            authService.hasUserRoleOrAbove('ADMIN', role) &&
-            userIdPathParam !== 'me' &&
-            !Number.isNaN(userIdPathParamNumber)
-        ) {
+        if (authService.hasUserRoleOrAbove('ADMIN', role) && userIdPathParam !== 'me') {
+            if (Number.isNaN(userIdPathParamNumber)) {
+                throw InvalidPathParamsError('userId must be a number');
+            }
+
             userIdToUse = userIdPathParamNumber;
         }
 

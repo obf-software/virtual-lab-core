@@ -72,6 +72,12 @@ export function Api({ stack, app }: sst.StackContext) {
                     permissions: ['ec2:*'],
                 },
             },
+            'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
+                function: {
+                    handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',
+                    permissions: ['ec2:*'],
+                },
+            },
             'PATCH /api/v1/users/{userId}/role': {
                 function: {
                     handler: 'packages/api/modules/user/handlers.updateUserRole',
