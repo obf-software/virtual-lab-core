@@ -1,6 +1,5 @@
 import {
     Button,
-    ButtonGroup,
     Card,
     CardBody,
     CardFooter,
@@ -14,6 +13,7 @@ import {
     Tag,
     Text,
     Wrap,
+    useDisclosure,
     useToast,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
@@ -35,6 +35,7 @@ import { useInstancesContext } from '../../../contexts/instances/hook';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { changeInstanceState, deleteInstance } from '../../../services/api/service';
 import { useNotificationsContext } from '../../../contexts/notifications/hook';
+import { ConfirmDeletionModal } from './confirm-deletion-modal';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -108,6 +109,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const { connect } = useConnectionContext();
     const { activePage, loadInstancesPage } = useInstancesContext();
     const { registerHandler, unregisterHandlerById } = useNotificationsContext();
+    const { isOpen, onClose, onOpen } = useDisclosure();
     const navigate = useNavigate();
     const toast = useToast();
 
@@ -140,6 +142,33 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
 
     return (
         <Card>
+            <ConfirmDeletionModal
+                instanceName={instance.name}
+                isOpen={isOpen}
+                onClose={onClose}
+                isLoading={isLoading}
+                onConfirm={() => {
+                    setIsLoading(true);
+                    deleteInstance(undefined, instance.id)
+                        .then(() => {
+                            setIsLoading(false);
+                            loadInstancesPage(activePage, 20).catch(console.error);
+                        })
+                        .catch((error) => {
+                            setIsLoading(false);
+                            toast({
+                                title: 'Erro ao excluir instância',
+                                description:
+                                    error instanceof Error ? error.message : 'Erro desconhecido',
+                                status: 'error',
+                                duration: 5000,
+                                isClosable: true,
+                                position: 'bottom-left',
+                                variant: 'left-accent',
+                            });
+                        });
+                }}
+            />
             <CardHeader>
                 <Stack
                     direction={{ base: 'column', md: 'row' }}
@@ -170,7 +199,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                 <Stack
                     direction='row'
                     align='center'
-                    mt={'2%'}
+                    mt={'5%'}
                 >
                     <Icon
                         aria-label={platformStyle.label}
@@ -180,7 +209,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Text size={'md'}>{instance.distribution}</Text>
                 </Stack>
 
-                <Wrap mt={'2%'}>
+                <Wrap mt={'5%'}>
                     {[
                         ['Tipo', instance.instanceType],
                         ['CPU', `${instance.cpu} vCPU`],
@@ -234,7 +263,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                 ) : null}
             </CardBody>
             <CardFooter>
-                <ButtonGroup>
+                <Wrap spacingY={4}>
                     <Button
                         leftIcon={<FiPlay />}
                         colorScheme='green'
@@ -357,39 +386,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={!isMoreOptionsOpen}
                         isLoading={isLoading}
-                        onClick={() => {
-                            setIsLoading(true);
-                            deleteInstance(undefined, instance.id)
-                                .then(() => {
-                                    setIsLoading(false);
-                                    toast({
-                                        title: 'Instância excluída',
-                                        description: 'A instância foi excluída com sucesso',
-                                        status: 'info',
-                                        duration: 5000,
-                                        isClosable: true,
-                                        position: 'bottom-left',
-                                        variant: 'left-accent',
-                                    });
-
-                                    loadInstancesPage(activePage, 20).catch(console.error);
-                                })
-                                .catch((error) => {
-                                    setIsLoading(false);
-                                    toast({
-                                        title: 'Erro ao excluir instância',
-                                        description:
-                                            error instanceof Error
-                                                ? error.message
-                                                : 'Erro desconhecido',
-                                        status: 'error',
-                                        duration: 5000,
-                                        isClosable: true,
-                                        position: 'bottom-left',
-                                        variant: 'left-accent',
-                                    });
-                                });
-                        }}
+                        onClick={onOpen}
                     >
                         Exluir
                     </Button>
@@ -402,7 +399,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         icon={isMoreOptionsOpen ? <FiChevronsLeft /> : <FiMoreVertical />}
                         onClick={() => setIsMoreOptionsOpen(!isMoreOptionsOpen)}
                     />
-                </ButtonGroup>
+                </Wrap>
             </CardFooter>
         </Card>
     );
