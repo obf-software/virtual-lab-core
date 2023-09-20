@@ -72,6 +72,12 @@ export function Api({ stack, app }: sst.StackContext) {
                     permissions: ['ec2:*'],
                 },
             },
+            'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
+                function: {
+                    handler: 'packages/api/modules/instance/handlers/deleteInstance.handler',
+                    permissions: ['ec2:*'],
+                },
+            },
             'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
                 function: {
                     handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',

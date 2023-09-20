@@ -115,3 +115,9 @@ export const changeInstanceState = async (
         method: 'POST',
         body: { state },
     });
+
+export const deleteInstance = async (userId: string | number | undefined, instanceId: number) =>
+    executeRequest({
+        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}`,
+        method: 'DELETE',
+    });

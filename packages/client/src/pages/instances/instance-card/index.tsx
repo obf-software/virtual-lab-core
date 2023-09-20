@@ -33,7 +33,7 @@ import { useConnectionContext } from '../../../contexts/connection/hook';
 import { Instance, InstanceState } from '../../../services/api/protocols';
 import { useInstancesContext } from '../../../contexts/instances/hook';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { changeInstanceState } from '../../../services/api/service';
+import { changeInstanceState, deleteInstance } from '../../../services/api/service';
 import { useNotificationsContext } from '../../../contexts/notifications/hook';
 
 dayjs.extend(relativeTime);
@@ -106,6 +106,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const { connect } = useConnectionContext();
+    const { activePage, loadInstancesPage } = useInstancesContext();
     const { registerHandler, unregisterHandlerById } = useNotificationsContext();
     const navigate = useNavigate();
     const toast = useToast();
@@ -356,6 +357,39 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={!isMoreOptionsOpen}
                         isLoading={isLoading}
+                        onClick={() => {
+                            setIsLoading(true);
+                            deleteInstance(undefined, instance.id)
+                                .then(() => {
+                                    setIsLoading(false);
+                                    toast({
+                                        title: 'Instância excluída',
+                                        description: 'A instância foi excluída com sucesso',
+                                        status: 'info',
+                                        duration: 5000,
+                                        isClosable: true,
+                                        position: 'bottom-left',
+                                        variant: 'left-accent',
+                                    });
+
+                                    loadInstancesPage(activePage, 20).catch(console.error);
+                                })
+                                .catch((error) => {
+                                    setIsLoading(false);
+                                    toast({
+                                        title: 'Erro ao excluir instância',
+                                        description:
+                                            error instanceof Error
+                                                ? error.message
+                                                : 'Erro desconhecido',
+                                        status: 'error',
+                                        duration: 5000,
+                                        isClosable: true,
+                                        position: 'bottom-left',
+                                        variant: 'left-accent',
+                                    });
+                                });
+                        }}
                     >
                         Exluir
                     </Button>

@@ -57,4 +57,18 @@ export class InstanceRepository {
             numberOfResults: countResult.count,
         } satisfies SeekPaginated<typeof schema.instance.$inferSelect>;
     }
+
+    async deleteInstance(instanceId: number) {
+        const deletedInstances = await this.dbClient
+            .delete(schema.instance)
+            .where(eq(schema.instance.id, instanceId))
+            .returning()
+            .execute();
+
+        if (deletedInstances.length === 0) {
+            return undefined;
+        }
+
+        return deletedInstances[0];
+    }
 }

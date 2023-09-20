@@ -1,4 +1,5 @@
 import { AwsEc2Integration } from '../../integrations/aws-ec2/service';
+import { logger } from '../../integrations/powertools';
 import { InstanceRepository } from './repository';
 
 export class InstanceService {
@@ -62,5 +63,23 @@ export class InstanceService {
                 await this.awsEc2Integration.rebootInstance(awsInstanceId);
                 return undefined;
         }
+    }
+
+    async deleteInstance(instanceId: number) {
+        const deletedInstance = await this.instanceRepository.deleteInstance(instanceId);
+
+        if (deletedInstance === undefined) {
+            return undefined;
+        }
+
+        const instanceTerminationResult = await this.awsEc2Integration.terminateInstance(
+            deletedInstance.awsInstanceId,
+        );
+
+        if (instanceTerminationResult !== undefined) {
+            logger.info(`Instance ${deletedInstance.id} is being terminated`);
+        }
+
+        return instanceId;
     }
 }
