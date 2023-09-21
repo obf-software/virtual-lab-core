@@ -9,11 +9,7 @@ export class AppSyncIntegration {
     private AWS_REGION: string;
     private APP_SYNC_API_URL: string;
 
-    constructor(AWS_REGION: string, APP_SYNC_API_URL: string | undefined) {
-        if (APP_SYNC_API_URL === undefined) {
-            throw new Error('APP_SYNC_API_URL is undefined');
-        }
-
+    constructor(AWS_REGION: string, APP_SYNC_API_URL: string) {
         this.AWS_REGION = AWS_REGION;
         this.APP_SYNC_API_URL = APP_SYNC_API_URL;
     }

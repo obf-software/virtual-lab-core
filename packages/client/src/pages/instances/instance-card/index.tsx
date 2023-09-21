@@ -33,7 +33,11 @@ import { useConnectionContext } from '../../../contexts/connection/hook';
 import { Instance, InstanceState } from '../../../services/api/protocols';
 import { useInstancesContext } from '../../../contexts/instances/hook';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { changeInstanceState, deleteInstance } from '../../../services/api/service';
+import {
+    changeInstanceState,
+    deleteInstance,
+    getInstanceConnection,
+} from '../../../services/api/service';
 import { useNotificationsContext } from '../../../contexts/notifications/hook';
 import { ConfirmDeletionModal } from './confirm-deletion-modal';
 
@@ -106,9 +110,9 @@ interface InstanceCardProps {
 export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const [isMoreOptionsOpen, setIsMoreOptionsOpen] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    const { connect } = useConnectionContext();
     const { activePage, loadInstancesPage } = useInstancesContext();
     const { registerHandler, unregisterHandlerById } = useNotificationsContext();
+    const { connect } = useConnectionContext();
     const { isOpen, onClose, onOpen } = useDisclosure();
     const navigate = useNavigate();
     const toast = useToast();
@@ -271,14 +275,27 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         isDisabled={instance.state !== 'running'}
                         isLoading={isLoading}
                         onClick={() => {
-                            // getConnectionString(instance.id)
-                            //     .then((connectionString) => {
-                            //         connect(connectionString);
-                            //         navigate('/connection');
-                            //     })
-                            //     .catch((error) => {
-                            //         alert(`Erro ao obter string de conexão: ${error}`);
-                            //     });
+                            setIsLoading(true);
+                            getInstanceConnection(undefined, instance.id)
+                                .then(({ data, error }) => {
+                                    setIsLoading(false);
+                                    if (error !== undefined) {
+                                        toast({
+                                            title: 'Erro ao obter string de conexão',
+                                            description: error,
+                                            status: 'error',
+                                            duration: 5000,
+                                            isClosable: true,
+                                            position: 'bottom-left',
+                                            variant: 'left-accent',
+                                        });
+                                        return;
+                                    }
+
+                                    connect(data.connectionString);
+                                    navigate('/connection');
+                                })
+                                .catch(console.error);
                         }}
                     >
                         Conectar

@@ -70,17 +70,10 @@ export const InstancesProvider: React.FC<PropsWithChildren> = ({ children }) => 
         }
     };
 
-    const getConnectionString = async (instanceId: number) => {
-        return Promise.resolve(
-            'token=eyJpdiI6IjF0anVHU1hHUzBHdXhnK3lIVGdGcEE9PSIsInZhbHVlIjoibUJIRDhZOHJqWWk2Z0t2cU5zQmJFcEV6NjUvQjJyK25zRUxtVlFuYmZzQ3ZRZGhhazZ5T0FTWHRsWktablBOWHJ0Ym5TUlJTY2VKdTcvK28rTDVGdVl3Qi9SQzVydVBYS2U5SE1yNEJldDN5N3VvSFZyUTg2ZlQxY2x2WmlqY0xTRHE4US9mMTFycERLNURtdWRYVWNyMC83VUc5MnphSHZHcVBQc3Irdi9wWUtibTZpUVY1ejlMSG5vdDFKbnphcUxBQWJjMnJZTDlpOERxS2dyTjBUZi9jblZmamM4d2RwQW91Z0JJaFhtZz0ifQ==',
-        );
-    };
-
     return (
         <InstancesContext.Provider
             value={{
                 loadInstancesPage,
-                getConnectionString,
                 activePage,
                 numberOfPages,
                 numberOfResults,

@@ -99,3 +99,7 @@ export interface Instance {
      */
     state?: keyof typeof InstanceState;
 }
+
+export interface InstanceConnection {
+    connectionString: string;
+}

@@ -3,6 +3,7 @@ import {
     ApiResponse,
     Group,
     Instance,
+    InstanceConnection,
     SeekPaginated,
     UrlPath,
     User,
@@ -120,4 +121,13 @@ export const deleteInstance = async (userId: string | number | undefined, instan
     executeRequest({
         path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}`,
         method: 'DELETE',
+    });
+
+export const getInstanceConnection = async (
+    userId: string | number | undefined,
+    instanceId: number,
+) =>
+    executeRequest<InstanceConnection>({
+        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}/connection`,
+        method: 'GET',
     });

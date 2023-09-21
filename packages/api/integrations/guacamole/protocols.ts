@@ -301,7 +301,7 @@ export type VNCConnectionSettings = CommonConnectionSettings & {
      * than a local cursor, but may be necessary if the VNC server does not support sending the
      * cursor image to the client.
      */
-    cursor?: 'remote';
+    cursor?: 'remote' | 'local';
     /**
      * @Display_Settings
      * A space-delimited list of VNC encodings to use. The format of this parameter is dictated by

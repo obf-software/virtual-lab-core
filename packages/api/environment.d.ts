@@ -5,5 +5,8 @@ namespace NodeJS {
         AWS_REGION: string;
         AWS_EXECUTION_ENV: string;
         DATABASE_URL: string;
+        APP_SYNC_API_URL: string;
+        INSTANCE_PASSWORD: string;
+        GUACAMOLE_CYPHER_KEY: string;
     }
 }

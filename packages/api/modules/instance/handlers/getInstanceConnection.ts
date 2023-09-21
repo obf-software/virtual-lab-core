@@ -13,6 +13,7 @@ import { GuacamoleIntegration } from '../../../integrations/guacamole/service';
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
 
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+
 const awsEc2Integration = new AwsEc2Integration(AWS_REGION);
 const guacamoleIntegration = new GuacamoleIntegration();
 const instanceRepository = new InstanceRepository(dbClient);
@@ -58,13 +59,10 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
         throw new Error('You are not authorized to perform this action');
     }
 
-    const result = await instanceService.deleteInstance(instanceIdPathParamNumber);
-
-    if (result === undefined) {
-        throw new Error('Instance not found');
-    }
+    const connection = await instanceService.getInstanceConnection(instanceIdPathParamNumber);
 
     return {
         statusCode: 200,
+        body: JSON.stringify(connection),
     };
 }, true);

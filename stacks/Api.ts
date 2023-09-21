@@ -6,7 +6,7 @@ import { EventBus } from 'aws-cdk-lib/aws-events';
 
 export function Api({ stack, app }: sst.StackContext) {
     const { userPool, userPoolClient } = sst.use(Auth);
-    const { DATABASE_URL } = sst.use(Config);
+    const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
@@ -68,7 +68,7 @@ export function Api({ stack, app }: sst.StackContext) {
             },
             'GET /api/v1/users/{userId}/instances': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers.listUserInstances',
+                    handler: 'packages/api/modules/instance/handlers/listUserInstances.handler',
                     permissions: ['ec2:*'],
                 },
             },
@@ -82,6 +82,17 @@ export function Api({ stack, app }: sst.StackContext) {
                 function: {
                     handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',
                     permissions: ['ec2:*'],
+                },
+            },
+            'GET /api/v1/users/{userId}/instances/{instanceId}/connection': {
+                function: {
+                    handler: 'packages/api/modules/instance/handlers/getInstanceConnection.handler',
+                    permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                        GUACAMOLE_CYPHER_KEY,
+                        INSTANCE_PASSWORD,
+                    },
                 },
             },
             'PATCH /api/v1/users/{userId}/role': {
@@ -117,7 +128,7 @@ export function Api({ stack, app }: sst.StackContext) {
                         type: 'function',
                         function: {
                             handler:
-                                'packages/api/modules/instance/handlers.onEc2InstanceStateChange',
+                                'packages/api/modules/instance/handlers/onEc2InstanceStateChange.handler',
                             permissions: ['ec2:*', 'appsync:GraphQL'],
                             environment: {
                                 APP_SYNC_API_URL: appSyncApi.url,
