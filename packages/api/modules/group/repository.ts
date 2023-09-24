@@ -9,6 +9,20 @@ export class GroupRepository {
         this.dbClient = dbClient;
     }
 
+    async createGroup(data: typeof schema.group.$inferInsert) {
+        const newGroup = await this.dbClient
+            .insert(schema.group)
+            .values(data)
+            .returning()
+            .execute();
+
+        if (newGroup.length !== 1) {
+            throw new Error('Could not create group');
+        }
+
+        return newGroup[0];
+    }
+
     async listGroups(pagination: { resultsPerPage: number; page: number }) {
         const [[countResult], groups] = await Promise.all([
             this.dbClient
@@ -59,5 +73,19 @@ export class GroupRepository {
             resultsPerPage: pagination.resultsPerPage,
             numberOfResults: countResult.count,
         } satisfies SeekPaginated<typeof schema.group.$inferSelect>;
+    }
+
+    async deleteGroup(groupId: number) {
+        const deleteGroups = await this.dbClient
+            .delete(schema.group)
+            .where(eq(schema.group.id, groupId))
+            .returning()
+            .execute();
+
+        if (deleteGroups.length === 0) {
+            return undefined;
+        }
+
+        return deleteGroups[0];
     }
 }

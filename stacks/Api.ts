@@ -75,7 +75,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers.listUserGroups',
+                    handler: 'packages/api/modules/group/handlers/listUserGroups.handler',
                 },
             },
             'GET /api/v1/users/{userId}/instances': {
@@ -119,7 +119,18 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers.listGroups',
+                    handler: 'packages/api/modules/group/handlers/listGroups.handler',
+                },
+            },
+            'POST /api/v1/groups': {
+                function: {
+                    handler: 'packages/api/modules/group/handlers/createGroup.handler',
+                    permissions: ['servicecatalog:*'],
+                },
+            },
+            'DELETE /api/v1/groups/{groupId}': {
+                function: {
+                    handler: 'packages/api/modules/group/handlers/deleteGroup.handler',
                 },
             },
         },
