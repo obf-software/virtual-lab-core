@@ -13,11 +13,12 @@ import {
     InstanceType,
     Vpc,
 } from 'aws-cdk-lib/aws-ec2';
-import { User } from 'aws-cdk-lib/aws-iam';
 import { Config } from './Config';
+import { Api } from './Api';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { INSTANCE_PASSWORD } = sst.use(Config);
+    const { apiLambdaRole } = sst.use(Api);
 
     const vpc = Vpc.fromLookup(stack, `DefaultVpc`, { isDefault: true });
 
@@ -64,7 +65,5 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     });
 
     defaultPortfolio.addProduct(defaultLinuxProduct);
-    defaultPortfolio.giveAccessToUser(
-        User.fromUserArn(stack, 'DefaultPortfolioUsersAccess', 'arn:aws:iam:::user/*'),
-    );
+    defaultPortfolio.giveAccessToRole(apiLambdaRole);
 };

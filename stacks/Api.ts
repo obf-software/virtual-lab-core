@@ -3,11 +3,23 @@ import { Auth } from './Auth';
 import { Config } from './Config';
 import { AppSyncApi } from './AppSyncApi';
 import { EventBus } from 'aws-cdk-lib/aws-events';
+import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 
 export const Api = ({ stack, app }: sst.StackContext) => {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
+
+    const apiLambdaRole = new Role(stack, 'ApiLambdaRole', {
+        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+        managedPolicies: [
+            ManagedPolicy.fromManagedPolicyArn(
+                stack,
+                'ApiLambdaRoleServiceCatalogManagedPolicy',
+                'arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess',
+            ),
+        ],
+    });
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
         onCreate: 'packages/api/modules/core/handlers.migrateDatabase',
@@ -150,5 +162,6 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         api,
         apiEventBus,
         migrateDbScript,
+        apiLambdaRole,
     };
 };
