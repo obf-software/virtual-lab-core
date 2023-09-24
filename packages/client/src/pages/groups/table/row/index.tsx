@@ -13,7 +13,7 @@ import {
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiTrash2 } from 'react-icons/fi';
 import { ConfirmDeletionModal } from '../../../../components/confirm-deletion-modal';
 import { deleteGroup } from '../../../../services/api/service';
 import { useGroupsContext } from '../../../../contexts/groups/hook';
@@ -31,37 +31,48 @@ export const GroupsTableRow: React.FC<GroupsTableRowProps> = ({ group }) => {
     const toast = useToast();
     const { loadGroupsPage } = useGroupsContext();
 
+    const onOpenGroup = () => {
+        alert('Abrir grupo');
+    };
+
     return (
-        <Tr>
-            <Td>{group.name}</Td>
-            <Td>
+        <Tr
+            _hover={{
+                bg: 'gray.50',
+                cursor: 'pointer',
+            }}
+        >
+            <Td onClick={onOpenGroup}>{group.name}</Td>
+            <Td onClick={onOpenGroup}>
                 <Tooltip label={group.description}>
                     {`${group.description.slice(0, 15)}...`}
                 </Tooltip>
             </Td>
-            <Td>
+            <Td onClick={onOpenGroup}>
                 <Tag>{group.awsPortfolioId}</Tag>
             </Td>
 
-            <Td>{dayjs(group.createdAt).format('DD/MM/YYYY')}</Td>
-            <Td isNumeric>
+            <Td
+                onClick={onOpenGroup}
+                cursor='pointer'
+            >
+                {dayjs(group.createdAt).format('DD/MM/YYYY')}
+            </Td>
+            <Td
+                isNumeric
+                cursor='initial'
+            >
                 <ButtonGroup>
-                    <IconButton
-                        aria-label='Abrir detalhes do grupo'
-                        icon={<FiEdit />}
-                        variant='outline'
-                        colorScheme='blue'
-                        size='sm'
-                    />
-
-                    <IconButton
-                        aria-label='Excluir grupo'
-                        icon={<FiTrash2 />}
-                        variant='solid'
-                        colorScheme='red'
-                        size='sm'
-                        onClick={confirmDeletionModalDisclosure.onOpen}
-                    />
+                    <Tooltip label='Excluir'>
+                        <IconButton
+                            aria-label='Excluir grupo'
+                            icon={<FiTrash2 />}
+                            variant='solid'
+                            colorScheme='red'
+                            size='sm'
+                            onClick={confirmDeletionModalDisclosure.onOpen}
+                        />
+                    </Tooltip>
                 </ButtonGroup>
                 <ConfirmDeletionModal
                     title='Excluir grupo'
