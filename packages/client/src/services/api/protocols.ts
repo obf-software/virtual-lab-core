@@ -55,7 +55,7 @@ export interface Group {
     id: number;
     name: string;
     description: string;
-    portfolioId: string;
+    awsPortfolioId: string;
     createdAt: string;
     updatedAt: string;
 }
