@@ -76,6 +76,12 @@ export class GroupRepository {
     }
 
     async deleteGroup(groupId: number) {
+        await this.dbClient
+            .delete(schema.userToGroup)
+            .where(eq(schema.userToGroup.groupId, groupId))
+            .returning()
+            .execute();
+
         const deleteGroups = await this.dbClient
             .delete(schema.group)
             .where(eq(schema.group.id, groupId))

@@ -32,6 +32,7 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
 
     return {
         statusCode: 200,
+        body: JSON.stringify({ message: 'Group deleted' }),
         headers: { 'Content-Type': 'application/json' },
     };
 }, true);

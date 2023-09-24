@@ -1,24 +1,19 @@
 import {
-    ButtonGroup,
-    IconButton,
     Spinner,
     Table,
     TableCaption,
     TableContainer,
-    Tag,
     Tbody,
-    Td,
     Th,
     Thead,
-    Tooltip,
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FiEdit } from 'react-icons/fi';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
 import { useGroupsContext } from '../../../contexts/groups/hook';
+import { GroupsTableRow } from './row';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -66,30 +61,10 @@ export const GroupsTable: React.FC = () => {
                 <Tbody>
                     {isLoading === false &&
                         groups.map((group, index) => (
-                            <Tr key={`tr-${index}`}>
-                                <Td>{group.name}</Td>
-                                <Td>
-                                    <Tooltip label={group.description}>
-                                        {`${group.description.slice(0, 15)}...`}
-                                    </Tooltip>
-                                </Td>
-                                <Td>
-                                    <Tag>{group.awsPortfolioId}</Tag>
-                                </Td>
-
-                                <Td>{dayjs(group.createdAt).format('DD/MM/YYYY')}</Td>
-                                <Td isNumeric>
-                                    <ButtonGroup>
-                                        <IconButton
-                                            aria-label='Abrir detalhes'
-                                            icon={<FiEdit />}
-                                            variant='outline'
-                                            colorScheme='blue'
-                                            size='sm'
-                                        />
-                                    </ButtonGroup>
-                                </Td>
-                            </Tr>
+                            <GroupsTableRow
+                                key={`groups-table-row-${index}`}
+                                group={group}
+                            />
                         ))}
                 </Tbody>
             </Table>

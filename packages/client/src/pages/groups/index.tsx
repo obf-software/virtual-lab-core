@@ -16,11 +16,11 @@ import {
 import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { GroupsTable } from './groups-table';
+import { GroupsTable } from './table';
 import { useGroupsContext } from '../../contexts/groups/hook';
 import { Paginator } from '../../components/paginator';
 
-const RESULTS_PER_PAGE = 10;
+const RESULTS_PER_PAGE = 20;
 
 export const GroupsPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -80,7 +80,7 @@ export const GroupsPage: React.FC = () => {
                             leftIcon={<FiPlus />}
                             isDisabled={groupsContext.isLoading}
                         >
-                            Adicionar grupo
+                            Novo grupo
                         </Button>
                     </ButtonGroup>
                 </Stack>

@@ -54,7 +54,7 @@ const executeRequest = async <T>(props: {
         };
     } catch (error) {
         const reason = error instanceof Error ? error.message : 'Unknown error';
-        console.log(`Error while fetching CMS data: ${reason}`);
+        console.log(`Error while fetching API data: ${reason}`);
         return { error: reason, data: undefined };
     }
 };
@@ -98,6 +98,19 @@ export const listGroups = async (pagination: { resultsPerPage: number; page: num
         path: '/api/v1/groups',
         method: 'GET',
         queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
+    });
+
+export const createGroup = async (data: Pick<Group, 'name' | 'description' | 'awsPortfolioId'>) =>
+    executeRequest<Group>({
+        path: '/api/v1/groups',
+        method: 'POST',
+        body: data,
+    });
+
+export const deleteGroup = async (groupId: number) =>
+    executeRequest({
+        path: `/api/v1/groups/${groupId}`,
+        method: 'DELETE',
     });
 
 export const getUserQuota = async (userId: string | number | undefined) =>

@@ -10,7 +10,8 @@ import {
 import React from 'react';
 
 interface ConfirmDeletionModalProps {
-    instanceName: string;
+    title: string;
+    text: string;
 
     onConfirm: () => void;
     onClose: () => void;
@@ -19,7 +20,8 @@ interface ConfirmDeletionModalProps {
 }
 
 export const ConfirmDeletionModal: React.FC<ConfirmDeletionModalProps> = ({
-    instanceName,
+    title,
+    text,
     isOpen,
     isLoading,
     onClose,
@@ -39,13 +41,9 @@ export const ConfirmDeletionModal: React.FC<ConfirmDeletionModalProps> = ({
         >
             <AlertDialogOverlay>
                 <AlertDialogContent>
-                    <AlertDialogHeader fontSize='lg'>Excluir Instância</AlertDialogHeader>
+                    <AlertDialogHeader fontSize='lg'>{title}</AlertDialogHeader>
 
-                    <AlertDialogBody>
-                        Você tem certeza que deseja deletar a instância{' '}
-                        <strong>{instanceName}</strong>? Essa ação não pode ser desfeita e todos os
-                        dados serão perdidos.
-                    </AlertDialogBody>
+                    <AlertDialogBody>{text}</AlertDialogBody>
 
                     <AlertDialogFooter>
                         <Button

@@ -39,7 +39,7 @@ import {
     getInstanceConnection,
 } from '../../../services/api/service';
 import { useNotificationsContext } from '../../../contexts/notifications/hook';
-import { ConfirmDeletionModal } from './confirm-deletion-modal';
+import { ConfirmDeletionModal } from '../../../components/confirm-deletion-modal/index';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -147,7 +147,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     return (
         <Card>
             <ConfirmDeletionModal
-                instanceName={instance.name}
+                title='Excluir Instância'
+                text={`Você tem certeza que deseja deletar a instância ${instance.name}? Essa ação não pode ser desfeita e todos os dados serão perdidos.`}
                 isOpen={isOpen}
                 onClose={onClose}
                 isLoading={isLoading}
