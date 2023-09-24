@@ -30,3 +30,6 @@ _dev
 npm-debug.log*
 logs
 *.log
+
+# CDK
+cdk.context.json

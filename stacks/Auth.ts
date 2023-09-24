@@ -15,7 +15,7 @@ import { Config } from './Config';
 
 const stagesWhereUserPoolIsRetained = ['production'];
 
-export function Auth({ stack, app }: sst.StackContext) {
+export const Auth = ({ stack, app }: sst.StackContext) => {
     const { DATABASE_URL } = sst.use(Config);
 
     const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
@@ -127,4 +127,4 @@ export function Auth({ stack, app }: sst.StackContext) {
         userPoolDomain,
         cognito,
     };
-}
+};

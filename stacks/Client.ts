@@ -3,7 +3,7 @@ import { Api } from './Api';
 import { Auth } from './Auth';
 import { AppSyncApi } from './AppSyncApi';
 
-export function Client({ stack, app }: sst.StackContext) {
+export const Client = ({ stack, app }: sst.StackContext) => {
     const { api } = sst.use(Api);
     const { userPool, userPoolClient } = sst.use(Auth);
     const { appSyncApi } = sst.use(AppSyncApi);
@@ -28,4 +28,4 @@ export function Client({ stack, app }: sst.StackContext) {
     return {
         staticSite,
     };
-}
+};

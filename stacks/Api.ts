@@ -4,7 +4,7 @@ import { Config } from './Config';
 import { AppSyncApi } from './AppSyncApi';
 import { EventBus } from 'aws-cdk-lib/aws-events';
 
-export function Api({ stack, app }: sst.StackContext) {
+export const Api = ({ stack, app }: sst.StackContext) => {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
@@ -151,4 +151,4 @@ export function Api({ stack, app }: sst.StackContext) {
         apiEventBus,
         migrateDbScript,
     };
-}
+};
