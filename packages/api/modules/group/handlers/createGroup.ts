@@ -28,7 +28,7 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
             description: z.string().nonempty(),
             awsPortfolioId: z.string().max(50).nonempty(),
         })
-        .safeParse({ ...event.queryStringParameters });
+        .safeParse(JSON.parse(event.body ?? '{}'));
     if (!body.success) throw InvalidBodyError(body.error.message);
     const { name, description, awsPortfolioId } = body.data;
 

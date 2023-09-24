@@ -12,6 +12,7 @@ import {
     InputRightElement,
     IconButton,
     ButtonGroup,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React, { useEffect, useState } from 'react';
@@ -19,6 +20,7 @@ import { useMenuContext } from '../../contexts/menu/hook';
 import { GroupsTable } from './table';
 import { useGroupsContext } from '../../contexts/groups/hook';
 import { Paginator } from '../../components/paginator';
+import { CreateGroupModal } from './create-group-modal';
 
 const RESULTS_PER_PAGE = 20;
 
@@ -26,6 +28,7 @@ export const GroupsPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
     const groupsContext = useGroupsContext();
     const [activePage, setActivePage] = useState<number>(1);
+    const createGroupModalDisclosure = useDisclosure();
 
     useEffect(() => {
         setActiveMenuItem('ADMIN_GROUPS');
@@ -37,6 +40,10 @@ export const GroupsPage: React.FC = () => {
 
     return (
         <Box>
+            <CreateGroupModal
+                isOpen={createGroupModalDisclosure.isOpen}
+                onClose={createGroupModalDisclosure.onClose}
+            />
             <Container maxW={'6xl'}>
                 <Stack
                     pb={10}
@@ -79,6 +86,7 @@ export const GroupsPage: React.FC = () => {
                             colorScheme='blue'
                             leftIcon={<FiPlus />}
                             isDisabled={groupsContext.isLoading}
+                            onClick={createGroupModalDisclosure.onOpen}
                         >
                             Novo grupo
                         </Button>

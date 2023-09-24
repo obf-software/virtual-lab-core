@@ -1,6 +1,7 @@
 import { GroupRepository } from './repository';
 import * as schema from '../../drizzle/schema';
 import { AwsServiceCatalogIntegration } from '../../integrations/aws-service-catalog/service';
+import createHttpError from 'http-errors';
 
 export class GroupService {
     private groupRepository: GroupRepository;
@@ -20,7 +21,7 @@ export class GroupService {
         );
 
         if (!portfolioExists) {
-            throw new Error('Invalid AWS Portfolio ID');
+            throw new createHttpError.BadRequest('AWS Portfolio does not exist');
         }
 
         return await this.groupRepository.createGroup(data);
