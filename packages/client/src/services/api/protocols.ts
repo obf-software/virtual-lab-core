@@ -103,3 +103,16 @@ export interface Instance {
 export interface InstanceConnection {
     connectionString: string;
 }
+
+export interface ProductSummary {
+    awsProductId: string;
+    awsProductViewId: string;
+    name: string;
+    description: string;
+    createdAt: string;
+}
+
+export interface ProductProvisioningParameters {
+    // TODO
+    a: string;
+}

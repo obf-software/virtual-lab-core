@@ -9,6 +9,7 @@ import { Router } from './router.tsx';
 import { ConnectionProvider } from './contexts/connection/provider.tsx';
 import { InstancesProvider } from './contexts/instances/provider.tsx';
 import { NotificationsProvider } from './contexts/notifications/provider.tsx';
+import { ProductsProvider } from './contexts/products/provider.tsx';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -18,7 +19,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                     <MenuProvider>
                         <ConnectionProvider>
                             <InstancesProvider>
-                                <Router />
+                                <ProductsProvider>
+                                    <Router />
+                                </ProductsProvider>
                             </InstancesProvider>
                         </ConnectionProvider>
                     </MenuProvider>

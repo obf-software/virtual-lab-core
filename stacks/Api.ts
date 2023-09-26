@@ -10,20 +10,19 @@ export const Api = ({ stack, app }: sst.StackContext) => {
     const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
 
-    const apiLambdaRole = new Role(stack, 'ApiLambdaRole', {
+    const listUserProductsFunctionRole = new Role(stack, 'ListUserProductsFunctionRole', {
         assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [
-            ManagedPolicy.fromManagedPolicyArn(
-                stack,
-                'ApiLambdaRoleServiceCatalogManagedPolicy',
-                'arn:aws:iam::aws:policy/AWSServiceCatalogEndUserFullAccess',
-            ),
+            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
+            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
         ],
     });
 
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
-        onCreate: 'packages/api/modules/core/handlers.migrateDatabase',
-        onUpdate: 'packages/api/modules/core/handlers.migrateDatabase',
+        onCreate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
+        onUpdate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
         defaults: {
             function: {
                 environment: {
@@ -68,9 +67,21 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
         },
         routes: {
-            'GET /api/v1/users': {
+            // Group module
+            'POST /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers.listUsers',
+                    handler: 'packages/api/modules/group/handlers/createGroup.handler',
+                    permissions: ['servicecatalog:*'],
+                },
+            },
+            'DELETE /api/v1/groups/{groupId}': {
+                function: {
+                    handler: 'packages/api/modules/group/handlers/deleteGroup.handler',
+                },
+            },
+            'GET /api/v1/groups': {
+                function: {
+                    handler: 'packages/api/modules/group/handlers/listGroups.handler',
                 },
             },
             'GET /api/v1/users/{userId}/groups': {
@@ -78,21 +89,17 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     handler: 'packages/api/modules/group/handlers/listUserGroups.handler',
                 },
             },
-            'GET /api/v1/users/{userId}/instances': {
+
+            // Instance module
+            'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/listUserInstances.handler',
+                    handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',
                     permissions: ['ec2:*'],
                 },
             },
             'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
                 function: {
                     handler: 'packages/api/modules/instance/handlers/deleteInstance.handler',
-                    permissions: ['ec2:*'],
-                },
-            },
-            'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
-                function: {
-                    handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',
                     permissions: ['ec2:*'],
                 },
             },
@@ -107,30 +114,35 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     },
                 },
             },
-            'PATCH /api/v1/users/{userId}/role': {
+            'GET /api/v1/users/{userId}/instances': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers.updateUserRole',
+                    handler: 'packages/api/modules/instance/handlers/listUserInstances.handler',
+                    permissions: ['ec2:*'],
+                },
+            },
+
+            // Product module
+            'GET /api/v1/users/{userId}/products': {
+                function: {
+                    handler: 'packages/api/modules/product/handlers/listUserProducts.handler',
+                    role: listUserProductsFunctionRole,
+                },
+            },
+
+            // User module
+            'GET /api/v1/users': {
+                function: {
+                    handler: 'packages/api/modules/user/handlers/listUsers.handler',
                 },
             },
             'GET /api/v1/users/{userId}/quota': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers.getUserQuota',
+                    handler: 'packages/api/modules/user/handlers/getUserQuota.handler',
                 },
             },
-            'GET /api/v1/groups': {
+            'PATCH /api/v1/users/{userId}/role': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/listGroups.handler',
-                },
-            },
-            'POST /api/v1/groups': {
-                function: {
-                    handler: 'packages/api/modules/group/handlers/createGroup.handler',
-                    permissions: ['servicecatalog:*'],
-                },
-            },
-            'DELETE /api/v1/groups/{groupId}': {
-                function: {
-                    handler: 'packages/api/modules/group/handlers/deleteGroup.handler',
+                    handler: 'packages/api/modules/user/handlers/updateUserRole.handler',
                 },
             },
         },
@@ -173,6 +185,6 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         api,
         apiEventBus,
         migrateDbScript,
-        apiLambdaRole,
+        lambdaRoles: [listUserProductsFunctionRole],
     };
 };

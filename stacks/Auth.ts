@@ -19,7 +19,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
     const { DATABASE_URL } = sst.use(Config);
 
     const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
-        handler: 'packages/api/modules/auth/handlers.preTokenGenerationTrigger',
+        handler: 'packages/api/modules/auth/handlers/preTokenGenerationTrigger.handler',
         runtime: 'nodejs18.x',
         environment: {
             DATABASE_URL,
@@ -27,7 +27,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
     });
 
     const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
-        handler: 'packages/api/modules/auth/handlers.postConfirmationTrigger',
+        handler: 'packages/api/modules/auth/handlers/postConfirmationTrigger.handler',
         runtime: 'nodejs18.x',
         environment: {
             DATABASE_URL,

@@ -1,14 +1,14 @@
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { createHandler } from '../../../integrations/powertools';
+import { AuthService } from '../../auth/service';
+import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
+import { ProductService } from '../service';
+import { GroupService } from '../../group/service';
+import { GroupRepository } from '../../group/repository';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../../../drizzle/schema';
-import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
-import { GroupRepository } from '../repository';
-import { GroupService } from '../service';
-import { AuthService } from '../../auth/service';
-import { createHandler } from '../../../integrations/powertools';
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { InvalidPathParamsError, InvalidQueryParamsError } from '../../core/errors';
-import { z } from 'zod';
+import { InvalidPathParamsError } from '../../core/errors';
 
 // Config
 const { AWS_REGION, DATABASE_URL } = process.env;
@@ -22,6 +22,7 @@ const groupRepository = new GroupRepository(dbClient);
 
 // Service
 const groupService = new GroupService({ awsServiceCatalogIntegration, groupRepository });
+const productService = new ProductService({ awsServiceCatalogIntegration, groupService });
 const authService = new AuthService();
 
 export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
@@ -40,20 +41,11 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
         userIdToUse = userIdPathParamNumber;
     }
 
-    const query = z
-        .object({
-            resultsPerPage: z.string().default('10').transform(Number),
-            page: z.string().default('1').transform(Number),
-        })
-        .safeParse({ ...event.queryStringParameters });
-    if (!query.success) throw InvalidQueryParamsError(query.error.message);
-    const { resultsPerPage, page } = query.data;
-
-    const result = await groupService.listUserGroups(userIdToUse, { resultsPerPage, page });
+    const response = await productService.listUserProducts(userIdToUse);
 
     return {
         statusCode: 200,
-        body: JSON.stringify(result),
+        body: JSON.stringify(response),
         headers: { 'Content-Type': 'application/json' },
     };
 }, true);

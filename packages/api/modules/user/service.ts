@@ -5,8 +5,8 @@ import { UserRole } from './protocols';
 export class UserService {
     private userRepository: UserRepository;
 
-    constructor(userRepository: UserRepository) {
-        this.userRepository = userRepository;
+    constructor(props: { userRepository: UserRepository }) {
+        this.userRepository = props.userRepository;
     }
 
     async create(props: Pick<typeof schema.user.$inferInsert, 'username' | 'role'>) {

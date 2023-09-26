@@ -94,4 +94,21 @@ export class GroupRepository {
 
         return deleteGroups[0];
     }
+
+    async listUserGroupAwsPortfolioIds(userId: number) {
+        const groups = await this.dbClient.query.group
+            .findMany({
+                with: {
+                    userToGroup: {
+                        where: (userToGroup, builder) => builder.eq(userToGroup.userId, userId),
+                    },
+                },
+                columns: {
+                    awsPortfolioId: true,
+                },
+            })
+            .execute();
+
+        return [...new Set(groups.map((g) => g.awsPortfolioId))];
+    }
 }

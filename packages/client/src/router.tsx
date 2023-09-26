@@ -12,6 +12,7 @@ import { GroupsProvider } from './contexts/groups/provider';
 import { MyGroupsProvider } from './contexts/my-groups/provider';
 import { MyGroupsPage } from './pages/my-groups';
 import { ConnectionPage } from './pages/connection';
+import { NewInstancePage } from './pages/new-instance';
 
 /**
  * TODO: Filter routes based on user's authorization
@@ -29,6 +30,10 @@ export const Router: React.FC = () => {
                 {
                     path: 'instances',
                     element: <InstancesPage />,
+                },
+                {
+                    path: 'new-instance',
+                    element: <NewInstancePage />,
                 },
                 {
                     path: 'my-groups',
@@ -62,10 +67,6 @@ export const Router: React.FC = () => {
                             <GroupsPage />
                         </GroupsProvider>
                     ),
-                },
-                {
-                    path: 'admin/portfolios',
-                    element: <>WIP</>,
                 },
             ],
             // errorElement: <div>error</div>,

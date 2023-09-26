@@ -9,12 +9,18 @@ import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { createHandler } from '../../../integrations/powertools';
 import { InvalidPathParamsError } from '../../core/errors';
 
+// Config
 const { AWS_REGION, DATABASE_URL } = process.env;
-
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
-const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration(AWS_REGION);
+
+// Integration
+const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
+
+// Repository
 const groupRepository = new GroupRepository(dbClient);
-const groupService = new GroupService(groupRepository, awsServiceCatalogIntegration);
+
+// Service
+const groupService = new GroupService({ awsServiceCatalogIntegration, groupRepository });
 const authService = new AuthService();
 
 export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {

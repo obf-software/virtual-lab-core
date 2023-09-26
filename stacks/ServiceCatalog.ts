@@ -18,7 +18,7 @@ import { Api } from './Api';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { INSTANCE_PASSWORD } = sst.use(Config);
-    const { apiLambdaRole } = sst.use(Api);
+    const { lambdaRoles } = sst.use(Api);
 
     const vpc = Vpc.fromLookup(stack, `DefaultVpc`, { isDefault: true });
 
@@ -64,6 +64,9 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         description: 'Default Portfolio',
     });
 
+    lambdaRoles.forEach((role) => {
+        defaultPortfolio.giveAccessToRole(role);
+    });
+
     defaultPortfolio.addProduct(defaultLinuxProduct);
-    defaultPortfolio.giveAccessToRole(apiLambdaRole);
 };

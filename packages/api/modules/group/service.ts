@@ -7,12 +7,12 @@ export class GroupService {
     private groupRepository: GroupRepository;
     private awsServiceCatalogIntegration: AwsServiceCatalogIntegration;
 
-    constructor(
-        groupRepository: GroupRepository,
-        awsServiceCatalogIntegration: AwsServiceCatalogIntegration,
-    ) {
-        this.groupRepository = groupRepository;
-        this.awsServiceCatalogIntegration = awsServiceCatalogIntegration;
+    constructor(props: {
+        groupRepository: GroupRepository;
+        awsServiceCatalogIntegration: AwsServiceCatalogIntegration;
+    }) {
+        this.groupRepository = props.groupRepository;
+        this.awsServiceCatalogIntegration = props.awsServiceCatalogIntegration;
     }
 
     async createGroup(data: typeof schema.group.$inferInsert) {
@@ -37,5 +37,9 @@ export class GroupService {
 
     async deleteGroup(groupId: number) {
         return await this.groupRepository.deleteGroup(groupId);
+    }
+
+    async listUserGroupAwsPortfolioIds(userId: number) {
+        return await this.groupRepository.listUserGroupAwsPortfolioIds(userId);
     }
 }

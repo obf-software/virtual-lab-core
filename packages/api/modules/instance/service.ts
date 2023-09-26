@@ -10,18 +10,18 @@ export class InstanceService {
     private awsEc2Integration: AwsEc2Integration;
     private guacamoleIntegration: GuacamoleIntegration;
 
-    constructor(
-        INSTANCE_PASSWORD: string,
-        GUACAMOLE_CYPHER_KEY: string,
-        instanceRepository: InstanceRepository,
-        awsEc2Integration: AwsEc2Integration,
-        guacamoleIntegration: GuacamoleIntegration,
-    ) {
-        this.INSTANCE_PASSWORD = INSTANCE_PASSWORD;
-        this.GUACAMOLE_CYPHER_KEY = GUACAMOLE_CYPHER_KEY;
-        this.instanceRepository = instanceRepository;
-        this.awsEc2Integration = awsEc2Integration;
-        this.guacamoleIntegration = guacamoleIntegration;
+    constructor(props: {
+        INSTANCE_PASSWORD: string;
+        GUACAMOLE_CYPHER_KEY: string;
+        instanceRepository: InstanceRepository;
+        awsEc2Integration: AwsEc2Integration;
+        guacamoleIntegration: GuacamoleIntegration;
+    }) {
+        this.INSTANCE_PASSWORD = props.INSTANCE_PASSWORD;
+        this.GUACAMOLE_CYPHER_KEY = props.GUACAMOLE_CYPHER_KEY;
+        this.instanceRepository = props.instanceRepository;
+        this.awsEc2Integration = props.awsEc2Integration;
+        this.guacamoleIntegration = props.guacamoleIntegration;
     }
 
     async getInstanceByAwsInstanceId(awsInstanceId: string) {

@@ -1,27 +1,23 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { createHandler } from '../../../integrations/powertools';
-import postgres from 'postgres';
+import { UserRepository } from '../repository';
+import { UserService } from '../service';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
-import { GroupRepository } from '../repository';
-import { GroupService } from '../service';
-import { AuthService } from '../../auth/service';
+import postgres from 'postgres';
 import * as schema from '../../../drizzle/schema';
 import { z } from 'zod';
+import { AuthService } from '../../auth/service';
 import { InvalidQueryParamsError } from '../../core/errors';
 
 // Config
-const { AWS_REGION, DATABASE_URL } = process.env;
+const { DATABASE_URL } = process.env;
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 
-// Integration
-const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
-
 // Repository
-const groupRepository = new GroupRepository(dbClient);
+const userRepository = new UserRepository(dbClient);
 
 // Service
-const groupService = new GroupService({ awsServiceCatalogIntegration, groupRepository });
+const userService = new UserService({ userRepository });
 const authService = new AuthService();
 
 export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
@@ -37,7 +33,7 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
     if (!query.success) throw InvalidQueryParamsError(query.error.message);
     const { resultsPerPage, page } = query.data;
 
-    const result = await groupService.listGroups({ resultsPerPage, page });
+    const result = await userService.listUsers({ resultsPerPage, page });
 
     return {
         statusCode: 200,

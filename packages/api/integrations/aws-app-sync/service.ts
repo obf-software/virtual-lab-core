@@ -5,13 +5,13 @@ import { SignatureV4 } from '@aws-sdk/signature-v4';
 import fetch from 'node-fetch';
 import { logger } from '../powertools';
 
-export class AppSyncIntegration {
+export class AwsAppSyncIntegration {
     private AWS_REGION: string;
     private APP_SYNC_API_URL: string;
 
-    constructor(AWS_REGION: string, APP_SYNC_API_URL: string) {
-        this.AWS_REGION = AWS_REGION;
-        this.APP_SYNC_API_URL = APP_SYNC_API_URL;
+    constructor(props: { AWS_REGION: string; APP_SYNC_API_URL: string }) {
+        this.AWS_REGION = props.AWS_REGION;
+        this.APP_SYNC_API_URL = props.APP_SYNC_API_URL;
     }
 
     private buildMutation(username: string, data: unknown) {
@@ -53,7 +53,7 @@ export class AppSyncIntegration {
         const signedRequest = await signer.sign(request);
         const response = await fetch(apiUrl, signedRequest);
         const responseBody = await response.text();
-        logger.info(`AppSyncIntegration.publishMutation: ${responseBody} ${response.status}`);
+        logger.info(`AwsAppSyncIntegration.publishMutation: ${responseBody} ${response.status}`);
     }
 
     async publishEc2InstanceStateChanged(props: {

@@ -14,8 +14,8 @@ import {
 export class AwsEc2Integration {
     private client: EC2Client;
 
-    constructor(AWS_REGION: string) {
-        this.client = new EC2Client({ region: AWS_REGION });
+    constructor(props: { AWS_REGION: string }) {
+        this.client = new EC2Client({ region: props.AWS_REGION });
     }
 
     async getInstance(awsInstanceId: string) {

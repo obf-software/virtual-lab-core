@@ -1,10 +1,14 @@
-import { DescribePortfolioCommand, ServiceCatalogClient } from '@aws-sdk/client-service-catalog';
+import {
+    DescribePortfolioCommand,
+    ServiceCatalogClient,
+    paginateSearchProductsAsAdmin,
+} from '@aws-sdk/client-service-catalog';
 
 export class AwsServiceCatalogIntegration {
     private client: ServiceCatalogClient;
 
-    constructor(AWS_REGION: string) {
-        this.client = new ServiceCatalogClient({ region: AWS_REGION });
+    constructor(props: { AWS_REGION: string }) {
+        this.client = new ServiceCatalogClient({ region: props.AWS_REGION });
     }
 
     async portfolioExists(portfolioId: string) {
@@ -15,5 +19,9 @@ export class AwsServiceCatalogIntegration {
         } catch {
             return false;
         }
+    }
+
+    paginateSearchProductsAsAdmin(portfolioId: string) {
+        return paginateSearchProductsAsAdmin({ client: this.client }, { PortfolioId: portfolioId });
     }
 }

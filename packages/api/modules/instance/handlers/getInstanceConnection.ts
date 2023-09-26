@@ -10,20 +10,25 @@ import { AuthService } from '../../auth/service';
 import { InvalidPathParamsError } from '../../core/errors';
 import { GuacamoleIntegration } from '../../../integrations/guacamole/service';
 
+// Config
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
-
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 
-const awsEc2Integration = new AwsEc2Integration(AWS_REGION);
+// Integration
+const awsEc2Integration = new AwsEc2Integration({ AWS_REGION });
 const guacamoleIntegration = new GuacamoleIntegration();
+
+// Repository
 const instanceRepository = new InstanceRepository(dbClient);
-const instanceService = new InstanceService(
+
+// Service
+const instanceService = new InstanceService({
     INSTANCE_PASSWORD,
     GUACAMOLE_CYPHER_KEY,
     instanceRepository,
     awsEc2Integration,
     guacamoleIntegration,
-);
+});
 const authService = new AuthService();
 
 export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {

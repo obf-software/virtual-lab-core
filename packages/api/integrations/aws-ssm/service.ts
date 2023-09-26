@@ -3,8 +3,8 @@ import { GetParametersCommand, SSMClient } from '@aws-sdk/client-ssm';
 export class AwsSsmIntegration {
     private client: SSMClient;
 
-    constructor(AWS_REGION: string) {
-        this.client = new SSMClient({ region: AWS_REGION });
+    constructor(props: { AWS_REGION: string }) {
+        this.client = new SSMClient({ region: props.AWS_REGION });
     }
 
     async getStringParameters<T extends Record<string, string>>(

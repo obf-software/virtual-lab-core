@@ -1,5 +1,5 @@
 import { IconType } from 'react-icons';
-import { FiHome, FiMonitor, FiShoppingBag, FiUser, FiUsers } from 'react-icons/fi';
+import { FiHome, FiMonitor, FiUser, FiUsers } from 'react-icons/fi';
 
 export enum MenuItems {
     HOME = 'HOME',
@@ -7,7 +7,6 @@ export enum MenuItems {
     MY_GROUPS = 'MY_GROUPS',
     ADMIN_USERS = 'ADMIN_USERS',
     ADMIN_GROUPS = 'ADMIN_GROUPS',
-    ADMIN_PORTFOLIOS = 'ADMIN_PORTFOLIOS',
 }
 
 interface MenuItemData {
@@ -53,12 +52,6 @@ export const menuItemsMap: {
         icon: FiUsers as IconType,
         label: 'Grupos',
         href: '/admin/groups',
-        adminOnly: true,
-    },
-    ADMIN_PORTFOLIOS: {
-        icon: FiShoppingBag as IconType,
-        label: 'Portfólios',
-        href: '/admin/portfolios',
         adminOnly: true,
     },
 };

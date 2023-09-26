@@ -40,7 +40,7 @@ export const UsersProvider: React.FC<PropsWithChildren> = ({ children }) => {
         }
     };
 
-    const updateUserRole = async (userId: string, role: keyof typeof UserRole) => {
+    const updateUserRole = async (userId: number, role: keyof typeof UserRole) => {
         try {
             setIsUpdating(true);
 
