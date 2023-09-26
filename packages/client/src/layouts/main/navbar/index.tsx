@@ -170,6 +170,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                         >
                             <HStack>
                                 <Avatar
+                                    borderColor={'gray.500'}
+                                    borderWidth={2}
+                                    name={displayName}
                                     size={'sm'}
                                     src={undefined}
                                 />
