@@ -1,5 +1,6 @@
 import {
     DescribePortfolioCommand,
+    DescribeProductAsAdminCommand,
     ServiceCatalogClient,
     paginateSearchProductsAsAdmin,
 } from '@aws-sdk/client-service-catalog';
@@ -21,7 +22,14 @@ export class AwsServiceCatalogIntegration {
         }
     }
 
-    paginateSearchProductsAsAdmin(portfolioId: string) {
+    paginateListPortfolioProducts(portfolioId: string) {
         return paginateSearchProductsAsAdmin({ client: this.client }, { PortfolioId: portfolioId });
+    }
+
+    async getProduct(productId: string) {
+        const command = new DescribeProductAsAdminCommand({ Id: productId });
+        const { ProductViewDetail, ProvisioningArtifactSummaries, Tags } =
+            await this.client.send(command);
+        return { ProductViewDetail, ProvisioningArtifactSummaries, Tags };
     }
 }

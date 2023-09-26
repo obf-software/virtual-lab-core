@@ -96,6 +96,10 @@ export const NewInstancePage: React.FC = () => {
                         />
                     </Box>
                 ) : null}
+
+                {!isLoading && products.length > 0 ? (
+                    <pre>{JSON.stringify(products, null, 2)}</pre>
+                ) : null}
             </Container>
         </Box>
     );

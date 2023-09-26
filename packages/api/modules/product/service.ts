@@ -21,7 +21,7 @@ export class ProductService {
 
         await Promise.all(
             awsPortfolioIds.map(async (awsPortfolioId) => {
-                for await (const batch of this.awsServiceCatalogIntegration.paginateSearchProductsAsAdmin(
+                for await (const batch of this.awsServiceCatalogIntegration.paginateListPortfolioProducts(
                     awsPortfolioId,
                 )) {
                     for (const product of batch.ProductViewDetails ?? []) {
@@ -35,14 +35,29 @@ export class ProductService {
             }),
         );
 
-        console.log(JSON.stringify([...productIdToDetailMap.values()]));
+        return await Promise.all(
+            [...productIdToDetailMap.values()].map(async (product) => {
+                const productData = await this.awsServiceCatalogIntegration.getProduct(
+                    product.ProductViewSummary?.ProductId ?? '',
+                );
 
-        return [...productIdToDetailMap.values()].map((product) => ({
-            awsProductId: product.ProductViewSummary?.ProductId ?? '',
-            awsProductViewId: product.ProductViewSummary?.Id ?? '',
-            name: product.ProductViewSummary?.Name ?? '',
-            description: product.ProductViewSummary?.ShortDescription ?? '',
-            createdAt: product.CreatedTime?.toISOString() ?? '',
-        }));
+                const artifactsSortedByCreationTime =
+                    productData.ProvisioningArtifactSummaries?.sort((a, b) => {
+                        const aDate = new Date(a.CreatedTime ?? '');
+                        const bDate = new Date(b.CreatedTime ?? '');
+                        return bDate.getTime() - aDate.getTime();
+                    }) ?? [];
+
+                return {
+                    awsProductId: product.ProductViewSummary?.ProductId ?? '',
+                    awsProductViewId: product.ProductViewSummary?.Id ?? '',
+                    awsProductArtifactId: artifactsSortedByCreationTime[0]?.Id ?? '',
+                    name: product.ProductViewSummary?.Name ?? '',
+                    description: product.ProductViewSummary?.ShortDescription ?? '',
+                    createdAt: product.CreatedTime?.toISOString() ?? '',
+                    tags: productData.Tags?.map((tag) => tag.Value).join(', ') ?? null,
+                };
+            }),
+        );
     }
 }
