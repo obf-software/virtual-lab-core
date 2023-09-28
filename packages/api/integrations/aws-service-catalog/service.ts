@@ -23,7 +23,10 @@ export class AwsServiceCatalogIntegration {
     }
 
     paginateListPortfolioProducts(portfolioId: string) {
-        return paginateSearchProductsAsAdmin({ client: this.client }, { PortfolioId: portfolioId });
+        return paginateSearchProductsAsAdmin(
+            { client: this.client },
+            { PortfolioId: portfolioId, PageSize: 1000 },
+        );
     }
 
     async getProduct(productId: string) {

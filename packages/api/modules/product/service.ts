@@ -35,29 +35,12 @@ export class ProductService {
             }),
         );
 
-        return await Promise.all(
-            [...productIdToDetailMap.values()].map(async (product) => {
-                const productData = await this.awsServiceCatalogIntegration.getProduct(
-                    product.ProductViewSummary?.ProductId ?? '',
-                );
-
-                const artifactsSortedByCreationTime =
-                    productData.ProvisioningArtifactSummaries?.sort((a, b) => {
-                        const aDate = new Date(a.CreatedTime ?? '');
-                        const bDate = new Date(b.CreatedTime ?? '');
-                        return bDate.getTime() - aDate.getTime();
-                    }) ?? [];
-
-                return {
-                    awsProductId: product.ProductViewSummary?.ProductId ?? '',
-                    awsProductViewId: product.ProductViewSummary?.Id ?? '',
-                    awsProductArtifactId: artifactsSortedByCreationTime[0]?.Id ?? '',
-                    name: product.ProductViewSummary?.Name ?? '',
-                    description: product.ProductViewSummary?.ShortDescription ?? '',
-                    createdAt: product.CreatedTime?.toISOString() ?? '',
-                    tags: productData.Tags?.map((tag) => tag.Value).join(', ') ?? null,
-                };
-            }),
-        );
+        return [...productIdToDetailMap.values()].map((product) => ({
+            awsProductId: product.ProductViewSummary?.ProductId ?? '',
+            awsProductViewId: product.ProductViewSummary?.Id ?? '',
+            name: product.ProductViewSummary?.Name ?? '',
+            description: product.ProductViewSummary?.ShortDescription ?? '',
+            createdAt: product.CreatedTime?.toISOString() ?? '',
+        }));
     }
 }

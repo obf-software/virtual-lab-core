@@ -31,6 +31,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
             description: 'Default Linux Product',
             productVersions: [
                 {
+                    productVersionName: 'latest',
                     cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
                         new BaseLinuxProduct(stack, 'DefaultLinuxProductVersion', {
                             vpc,
@@ -60,8 +61,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
 
     const defaultPortfolio = new serviceCatalog.Portfolio(stack, 'DefaultPortfolio', {
         displayName: 'Default Portfolio',
-        providerName: 'SST',
-        description: 'Default Portfolio',
+        providerName: stack.account,
     });
 
     lambdaRoles.forEach((role) => {

@@ -104,13 +104,10 @@ export interface InstanceConnection {
     connectionString: string;
 }
 
-export interface ProductSummary {
+export interface Product {
     awsProductId: string;
-    awsProductViewId: string;
-    awsProductArtifactId: string;
     name: string;
     description: string;
-    tags: string | null;
     createdAt: string;
 }
 
