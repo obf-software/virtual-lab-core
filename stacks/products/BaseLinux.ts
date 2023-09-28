@@ -37,16 +37,11 @@ interface BaseLinuxProductProps {
     // Other
     password: string;
     vpc: IVpc;
-    tags?: string[];
 }
 
 export class BaseLinuxProduct extends ProductStack {
     constructor(scope: Construct, id: string, props: ProductStackProps & BaseLinuxProductProps) {
         super(scope, id);
-
-        if (props.tags !== undefined && props.tags.length > 0) {
-            this.tags.setTag('CustomTags', props.tags.join(', '));
-        }
 
         const vpc = Vpc.fromLookup(scope, `${id}-Vpc`, { isDefault: true });
         const allowedInstanceTypes = new Set(
@@ -60,6 +55,11 @@ export class BaseLinuxProduct extends ProductStack {
             default: props.defaultInstanceType.toString(),
             allowedValues: [...allowedInstanceTypes],
             description: 'Instance type',
+        });
+
+        const usernameParam = new CfnParameter(this, `${id}-UsernameParam`, {
+            type: 'String',
+            description: 'Cognito username of the user that created the instance',
         });
 
         const securityGroup = new SecurityGroup(this, `${id}-SecurityGroup`, {
@@ -119,8 +119,15 @@ export class BaseLinuxProduct extends ProductStack {
         });
 
         new CfnOutput(this, `${id}-OutputInstanceId`, {
+            exportName: 'instanceId',
             value: instance.instanceId,
-            description: 'Instance ID',
+            description: 'instanceId',
+        });
+
+        new CfnOutput(this, `${id}-OutputUsername`, {
+            exportName: 'username',
+            value: usernameParam.valueAsString,
+            description: 'username',
         });
     }
 }

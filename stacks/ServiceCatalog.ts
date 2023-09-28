@@ -15,10 +15,22 @@ import {
 } from 'aws-cdk-lib/aws-ec2';
 import { Config } from './Config';
 import { Api } from './Api';
+import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { INSTANCE_PASSWORD } = sst.use(Config);
     const { lambdaRoles } = sst.use(Api);
+
+    const snsTopic = new Topic(stack, 'ServiceCatalogTopic', {
+        displayName: 'Service Catalog Topic',
+    });
+
+    const onProductLaunchComplete = new sst.Function(stack, 'onProductLaunchComplete', {
+        handler: 'packages/api/modules/product/handlers/onProductLaunchComplete.handler',
+    });
+
+    snsTopic.addSubscription(new LambdaSubscription(onProductLaunchComplete));
 
     const vpc = Vpc.fromLookup(stack, `DefaultVpc`, { isDefault: true });
 
@@ -50,7 +62,6 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                                 virtualization: AmazonLinuxVirt.HVM,
                                 kernel: AmazonLinuxKernel.KERNEL5_X,
                             }),
-                            tags: ['Default'],
                         }),
                     ),
                     validateTemplate: true,
