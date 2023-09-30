@@ -8,7 +8,6 @@ import {
     RebootInstancesCommand,
     StartInstancesCommand,
     StopInstancesCommand,
-    TerminateInstancesCommand,
 } from '@aws-sdk/client-ec2';
 
 export class AwsEc2Integration {
@@ -51,11 +50,10 @@ export class AwsEc2Integration {
         return InstanceTypes[0];
     }
 
-    async getVolumeData(awsVolumeId: string) {
-        const command = new DescribeVolumesCommand({ VolumeIds: [awsVolumeId] });
+    async getVolumesTotalSize(awsVolumeIds: string[]) {
+        const command = new DescribeVolumesCommand({ VolumeIds: awsVolumeIds, MaxResults: 1000 });
         const { Volumes } = await this.client.send(command);
-        if (Volumes === undefined || Volumes.length === 0) return undefined;
-        return Volumes[0];
+        return Volumes?.map((v) => v.Size ?? 0).reduce((acc, curr) => acc + curr, 0);
     }
 
     async startInstance(awsInstanceId: string) {
@@ -81,13 +79,5 @@ export class AwsEc2Integration {
     async rebootInstance(awsInstanceId: string) {
         const command = new RebootInstancesCommand({ InstanceIds: [awsInstanceId] });
         await this.client.send(command);
-    }
-
-    async terminateInstance(awsInstanceId: string) {
-        const command = new TerminateInstancesCommand({ InstanceIds: [awsInstanceId] });
-        const { TerminatingInstances } = await this.client.send(command);
-        if (TerminatingInstances === undefined || TerminatingInstances.length === 0)
-            return undefined;
-        return TerminatingInstances[0];
     }
 }

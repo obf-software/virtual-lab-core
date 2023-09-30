@@ -1,9 +1,12 @@
 import {
     DescribePortfolioCommand,
     DescribeProductAsAdminCommand,
+    DescribeProvisioningParametersCommand,
     ServiceCatalogClient,
+    TerminateProvisionedProductCommand,
     paginateSearchProductsAsAdmin,
 } from '@aws-sdk/client-service-catalog';
+import { randomUUID } from 'node:crypto';
 
 export class AwsServiceCatalogIntegration {
     private client: ServiceCatalogClient;
@@ -34,5 +37,24 @@ export class AwsServiceCatalogIntegration {
         const { ProductViewDetail, ProvisioningArtifactSummaries, Tags } =
             await this.client.send(command);
         return { ProductViewDetail, ProvisioningArtifactSummaries, Tags };
+    }
+
+    async terminateProvisionedProductByName(provisionedProductName: string) {
+        const command = new TerminateProvisionedProductCommand({
+            ProvisionedProductName: provisionedProductName,
+            IgnoreErrors: true,
+            RetainPhysicalResources: false,
+            TerminateToken: randomUUID(),
+        });
+        await this.client.send(command);
+    }
+
+    async getProductProvisioningParameters(productId: string, artifactName: string) {
+        const command = new DescribeProvisioningParametersCommand({
+            ProductId: productId,
+            ProvisioningArtifactName: artifactName,
+        });
+        const { ProvisioningArtifactParameters } = await this.client.send(command);
+        return ProvisioningArtifactParameters;
     }
 }

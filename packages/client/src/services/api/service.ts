@@ -4,7 +4,7 @@ import {
     Group,
     Instance,
     InstanceConnection,
-    ProductSummary,
+    Product,
     SeekPaginated,
     UrlPath,
     User,
@@ -147,7 +147,7 @@ export const getInstanceConnection = async (
     });
 
 export const listUserProducts = async (userId: string | number | undefined) =>
-    executeRequest<ProductSummary[]>({
+    executeRequest<Product[]>({
         path: `/api/v1/users/${userId ?? 'me'}/products`,
         method: 'GET',
     });

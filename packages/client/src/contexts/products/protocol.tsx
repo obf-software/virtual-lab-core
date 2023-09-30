@@ -1,11 +1,11 @@
-import { ProductProvisioningParameters, ProductSummary } from '../../services/api/protocols';
+import { ProductProvisioningParameters, Product } from '../../services/api/protocols';
 
 export interface ProductsContextData {
     loadProducts: () => Promise<void>;
     loadProductProvisioningParameters: (awsProductId: string) => Promise<void>;
     isLoading: boolean;
     products: {
-        summary: ProductSummary;
+        data: Product;
         provisioningParameters?: ProductProvisioningParameters;
         isLoading: boolean;
     }[];

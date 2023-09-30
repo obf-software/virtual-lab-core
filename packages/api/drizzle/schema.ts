@@ -49,18 +49,18 @@ export const instance = pgTable('instance', {
     userId: integer('user_id')
         .notNull()
         .references(() => user.id),
-    awsInstanceId: varchar('aws_instance_id', { length: 50 }).notNull(),
+    awsInstanceId: varchar('aws_instance_id', { length: 50 }),
+    awsProvisionedProductName: varchar('aws_provisioned_product_name', { length: 50 }).notNull(),
     name: varchar('name', { length: 128 }).notNull(),
-    description: text('description'),
-    connectionType: instanceConnectionType('connection_type').notNull(),
-    platform: varchar('platform', { length: 100 }).notNull(), // Linux, Windows, etc
-    distribution: varchar('distribution', { length: 100 }).notNull(), // Ubuntu, Windows Server 2019, etc
-    instanceType: varchar('instance_type', { length: 50 }).notNull(), // t2.micro, t3.small, etc
-    cpu: varchar('cpu_size_in_gb', { length: 10 }).notNull(), // 1, 2, 4, etc
-    memoryInGb: varchar('memory_in_gb', { length: 10 }).notNull(), // 1, 2, 4, etc
-    storageInGb: varchar('storage_in_gb', { length: 10 }).notNull(), // 16, 32, 64, etc
-    tags: text('tags'), // comma separated list of software names
-    createdAt: timestamp('created_at').defaultNow().notNull(),
+    description: text('description').notNull(),
+    connectionType: instanceConnectionType('connection_type'),
+    platform: varchar('platform', { length: 100 }), // Linux, Windows, etc
+    distribution: varchar('distribution', { length: 100 }), // Ubuntu, Windows Server 2019, etc
+    instanceType: varchar('instance_type', { length: 50 }), // t2.micro, t3.small, etc
+    cpuCores: varchar('cpu_cores', { length: 10 }), // 1, 2, 4, etc
+    memoryInGb: varchar('memory_in_gb', { length: 10 }), // 1, 2, 4, etc
+    storageInGb: varchar('storage_in_gb', { length: 10 }), // 16, 32, 64, etc
+    createdAt: timestamp('created_at').defaultNow(),
     lastConnectionAt: timestamp('last_connection_at'),
 });
 

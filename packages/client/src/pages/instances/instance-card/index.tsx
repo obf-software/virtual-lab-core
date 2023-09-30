@@ -122,13 +122,11 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
         : instanceStateStyleMap.unknown;
 
     let platformStyle = instancePlatformStyleMap.UNKNOWN;
-    if (instance.platform.toLocaleLowerCase().includes('linux')) {
+    if (instance.platform?.toLocaleLowerCase().includes('linux')) {
         platformStyle = instancePlatformStyleMap.LINUX;
-    } else if (instance.platform.toLocaleLowerCase().includes('windows')) {
+    } else if (instance.platform?.toLocaleLowerCase().includes('windows')) {
         platformStyle = instancePlatformStyleMap.WINDOWS;
     }
-
-    const tags = instance.tags?.split(',') ?? [];
 
     React.useEffect(() => {
         const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
@@ -216,11 +214,11 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
 
                 <Wrap mt={'5%'}>
                     {[
-                        ['Tipo', instance.instanceType],
-                        ['CPU', `${instance.cpu} vCPU`],
-                        ['Memória', `${instance.memoryInGb} GB`],
-                        ['Armazenamento', `${instance.storageInGb} GB`],
-                        ['Conexão', instance.connectionType],
+                        ['Tipo', instance.instanceType ?? '-'],
+                        ['CPU', `${instance.cpuCores ?? '-'} vCPU`],
+                        ['Memória', `${instance.memoryInGb ?? '-'} GB`],
+                        ['Armazenamento', `${instance.storageInGb ?? '-'} GB`],
+                        ['Conexão', instance.connectionType ?? '-'],
                         ['Criada em', dayjs(instance.createdAt).format('DD/MM/YYYY')],
                         [
                             'Último acesso',
@@ -251,21 +249,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         </Stack>
                     ))}
                 </Wrap>
-                {tags.length > 0 ? (
-                    <Wrap mt={'2%'}>
-                        {tags?.map((tag, index) => (
-                            <Tag
-                                key={`tag-${tag}-${index}`}
-                                colorScheme='blue'
-                                size='md'
-                                fontWeight={'black'}
-                                variant={'outline'}
-                            >
-                                {tag}
-                            </Tag>
-                        ))}
-                    </Wrap>
-                ) : null}
             </CardBody>
             <CardFooter>
                 <Wrap spacingY={4}>

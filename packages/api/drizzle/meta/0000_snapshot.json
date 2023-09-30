@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "acfbc8b3-5a7d-4d9b-9a0f-293e8d0ad8e3",
+  "id": "f00da26c-8a80-46c8-8ed4-01f2000cf770",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "group": {
@@ -72,6 +72,12 @@
           "name": "aws_instance_id",
           "type": "varchar(50)",
           "primaryKey": false,
+          "notNull": false
+        },
+        "aws_provisioned_product_name": {
+          "name": "aws_provisioned_product_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
           "notNull": true
         },
         "name": {
@@ -84,53 +90,47 @@
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "connection_type": {
           "name": "connection_type",
           "type": "instance_connection_type",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "platform": {
           "name": "platform",
           "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "distribution": {
           "name": "distribution",
           "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "instance_type": {
           "name": "instance_type",
           "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "cpu_size_in_gb": {
-          "name": "cpu_size_in_gb",
+        "cpu_cores": {
+          "name": "cpu_cores",
           "type": "varchar(10)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "memory_in_gb": {
           "name": "memory_in_gb",
           "type": "varchar(10)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "storage_in_gb": {
           "name": "storage_in_gb",
           "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tags": {
-          "name": "tags",
-          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -138,7 +138,7 @@
           "name": "created_at",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "default": "now()"
         },
         "last_connection_at": {

@@ -78,17 +78,17 @@ export enum InstanceState {
 export interface Instance {
     id: number;
     userId: number;
-    awsInstanceId: string;
+    awsInstanceId?: string;
+    awsProvisionedProductName: string;
     name: string;
-    description: string | null;
-    connectionType: keyof typeof InstanceConnectionType;
-    platform: string;
-    distribution: string;
-    instanceType: string;
-    cpu: string;
-    memoryInGb: string;
-    storageInGb: string;
-    tags: string | null;
+    description: string;
+    connectionType?: keyof typeof InstanceConnectionType;
+    platform?: string;
+    distribution?: string;
+    instanceType?: string;
+    cpuCores?: string;
+    memoryInGb?: string;
+    storageInGb?: string;
     createdAt: string;
     lastConnectionAt: string | null;
 

@@ -57,11 +57,6 @@ export class BaseLinuxProduct extends ProductStack {
             description: 'Instance type',
         });
 
-        const usernameParam = new CfnParameter(this, `${id}-UsernameParam`, {
-            type: 'String',
-            description: 'Cognito username of the user that created the instance',
-        });
-
         const securityGroup = new SecurityGroup(this, `${id}-SecurityGroup`, {
             vpc,
             allowAllIpv6Outbound: true,
@@ -118,16 +113,16 @@ export class BaseLinuxProduct extends ProductStack {
             },
         });
 
-        new CfnOutput(this, `${id}-OutputInstanceId`, {
-            exportName: 'instanceId',
+        new CfnOutput(this, `${id}-OutputAwsInstanceId`, {
+            exportName: 'awsInstanceId',
             value: instance.instanceId,
-            description: 'instanceId',
+            description: 'awsInstanceId',
         });
 
-        new CfnOutput(this, `${id}-OutputUsername`, {
-            exportName: 'username',
-            value: usernameParam.valueAsString,
-            description: 'username',
+        new CfnOutput(this, `${id}-OutputConnectionType`, {
+            exportName: 'connectionType',
+            value: 'VNC',
+            description: 'connectionType',
         });
     }
 }

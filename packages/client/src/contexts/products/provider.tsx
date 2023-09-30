@@ -30,8 +30,8 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
 
         setIsLoading(false);
         setProducts(
-            data.map((summary) => ({
-                summary,
+            data.map((data) => ({
+                data,
                 provisioningParameters: undefined,
                 isLoading: false,
             })),
@@ -40,9 +40,7 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
 
     const loadProductProvisioningParameters: ProductsContextData['loadProductProvisioningParameters'] =
         async (awsProductId) => {
-            const product = products.find(
-                (product) => product.summary.awsProductId === awsProductId,
-            );
+            const product = products.find((product) => product.data.awsProductId === awsProductId);
 
             if (product === undefined) {
                 return;
