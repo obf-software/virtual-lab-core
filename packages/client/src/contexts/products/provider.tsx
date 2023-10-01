@@ -1,7 +1,7 @@
 import React from 'react';
 import { ProductsContext } from './context';
 import { useToast } from '@chakra-ui/react';
-import { listUserProducts } from '../../services/api/service';
+import { listUserProducts, getProductProvisioningParameters } from '../../services/api/service';
 import { ProductsContextData } from './protocol';
 
 export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -42,15 +42,29 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
         async (awsProductId) => {
             const product = products.find((product) => product.data.awsProductId === awsProductId);
 
-            if (product === undefined) {
-                return;
+            if (product?.provisioningParameters !== undefined) {
+                return product.provisioningParameters;
             }
 
-            product.isLoading = true;
-            setProducts([...products]);
+            const { data, error } = await getProductProvisioningParameters(awsProductId);
 
-            // TODO: Load product provisioning parameters
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            if (error !== undefined) {
+                throw new Error(error);
+            }
+
+            setProducts((currentProducts) => {
+                return currentProducts.map((currentProduct) => {
+                    if (currentProduct.data.awsProductId === awsProductId) {
+                        return {
+                            ...currentProduct,
+                            provisioningParameters: data,
+                        };
+                    }
+                    return currentProduct;
+                });
+            });
+
+            return data;
         };
 
     return (

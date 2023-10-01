@@ -2,6 +2,7 @@ import {
     DescribePortfolioCommand,
     DescribeProductAsAdminCommand,
     DescribeProvisioningParametersCommand,
+    ListLaunchPathsCommand,
     ServiceCatalogClient,
     TerminateProvisionedProductCommand,
     paginateSearchProductsAsAdmin,
@@ -49,10 +50,27 @@ export class AwsServiceCatalogIntegration {
         await this.client.send(command);
     }
 
+    async getProductLaunchPath(productId: string) {
+        const command = new ListLaunchPathsCommand({ ProductId: productId });
+        const { LaunchPathSummaries } = await this.client.send(command);
+        if (LaunchPathSummaries === undefined || LaunchPathSummaries.length === 0) {
+            return undefined;
+        }
+
+        return LaunchPathSummaries[0];
+    }
+
     async getProductProvisioningParameters(productId: string, artifactName: string) {
+        const launchPath = await this.getProductLaunchPath(productId);
+
+        if (launchPath?.Id === undefined) {
+            return undefined;
+        }
+
         const command = new DescribeProvisioningParametersCommand({
             ProductId: productId,
             ProvisioningArtifactName: artifactName,
+            PathId: launchPath.Id,
         });
         const { ProvisioningArtifactParameters } = await this.client.send(command);
         return ProvisioningArtifactParameters;

@@ -56,6 +56,20 @@ export class ProductService {
         }));
     }
 
+    async getProductProvisioningParameters(productId: string) {
+        const provisioningParameters =
+            await this.awsServiceCatalogIntegration.getProductProvisioningParameters(
+                productId,
+                'latest',
+            );
+
+        if (!provisioningParameters) {
+            throw new Error(`Product ${productId} not found`);
+        }
+
+        return provisioningParameters;
+    }
+
     /**
      * This function gets a provisioned product stack and updates user's instance based on the
      * stack's outputs.

@@ -111,7 +111,19 @@ export interface Product {
     createdAt: string;
 }
 
-export interface ProductProvisioningParameters {
-    // TODO
-    a: string;
+export interface ProductProvisioningParameter {
+    ParameterKey: string;
+    DefaultValue?: string;
+    ParameterType: string;
+    IsNoEcho: boolean;
+    Description?: string;
+    ParameterConstraints: {
+        AllowedValues?: string[];
+        AllowedPattern?: string;
+        ConstraintDescription?: string;
+        MaxLength?: string;
+        MinLength?: string;
+        MaxValue?: string;
+        MinValue?: string;
+    };
 }

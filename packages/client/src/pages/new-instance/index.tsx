@@ -13,6 +13,7 @@ import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { useProductsContext } from '../../contexts/products/hook';
+import { NewInstanceCard } from './card';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -97,9 +98,15 @@ export const NewInstancePage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {!isLoading && products.length > 0 ? (
-                    <pre>{JSON.stringify(products, null, 2)}</pre>
-                ) : null}
+                {!isLoading &&
+                    products.map((product) => (
+                        <Box
+                            pb={10}
+                            key={`product-${product.data.awsProductId}`}
+                        >
+                            <NewInstanceCard product={product.data} />
+                        </Box>
+                    ))}
             </Container>
         </Box>
     );

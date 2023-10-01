@@ -20,6 +20,22 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         ],
     });
 
+    const getProductProvisioningParametersFunctionRole = new Role(
+        stack,
+        'GetProductProvisioningParametersFunctionRole',
+        {
+            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+            managedPolicies: [
+                ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+                ManagedPolicy.fromAwsManagedPolicyName(
+                    'service-role/AWSLambdaVPCAccessExecutionRole',
+                ),
+                ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
+                ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
+            ],
+        },
+    );
+
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
         onCreate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
         onUpdate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
@@ -128,6 +144,19 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     role: listUserProductsFunctionRole,
                 },
             },
+            'GET /api/v1/products/{productId}/provisioning-parameters': {
+                function: {
+                    handler:
+                        'packages/api/modules/product/handlers/getProductProvisioningParameters.handler',
+                    role: getProductProvisioningParametersFunctionRole,
+                    permissions: ['s3:*'],
+                    environment: {
+                        DATABASE_URL,
+                        GUACAMOLE_CYPHER_KEY,
+                        INSTANCE_PASSWORD,
+                    },
+                },
+            },
 
             // User module
             'GET /api/v1/users': {
@@ -185,6 +214,6 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         api,
         apiEventBus,
         migrateDbScript,
-        lambdaRoles: [listUserProductsFunctionRole],
+        lambdaRoles: [listUserProductsFunctionRole, getProductProvisioningParametersFunctionRole],
     };
 };

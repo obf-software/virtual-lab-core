@@ -5,6 +5,7 @@ import {
     Instance,
     InstanceConnection,
     Product,
+    ProductProvisioningParameter,
     SeekPaginated,
     UrlPath,
     User,
@@ -149,5 +150,11 @@ export const getInstanceConnection = async (
 export const listUserProducts = async (userId: string | number | undefined) =>
     executeRequest<Product[]>({
         path: `/api/v1/users/${userId ?? 'me'}/products`,
+        method: 'GET',
+    });
+
+export const getProductProvisioningParameters = async (productId: string) =>
+    executeRequest<ProductProvisioningParameter[]>({
+        path: `/api/v1/products/${productId}/provisioning-parameters`,
         method: 'GET',
     });

@@ -158,4 +158,8 @@ export class InstanceService {
             data,
         );
     }
+
+    async createInstance(data: typeof schema.instance.$inferInsert) {
+        return await this.instanceRepository.createInstance(data);
+    }
 }
