@@ -4,6 +4,7 @@ import { HttpRequest } from '@aws-sdk/protocol-http';
 import { SignatureV4 } from '@aws-sdk/signature-v4';
 import fetch from 'node-fetch';
 import { logger } from '../powertools';
+import * as schema from '../../drizzle/schema';
 
 export class AwsAppSyncIntegration {
     private AWS_REGION: string;
@@ -69,6 +70,16 @@ export class AwsAppSyncIntegration {
             awsInstanceId: props.awsInstanceId,
             name: props.name,
             state: props.state,
+        });
+    }
+
+    async publishEc2InstanceProvisioned(props: {
+        username: string;
+        instance: typeof schema.instance.$inferSelect;
+    }) {
+        await this.publishMutation(props.username, {
+            type: 'EC2_INSTANCE_PROVISIONED',
+            instance: props.instance,
         });
     }
 }

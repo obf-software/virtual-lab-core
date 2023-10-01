@@ -1,7 +1,8 @@
 import { AwsEc2Integration } from '../../integrations/aws-ec2/service';
 import { GuacamoleIntegration } from '../../integrations/guacamole/service';
-import { logger } from '../../integrations/powertools';
 import { InstanceRepository } from './repository';
+import * as schema from '../../drizzle/schema';
+import { AwsServiceCatalogIntegration } from '../../integrations/aws-service-catalog/service';
 
 export class InstanceService {
     private INSTANCE_PASSWORD: string;
@@ -9,6 +10,7 @@ export class InstanceService {
     private instanceRepository: InstanceRepository;
     private awsEc2Integration: AwsEc2Integration;
     private guacamoleIntegration: GuacamoleIntegration;
+    private awsServiceCatalogIntegration: AwsServiceCatalogIntegration;
 
     constructor(props: {
         INSTANCE_PASSWORD: string;
@@ -16,12 +18,14 @@ export class InstanceService {
         instanceRepository: InstanceRepository;
         awsEc2Integration: AwsEc2Integration;
         guacamoleIntegration: GuacamoleIntegration;
+        awsServiceCatalogIntegration: AwsServiceCatalogIntegration;
     }) {
         this.INSTANCE_PASSWORD = props.INSTANCE_PASSWORD;
         this.GUACAMOLE_CYPHER_KEY = props.GUACAMOLE_CYPHER_KEY;
         this.instanceRepository = props.instanceRepository;
         this.awsEc2Integration = props.awsEc2Integration;
         this.guacamoleIntegration = props.guacamoleIntegration;
+        this.awsServiceCatalogIntegration = props.awsServiceCatalogIntegration;
     }
 
     async getInstanceByAwsInstanceId(awsInstanceId: string) {
@@ -44,8 +48,14 @@ export class InstanceService {
             return instances;
         }
 
-        const awsInstanceIds = instances.data.map((i) => i.awsInstanceId);
-        const instanceStatuses = await this.awsEc2Integration.listInstanceStatuses(awsInstanceIds);
+        const awsInstanceIds: string[] = instances.data
+            .filter((i) => i.awsInstanceId !== null)
+            .map((i) => i.awsInstanceId!);
+
+        const instanceStatuses =
+            awsInstanceIds.length > 0
+                ? await this.awsEc2Integration.listInstanceStatuses(awsInstanceIds)
+                : [];
         const instanceStatesByInstanceId = instanceStatuses.reduce(
             (acc, curr) => {
                 if (curr.InstanceId !== undefined) {
@@ -57,7 +67,7 @@ export class InstanceService {
         );
         const instancesWithStates = instances.data.map((i) => ({
             ...i,
-            state: instanceStatesByInstanceId[i.awsInstanceId],
+            state: instanceStatesByInstanceId[i.awsInstanceId ?? ''],
         }));
 
         return {
@@ -85,13 +95,9 @@ export class InstanceService {
             return undefined;
         }
 
-        const instanceTerminationResult = await this.awsEc2Integration.terminateInstance(
-            deletedInstance.awsInstanceId,
+        await this.awsServiceCatalogIntegration.terminateProvisionedProductByName(
+            deletedInstance.awsProvisionedProductName,
         );
-
-        if (instanceTerminationResult !== undefined) {
-            logger.info(`Instance ${deletedInstance.id} is being terminated`);
-        }
 
         return instanceId;
     }
@@ -101,6 +107,10 @@ export class InstanceService {
 
         if (instance === undefined) {
             throw new Error('Instance not found');
+        }
+
+        if (instance.awsInstanceId === null) {
+            throw new Error('Instance does not have an AWS instance ID');
         }
 
         const awsInstance = await this.awsEc2Integration.getInstance(instance.awsInstanceId);
@@ -137,5 +147,15 @@ export class InstanceService {
         return {
             connectionString,
         };
+    }
+
+    async updateInstanceByAwsProvisionedProductName(
+        awsProvisionedProductName: string,
+        data: Partial<typeof schema.instance.$inferInsert>,
+    ) {
+        return await this.instanceRepository.updateInstanceByAwsProvisionedProductName(
+            awsProvisionedProductName,
+            data,
+        );
     }
 }

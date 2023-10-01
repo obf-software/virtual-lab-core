@@ -48,9 +48,17 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                             viewed: false,
                             text: `Instância ${typedData.name} mudou de estado para ${typedData.state}`,
                         };
+                        return [newNotification, ...currentNotifications];
+                    }
 
-                        console.log('New notification', newNotification);
+                    if (data.type === 'EC2_INSTANCE_PROVISIONED') {
+                        const typedData = data as NotificationTypeMap['EC2_INSTANCE_PROVISIONED'];
 
+                        const newNotification: ReadableNotification = {
+                            id: v4(),
+                            viewed: false,
+                            text: `Instância ${typedData.instance.name} foi provisionada`,
+                        };
                         return [newNotification, ...currentNotifications];
                     }
 

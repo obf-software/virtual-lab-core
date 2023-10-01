@@ -49,11 +49,13 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
 
         newClient.onerror = (error) => {
             toast({
-                title: 'Erro de conexão',
-                description: error.message,
+                title: 'A conexão não pode ser estabelecida',
+                description:
+                    'A instância está sendo preparada, tente novamente em alguns instantes.',
                 status: 'error',
-                duration: 9000,
+                duration: 5000,
                 isClosable: true,
+                position: 'bottom-left',
                 variant: 'left-accent',
             });
         };

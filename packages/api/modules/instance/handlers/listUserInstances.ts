@@ -10,6 +10,7 @@ import { InstanceService } from '../service';
 import { AuthService } from '../../auth/service';
 import { z } from 'zod';
 import { InvalidQueryParamsError } from '../../core/errors';
+import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
 
 // Config
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
@@ -18,6 +19,7 @@ const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 // Integration
 const awsEc2Integration = new AwsEc2Integration({ AWS_REGION });
 const guacamoleIntegration = new GuacamoleIntegration();
+const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
 
 // Repository
 const instanceRepository = new InstanceRepository(dbClient);
@@ -29,6 +31,7 @@ const instanceService = new InstanceService({
     instanceRepository,
     awsEc2Integration,
     guacamoleIntegration,
+    awsServiceCatalogIntegration,
 });
 const authService = new AuthService();
 

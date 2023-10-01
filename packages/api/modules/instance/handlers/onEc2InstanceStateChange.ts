@@ -11,6 +11,7 @@ import { InstanceService } from '../service';
 import { UserRepository } from '../../user/repository';
 import { UserService } from '../../user/service';
 import { AwsAppSyncIntegration } from '../../../integrations/aws-app-sync/service';
+import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
 
 // Config
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD, APP_SYNC_API_URL } =
@@ -21,6 +22,7 @@ const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 const awsEc2Integration = new AwsEc2Integration({ AWS_REGION });
 const guacamoleIntegration = new GuacamoleIntegration();
 const awsAppSyncIntegration = new AwsAppSyncIntegration({ AWS_REGION, APP_SYNC_API_URL });
+const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
 
 // Repository
 const instanceRepository = new InstanceRepository(dbClient);
@@ -33,6 +35,7 @@ const instanceService = new InstanceService({
     instanceRepository,
     awsEc2Integration,
     guacamoleIntegration,
+    awsServiceCatalogIntegration,
 });
 const userService = new UserService({ userRepository });
 
@@ -62,7 +65,7 @@ export const handler = createHandler<
     await awsAppSyncIntegration.publishEc2InstanceStateChanged({
         username: user.username,
         id: instance.id,
-        awsInstanceId: instance.awsInstanceId,
+        awsInstanceId: instance.awsInstanceId!,
         name: instance.name,
         state,
     });

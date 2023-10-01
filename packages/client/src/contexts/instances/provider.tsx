@@ -16,25 +16,49 @@ export const InstancesProvider: React.FC<PropsWithChildren> = ({ children }) => 
     const toast = useToast();
 
     React.useEffect(() => {
-        const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
-            console.log('EC2_INSTANCE_STATE_CHANGED', data);
+        const ec2InstanceStateChangedHandlerId = registerHandler(
+            'EC2_INSTANCE_STATE_CHANGED',
+            (data) => {
+                console.log('EC2_INSTANCE_STATE_CHANGED', data);
 
-            setInstances((currentInstances) => {
-                return currentInstances.map((instance) => {
-                    if (instance.id === data.id) {
-                        return {
-                            ...instance,
-                            state: data.state,
-                        };
-                    }
+                setInstances((currentInstances) => {
+                    return currentInstances.map((instance) => {
+                        if (instance.id === data.id) {
+                            return {
+                                ...instance,
+                                state: data.state,
+                            };
+                        }
 
-                    return instance;
+                        return instance;
+                    });
                 });
-            });
-        });
+            },
+        );
+
+        const ec2InstanceProvisionedHandlerId = registerHandler(
+            'EC2_INSTANCE_PROVISIONED',
+            (data) => {
+                console.log('EC2_INSTANCE_PROVISIONED', data);
+
+                setInstances((currentInstances) => {
+                    return currentInstances.map((instance) => {
+                        if (instance.id === data.instance.id) {
+                            return {
+                                ...instance,
+                                ...data.instance,
+                            };
+                        }
+
+                        return instance;
+                    });
+                });
+            },
+        );
 
         return () => {
-            unregisterHandlerById(handlerId);
+            unregisterHandlerById(ec2InstanceStateChangedHandlerId);
+            unregisterHandlerById(ec2InstanceProvisionedHandlerId);
         };
     }, []);
 

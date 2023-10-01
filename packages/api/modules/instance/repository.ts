@@ -71,4 +71,35 @@ export class InstanceRepository {
 
         return deletedInstances[0];
     }
+
+    async updateInstanceByAwsProvisionedProductName(
+        awsProvisionedProductName: string,
+        data: Partial<typeof schema.instance.$inferInsert>,
+    ) {
+        const updatedInstances = await this.dbClient
+            .update(schema.instance)
+            .set(data)
+            .where(eq(schema.instance.awsProvisionedProductName, awsProvisionedProductName))
+            .returning()
+            .execute();
+
+        if (updatedInstances.length === 0) {
+            return undefined;
+        }
+
+        return updatedInstances[0];
+    }
+
+    async createInstance(data: typeof schema.instance.$inferInsert) {
+        const createdInstances = await this.dbClient
+            .insert(schema.instance)
+            .values(data)
+            .returning()
+            .execute();
+
+        if (createdInstances.length === 0) {
+            return undefined;
+        }
+        return createdInstances[0];
+    }
 }

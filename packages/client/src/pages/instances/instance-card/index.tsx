@@ -45,7 +45,7 @@ dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 const instanceStateStyleMap: Record<
-    keyof typeof InstanceState | 'unknown',
+    keyof typeof InstanceState | 'unknown' | 'provisioning',
     { label: string; colorScheme: string; hasSpinner: boolean }
 > = {
     'shutting-down': {
@@ -83,6 +83,11 @@ const instanceStateStyleMap: Record<
         colorScheme: 'gray',
         hasSpinner: false,
     },
+    provisioning: {
+        label: 'Provisionando',
+        colorScheme: 'orange',
+        hasSpinner: true,
+    },
 };
 
 const instancePlatformStyleMap: Record<
@@ -117,9 +122,12 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const navigate = useNavigate();
     const toast = useToast();
 
-    const stateStyle = Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
-        ? instanceStateStyleMap[instance.state ?? 'unknown']
-        : instanceStateStyleMap.unknown;
+    const stateStyle =
+        instance.awsInstanceId === null
+            ? instanceStateStyleMap.provisioning
+            : Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
+            ? instanceStateStyleMap[instance.state ?? 'unknown']
+            : instanceStateStyleMap.unknown;
 
     let platformStyle = instancePlatformStyleMap.UNKNOWN;
     if (instance.platform?.toLocaleLowerCase().includes('linux')) {
@@ -203,6 +211,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     direction='row'
                     align='center'
                     mt={'5%'}
+                    hidden={instance.awsInstanceId === null}
                 >
                     <Icon
                         aria-label={platformStyle.label}
@@ -212,12 +221,18 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Text size={'md'}>{instance.distribution}</Text>
                 </Stack>
 
-                <Wrap mt={'5%'}>
+                <Wrap
+                    mt={'5%'}
+                    hidden={instance.awsInstanceId === null}
+                >
                     {[
                         ['Tipo', instance.instanceType ?? '-'],
-                        ['CPU', `${instance.cpuCores ?? '-'} vCPU`],
-                        ['Memória', `${instance.memoryInGb ?? '-'} GB`],
-                        ['Armazenamento', `${instance.storageInGb ?? '-'} GB`],
+                        ['CPU', instance.cpuCores ? `${instance.cpuCores} vCPU` : '-'],
+                        ['Memória', instance.memoryInGb ? `${instance.memoryInGb} GB` : '-'],
+                        [
+                            'Armazenamento',
+                            instance.storageInGb ? `${instance.storageInGb} GB` : '-',
+                        ],
                         ['Conexão', instance.connectionType ?? '-'],
                         ['Criada em', dayjs(instance.createdAt).format('DD/MM/YYYY')],
                         [
@@ -250,12 +265,15 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     ))}
                 </Wrap>
             </CardBody>
-            <CardFooter>
+            <CardFooter hidden={instance.awsInstanceId === null}>
                 <Wrap spacingY={4}>
                     <Button
                         leftIcon={<FiPlay />}
                         colorScheme='green'
-                        hidden={instance.state !== 'pending' && instance.state !== 'running'}
+                        hidden={
+                            (instance.state !== 'pending' && instance.state !== 'running') ||
+                            instance.awsInstanceId === null
+                        }
                         isDisabled={instance.state !== 'running'}
                         isLoading={isLoading}
                         onClick={() => {
@@ -288,7 +306,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Button
                         leftIcon={<FiPower />}
                         colorScheme='red'
-                        hidden={instance.state !== 'pending' && instance.state !== 'running'}
+                        hidden={
+                            (instance.state !== 'pending' && instance.state !== 'running') ||
+                            instance.awsInstanceId === null
+                        }
                         isDisabled={instance.state !== 'running'}
                         isLoading={isLoading}
                         onClick={() => {
@@ -317,7 +338,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         leftIcon={<FiPower />}
                         colorScheme='green'
                         transition={'all 1s'}
-                        hidden={instance.state !== 'stopped' && instance.state !== 'stopping'}
+                        hidden={
+                            (instance.state !== 'stopped' && instance.state !== 'stopping') ||
+                            instance.awsInstanceId === null
+                        }
                         isDisabled={instance.state !== 'stopped'}
                         isLoading={isLoading}
                         onClick={() => {
@@ -345,13 +369,30 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Button
                         leftIcon={<FiRefreshCw />}
                         colorScheme='blackAlpha'
-                        hidden={!isMoreOptionsOpen || instance.state !== 'running'}
+                        hidden={
+                            !isMoreOptionsOpen ||
+                            instance.state !== 'running' ||
+                            instance.awsInstanceId === null
+                        }
                         isLoading={isLoading}
                         onClick={() => {
                             setIsLoading(true);
                             changeInstanceState(undefined, instance.id, 'reboot')
-                                .then(() => {
+                                .then(({ error }) => {
                                     setIsLoading(false);
+                                    if (error !== undefined) {
+                                        toast({
+                                            title: 'Erro ao reiniciar instância',
+                                            description: error,
+                                            status: 'error',
+                                            duration: 5000,
+                                            isClosable: true,
+                                            position: 'bottom-left',
+                                            variant: 'left-accent',
+                                        });
+                                        return;
+                                    }
+
                                     toast({
                                         title: 'Instância reiniciada',
                                         description: 'A instância foi reiniciada com sucesso',
@@ -362,21 +403,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                                         variant: 'left-accent',
                                     });
                                 })
-                                .catch((error) => {
-                                    setIsLoading(false);
-                                    toast({
-                                        title: 'Erro ao reiniciar instância',
-                                        description:
-                                            error instanceof Error
-                                                ? error.message
-                                                : 'Erro desconhecido',
-                                        status: 'error',
-                                        duration: 5000,
-                                        isClosable: true,
-                                        position: 'bottom-left',
-                                        variant: 'left-accent',
-                                    });
-                                });
+                                .catch(console.error);
                         }}
                     >
                         Reiniciar
@@ -385,18 +412,22 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Button
                         leftIcon={<FiTrash />}
                         colorScheme='red'
-                        hidden={!isMoreOptionsOpen}
+                        hidden={!isMoreOptionsOpen || instance.awsInstanceId === null}
                         isLoading={isLoading}
                         onClick={onOpen}
                     >
-                        Exluir
+                        Excluir {JSON.stringify(instance)}
                     </Button>
 
                     <IconButton
                         aria-label='Mais opções'
                         variant={'outline'}
                         colorScheme='blue'
-                        hidden={instance.state === 'stopping' || instance.state === 'pending'}
+                        hidden={
+                            instance.state === 'stopping' ||
+                            instance.state === 'pending' ||
+                            instance.awsInstanceId === null
+                        }
                         icon={isMoreOptionsOpen ? <FiChevronsLeft /> : <FiMoreVertical />}
                         onClick={() => setIsMoreOptionsOpen(!isMoreOptionsOpen)}
                     />

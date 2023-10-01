@@ -9,20 +9,43 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '../../../drizzle/schema';
 import { InvalidPathParamsError } from '../../core/errors';
+import { AwsCloudformationIntegration } from '../../../integrations/aws-cloudformation/service';
+import { AwsEc2Integration } from '../../../integrations/aws-ec2/service';
+import { GuacamoleIntegration } from '../../../integrations/guacamole/service';
+import { InstanceRepository } from '../../instance/repository';
+import { InstanceService } from '../../instance/service';
 
 // Config
-const { AWS_REGION, DATABASE_URL } = process.env;
+const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
 const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 
 // Integration
+const awsEc2Integration = new AwsEc2Integration({ AWS_REGION });
 const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
+const awsCloudformationIntegration = new AwsCloudformationIntegration({ AWS_REGION });
+const guacamoleIntegration = new GuacamoleIntegration();
 
 // Repository
 const groupRepository = new GroupRepository(dbClient);
+const instanceRepository = new InstanceRepository(dbClient);
 
 // Service
 const groupService = new GroupService({ awsServiceCatalogIntegration, groupRepository });
-const productService = new ProductService({ awsServiceCatalogIntegration, groupService });
+const instanceService = new InstanceService({
+    awsEc2Integration,
+    awsServiceCatalogIntegration,
+    GUACAMOLE_CYPHER_KEY,
+    guacamoleIntegration,
+    INSTANCE_PASSWORD,
+    instanceRepository,
+});
+const productService = new ProductService({
+    awsServiceCatalogIntegration,
+    awsEc2Integration,
+    awsCloudformationIntegration,
+    groupService,
+    instanceService,
+});
 const authService = new AuthService();
 
 export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {

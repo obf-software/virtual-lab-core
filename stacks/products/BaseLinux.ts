@@ -114,13 +114,11 @@ export class BaseLinuxProduct extends ProductStack {
         });
 
         new CfnOutput(this, `${id}-OutputAwsInstanceId`, {
-            exportName: 'awsInstanceId',
             value: instance.instanceId,
             description: 'awsInstanceId',
         });
 
         new CfnOutput(this, `${id}-OutputConnectionType`, {
-            exportName: 'connectionType',
             value: 'VNC',
             description: 'connectionType',
         });

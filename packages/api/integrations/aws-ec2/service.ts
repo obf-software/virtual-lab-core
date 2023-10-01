@@ -1,5 +1,5 @@
 import {
-    DescribeImageAttributeCommand,
+    DescribeImagesCommand,
     DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
     DescribeInstancesCommand,
@@ -35,12 +35,12 @@ export class AwsEc2Integration {
     }
 
     async getImageDescription(awsImageId: string) {
-        const command = new DescribeImageAttributeCommand({
-            Attribute: 'description',
-            ImageId: awsImageId,
+        const command = new DescribeImagesCommand({
+            ImageIds: [awsImageId],
         });
-        const { Description } = await this.client.send(command);
-        return Description?.Value;
+        const { Images } = await this.client.send(command);
+        if (Images === undefined || Images.length === 0) return undefined;
+        return Images[0].Description;
     }
 
     async getInstanceTypeData(awsInstanceType: string) {
@@ -51,7 +51,7 @@ export class AwsEc2Integration {
     }
 
     async getVolumesTotalSize(awsVolumeIds: string[]) {
-        const command = new DescribeVolumesCommand({ VolumeIds: awsVolumeIds, MaxResults: 1000 });
+        const command = new DescribeVolumesCommand({ VolumeIds: awsVolumeIds });
         const { Volumes } = await this.client.send(command);
         return Volumes?.map((v) => v.Size ?? 0).reduce((acc, curr) => acc + curr, 0);
     }

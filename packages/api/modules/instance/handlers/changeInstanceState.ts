@@ -10,6 +10,7 @@ import { AuthService } from '../../auth/service';
 import { z } from 'zod';
 import { InvalidBodyError, InvalidPathParamsError } from '../../core/errors';
 import { GuacamoleIntegration } from '../../../integrations/guacamole/service';
+import { AwsServiceCatalogIntegration } from '../../../integrations/aws-service-catalog/service';
 
 // Config
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
@@ -18,6 +19,7 @@ const dbClient = drizzle(postgres(DATABASE_URL), { schema });
 // Integration
 const awsEc2Integration = new AwsEc2Integration({ AWS_REGION });
 const guacamoleIntegration = new GuacamoleIntegration();
+const awsServiceCatalogIntegration = new AwsServiceCatalogIntegration({ AWS_REGION });
 
 // Repository
 const instanceRepository = new InstanceRepository(dbClient);
@@ -29,6 +31,7 @@ const instanceService = new InstanceService({
     instanceRepository,
     awsEc2Integration,
     guacamoleIntegration,
+    awsServiceCatalogIntegration,
 });
 const authService = new AuthService();
 
@@ -69,6 +72,10 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
         throw new Error('Instance not found');
     }
 
+    if (instance.awsInstanceId === null) {
+        throw new Error('Instance is not launched yet');
+    }
+
     if (!authService.hasUserRoleOrAbove('ADMIN', role) && instance.userId !== userIdToUse) {
         throw new Error('You are not authorized to perform this action');
     }
@@ -85,6 +92,7 @@ export const handler = createHandler<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
 
     return {
         statusCode: 200,
+        body: JSON.stringify({ message: 'Instance state changed' }),
         headers: { 'Content-Type': 'application/json' },
     };
 }, true);
