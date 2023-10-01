@@ -8,6 +8,7 @@ export interface ProductsContextData {
     isLoading: boolean;
     products: {
         data: Product;
+        launchPathId?: string;
         provisioningParameters?: ProductProvisioningParameter[];
     }[];
 }

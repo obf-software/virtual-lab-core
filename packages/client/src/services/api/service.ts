@@ -154,7 +154,10 @@ export const listUserProducts = async (userId: string | number | undefined) =>
     });
 
 export const getProductProvisioningParameters = async (productId: string) =>
-    executeRequest<ProductProvisioningParameter[]>({
+    executeRequest<{
+        provisioningParameters: ProductProvisioningParameter[];
+        launchPathId: string;
+    }>({
         path: `/api/v1/products/${productId}/provisioning-parameters`,
         method: 'GET',
     });

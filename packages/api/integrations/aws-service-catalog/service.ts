@@ -60,17 +60,15 @@ export class AwsServiceCatalogIntegration {
         return LaunchPathSummaries[0];
     }
 
-    async getProductProvisioningParameters(productId: string, artifactName: string) {
-        const launchPath = await this.getProductLaunchPath(productId);
-
-        if (launchPath?.Id === undefined) {
-            return undefined;
-        }
-
+    async getProductProvisioningParameters(
+        productId: string,
+        artifactName: string,
+        launchPathId: string,
+    ) {
         const command = new DescribeProvisioningParametersCommand({
             ProductId: productId,
             ProvisioningArtifactName: artifactName,
-            PathId: launchPath.Id,
+            PathId: launchPathId,
         });
         const { ProvisioningArtifactParameters } = await this.client.send(command);
         return ProvisioningArtifactParameters;

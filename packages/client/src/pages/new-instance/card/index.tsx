@@ -13,7 +13,6 @@ import {
 import dayjs from 'dayjs';
 import React from 'react';
 import { FiUploadCloud } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
 import { Product, ProductProvisioningParameter } from '../../../services/api/protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useProductsContext } from '../../../contexts/products/hook';
@@ -31,7 +30,6 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
     const { loadProductProvisioningParameters } = useProductsContext();
     const [parameters, setParameters] = React.useState<ProductProvisioningParameter[]>([]);
     const provisioningModalDisclosure = useDisclosure();
-    const navigate = useNavigate();
     const toast = useToast();
 
     return (
@@ -40,6 +38,7 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
                 isOpen={provisioningModalDisclosure.isOpen}
                 onClose={provisioningModalDisclosure.onClose}
                 parameters={parameters}
+                product={product}
             />
             <CardHeader>
                 <Stack

@@ -57,14 +57,15 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
                     if (currentProduct.data.awsProductId === awsProductId) {
                         return {
                             ...currentProduct,
-                            provisioningParameters: data,
+                            launchPathId: data.launchPathId,
+                            provisioningParameters: data.provisioningParameters,
                         };
                     }
                     return currentProduct;
                 });
             });
 
-            return data;
+            return data.provisioningParameters;
         };
 
     return (

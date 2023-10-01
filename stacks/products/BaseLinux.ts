@@ -54,7 +54,7 @@ export class BaseLinuxProduct extends ProductStack {
             type: 'String',
             default: props.defaultInstanceType.toString(),
             allowedValues: [...allowedInstanceTypes],
-            description: 'Instance type',
+            description: 'Instance Type',
         });
 
         const securityGroup = new SecurityGroup(this, `${id}-SecurityGroup`, {

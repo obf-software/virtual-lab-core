@@ -57,17 +57,27 @@ export class ProductService {
     }
 
     async getProductProvisioningParameters(productId: string) {
+        const launchPath = await this.awsServiceCatalogIntegration.getProductLaunchPath(productId);
+
+        if (launchPath?.Id === undefined) {
+            throw new Error(`Product ${productId} launch path not found`);
+        }
+
         const provisioningParameters =
             await this.awsServiceCatalogIntegration.getProductProvisioningParameters(
                 productId,
                 'latest',
+                launchPath.Id,
             );
 
         if (!provisioningParameters) {
             throw new Error(`Product ${productId} not found`);
         }
 
-        return provisioningParameters;
+        return {
+            provisioningParameters: provisioningParameters,
+            launchPathId: launchPath.Id,
+        };
     }
 
     /**

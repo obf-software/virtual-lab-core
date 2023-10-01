@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import {
     Button,
+    Divider,
     FormControl,
     FormLabel,
+    Heading,
     Input,
     Modal,
     ModalBody,
@@ -11,26 +14,65 @@ import {
     ModalHeader,
     ModalOverlay,
     Select,
+    Text,
 } from '@chakra-ui/react';
-import { ProductProvisioningParameter } from '../../../../services/api/protocols';
+import { Product, ProductProvisioningParameter } from '../../../../services/api/protocols';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { FiUploadCloud } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 interface ProvisioningModalProps {
+    product: Product;
     parameters: ProductProvisioningParameter[];
     isOpen: boolean;
     onClose: () => void;
 }
 
-interface ProvisioProductFormData {}
+interface ProvisioProductFormData {
+    parameters: Record<string, string>;
+}
 
 export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
     isOpen,
     onClose,
     parameters,
+    product,
 }) => {
     const formMethods = useForm<ProvisioProductFormData>();
+    const [isLoading, setIsLoading] = React.useState(false);
+    const navigate = useNavigate();
+
+    const submitHandler: SubmitHandler<ProvisioProductFormData> = async (data) => {
+        setIsLoading(true);
+
+        /**
+         * TODO: Provision product route integration
+         */
+        await Promise.resolve(
+            setTimeout(() => {
+                setIsLoading(false);
+                alert(JSON.stringify(data.parameters));
+                navigate('/instances');
+            }, 2000),
+        );
+    };
+
+    const getParameterLabel = (parameter: ProductProvisioningParameter) => {
+        if (parameter.Description === 'Instance Type') {
+            return 'Tipo de instância';
+        }
+
+        if (parameter.Description !== undefined) {
+            return parameter.Description;
+        }
+
+        if (parameter.ParameterKey !== undefined) {
+            return parameter.ParameterKey;
+        }
+
+        return 'Parâmetro sem nome';
+    };
 
     return (
         <Modal
@@ -51,50 +93,83 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
                     <FormProvider {...formMethods}>
                         <ModalCloseButton />
 
-                        <ModalHeader>Provisionar Nova Instância</ModalHeader>
+                        <ModalHeader>
+                            <Heading size={'lg'}>{product.name}</Heading>
+                        </ModalHeader>
 
                         <ModalBody>
-                            {parameters.map((parameter, i) => (
-                                <FormControl
-                                    mb={'2%'}
-                                    key={`provisioning-parameter-${i}`}
-                                    isRequired={parameter.DefaultValue === undefined}
-                                >
-                                    <FormLabel>
-                                        {parameter.Description ?? parameter.ParameterKey}
-                                    </FormLabel>
-                                    {parameter.ParameterConstraints.AllowedValues === undefined ||
-                                    parameter.ParameterConstraints.AllowedValues.length === 0 ? (
-                                        <Input defaultValue={parameter.DefaultValue}></Input>
-                                    ) : (
-                                        <Select>
-                                            {parameter.ParameterConstraints.AllowedValues.map(
-                                                (allowedValue, i) => (
-                                                    <option
-                                                        key={`allowed-value-${i}`}
-                                                        value={allowedValue}
-                                                        selected={
-                                                            allowedValue === parameter.DefaultValue
-                                                        }
-                                                    >
-                                                        {allowedValue}
-                                                    </option>
-                                                ),
-                                            )}
-                                        </Select>
-                                    )}
+                            <Text
+                                mb={'5%'}
+                                color={'gray.600'}
+                                fontWeight={'bold'}
+                            >
+                                {product.description}
+                            </Text>
 
-                                    {/* <pre key={`provisioning-parameter-${i}`}>
-                                        {JSON.stringify(parameter, null, 2)}
-                                    </pre> */}
-                                </FormControl>
-                            ))}
+                            <Divider
+                                mb={'5%'}
+                                hidden={parameters.length === 0}
+                            />
+
+                            <Heading
+                                size={'md'}
+                                mb={'5%'}
+                                hidden={parameters.length === 0}
+                            >
+                                Parâmetros
+                            </Heading>
+
+                            {parameters
+                                .filter((parameter) => parameter.ParameterType === 'String')
+                                .map((parameter, i) => (
+                                    <FormControl
+                                        mb={'2%'}
+                                        key={`provisioning-parameter-${i}`}
+                                        isRequired={parameter.DefaultValue === undefined}
+                                    >
+                                        <FormLabel>{getParameterLabel(parameter)}</FormLabel>
+                                        {parameter.ParameterConstraints.AllowedValues ===
+                                            undefined ||
+                                        parameter.ParameterConstraints.AllowedValues.length ===
+                                            0 ? (
+                                            <Input
+                                                defaultValue={parameter.DefaultValue}
+                                                {...formMethods.register(
+                                                    `parameters.${parameter.ParameterKey}`,
+                                                )}
+                                            ></Input>
+                                        ) : (
+                                            <Select
+                                                {...formMethods.register(
+                                                    `parameters.${parameter.ParameterKey}`,
+                                                )}
+                                            >
+                                                {parameter.ParameterConstraints.AllowedValues.map(
+                                                    (allowedValue, i) => (
+                                                        <option
+                                                            key={`allowed-value-${i}`}
+                                                            value={allowedValue}
+                                                            selected={
+                                                                allowedValue ===
+                                                                parameter.DefaultValue
+                                                            }
+                                                        >
+                                                            {allowedValue}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </Select>
+                                        )}
+                                    </FormControl>
+                                ))}
                         </ModalBody>
 
                         <ModalFooter>
                             <Button
                                 leftIcon={<FiUploadCloud />}
                                 colorScheme='blue'
+                                onClick={formMethods.handleSubmit(submitHandler)}
+                                isLoading={isLoading}
                             >
                                 Provisionar
                             </Button>
