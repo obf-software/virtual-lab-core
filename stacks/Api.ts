@@ -36,9 +36,10 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         },
     );
 
+    // TODO: arrumar isso e descobrir onde colocar
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
-        onCreate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
-        onUpdate: 'packages/api/modules/core/handlers/migrateDatabase.handler',
+        onCreate: 'packages/api/modules/core/handlers/migrate-database.handler',
+        onUpdate: 'packages/api/modules/core/handlers/migrate-database.handler',
         defaults: {
             function: {
                 environment: {
@@ -46,7 +47,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                 },
                 copyFiles: [
                     {
-                        from: 'packages/api/drizzle',
+                        from: 'packages/api/infrastructure/drizzle',
                         to: 'drizzle',
                     },
                 ],
@@ -75,53 +76,66 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         defaults: {
             authorizer: 'userPool',
             payloadFormatVersion: '2.0',
-            function: {
-                environment: {
-                    DATABASE_URL,
-                    APP_SYNC_API_URL: appSyncApi.url,
-                },
-            },
         },
         routes: {
             // Group module
             'POST /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/createGroup.handler',
+                    handler: 'packages/api/modules/group/handlers/create-group.handler',
                     permissions: ['servicecatalog:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'DELETE /api/v1/groups/{groupId}': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/deleteGroup.handler',
+                    handler: 'packages/api/modules/group/handlers/delete-group.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'GET /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/listGroups.handler',
+                    handler: 'packages/api/modules/group/handlers/list-groups.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/listUserGroups.handler',
+                    handler: 'packages/api/modules/group/handlers/list-user-groups.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
 
             // Instance module
             'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/changeInstanceState.handler',
+                    handler: 'packages/api/modules/instance/handlers/change-instance-state.handler',
                     permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/deleteInstance.handler',
+                    handler: 'packages/api/modules/instance/handlers/delete-instance.handler',
                     permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'GET /api/v1/users/{userId}/instances/{instanceId}/connection': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/getInstanceConnection.handler',
+                    handler:
+                        'packages/api/modules/instance/handlers/get-instance-connection.handler',
                     permissions: ['ec2:*'],
                     environment: {
                         DATABASE_URL,
@@ -132,46 +146,57 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/users/{userId}/instances': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/listUserInstances.handler',
+                    handler: 'packages/api/modules/instance/handlers/list-user-instances.handler',
                     permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
 
             // Product module
             'GET /api/v1/users/{userId}/products': {
                 function: {
-                    handler: 'packages/api/modules/product/handlers/listUserProducts.handler',
+                    handler: 'packages/api/modules/product/handlers/list-user-products.handler',
                     role: listUserProductsFunctionRole,
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'GET /api/v1/products/{productId}/provisioning-parameters': {
                 function: {
                     handler:
-                        'packages/api/modules/product/handlers/getProductProvisioningParameters.handler',
+                        'packages/api/modules/product/handlers/get-product-provisioning-parameters.handler',
                     role: getProductProvisioningParametersFunctionRole,
                     permissions: ['s3:*'],
-                    environment: {
-                        DATABASE_URL,
-                        GUACAMOLE_CYPHER_KEY,
-                        INSTANCE_PASSWORD,
-                    },
                 },
             },
 
             // User module
             'GET /api/v1/users': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers/listUsers.handler',
+                    handler: 'packages/api/modules/user/handlers/list-users.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
-            'GET /api/v1/users/{userId}/quota': {
+            'GET /api/v1/users/{userId}': {
+                //TODO: trocar a rota do client de quota pra esse
                 function: {
-                    handler: 'packages/api/modules/user/handlers/getUserQuota.handler',
+                    handler: 'packages/api/modules/user/handlers/get-user.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'PATCH /api/v1/users/{userId}/role': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers/updateUserRole.handler',
+                    handler: 'packages/api/modules/user/handlers/update-user-role.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
         },
@@ -192,11 +217,11 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                         type: 'function',
                         function: {
                             handler:
-                                'packages/api/modules/instance/handlers/onEc2InstanceStateChange.handler',
+                                'packages/api/modules/instance/handlers/on-ec2-instance-state-change.handler',
                             permissions: ['ec2:*', 'appsync:GraphQL'],
                             environment: {
-                                APP_SYNC_API_URL: appSyncApi.url,
                                 DATABASE_URL,
+                                APP_SYNC_API_URL: appSyncApi.url,
                             },
                         },
                     },

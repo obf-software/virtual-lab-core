@@ -20,7 +20,7 @@ import { Topic } from 'aws-cdk-lib/aws-sns';
 import { AppSyncApi } from './AppSyncApi';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
-    const { INSTANCE_PASSWORD, DATABASE_URL, GUACAMOLE_CYPHER_KEY } = sst.use(Config);
+    const { INSTANCE_PASSWORD, DATABASE_URL } = sst.use(Config);
     const { lambdaRoles } = sst.use(Api);
     const { appSyncApi } = sst.use(AppSyncApi);
 
@@ -29,12 +29,10 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     });
 
     const onProductLaunchComplete = new sst.Function(stack, 'onProductLaunchComplete', {
-        handler: 'packages/api/modules/product/handlers/onProductStatusChange.handler',
+        handler: 'packages/api/modules/product/handlers/on-product-status-change.handler',
         permissions: ['cloudformation:*', 'ec2:*', 'appsync:GraphQL'],
         environment: {
             DATABASE_URL,
-            GUACAMOLE_CYPHER_KEY,
-            INSTANCE_PASSWORD,
             APP_SYNC_API_URL: appSyncApi.url,
         },
     });

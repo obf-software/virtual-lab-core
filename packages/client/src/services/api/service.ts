@@ -115,9 +115,9 @@ export const deleteGroup = async (groupId: number) =>
         method: 'DELETE',
     });
 
-export const getUserQuota = async (userId: string | number | undefined) =>
-    executeRequest<UserQuota>({
-        path: `/api/v1/users/${userId ?? 'me'}/quota`,
+export const getUser = async (userId: string | number | undefined) =>
+    executeRequest<User & { quota: UserQuota }>({
+        path: `/api/v1/users/${userId ?? 'me'}`,
         method: 'GET',
     });
 

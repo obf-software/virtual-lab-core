@@ -416,7 +416,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         isLoading={isLoading}
                         onClick={onOpen}
                     >
-                        Excluir {JSON.stringify(instance)}
+                        Excluir
                     </Button>
 
                     <IconButton

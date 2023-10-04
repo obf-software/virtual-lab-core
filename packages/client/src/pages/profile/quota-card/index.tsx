@@ -5,22 +5,28 @@ import {
     FormLabel,
     Heading,
     Input,
+    InputGroup,
+    InputRightElement,
+    Spinner,
     VStack,
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
-import { UserQuota } from '../../../services/api/protocols';
-import { getUserQuota } from '../../../services/api/service';
+import { User, UserQuota } from '../../../services/api/protocols';
+import { getUser } from '../../../services/api/service';
 
 export const ProfileQuotaCard: React.FC = () => {
-    const [quota, setQuota] = React.useState<UserQuota>();
+    const [user, setUser] = React.useState<User & { quota: UserQuota }>();
+    const [isLoading, setIsLoading] = React.useState(false);
     const toast = useToast();
 
-    const loadUserQuota = React.useCallback(async () => {
-        const response = await getUserQuota(undefined);
+    const loadUser = React.useCallback(async () => {
+        setIsLoading(true);
+        const response = await getUser(undefined);
+        setIsLoading(false);
         if (response.error !== undefined) {
             toast({
-                title: 'Erro ao carregar quota!',
+                title: 'Erro ao carregar usuário!',
                 status: 'error',
                 duration: 3000,
                 colorScheme: 'red',
@@ -31,12 +37,12 @@ export const ProfileQuotaCard: React.FC = () => {
             return;
         }
 
-        setQuota(response.data);
-    }, [getUserQuota, setQuota]);
+        setUser(response.data);
+    }, [getUser, setUser]);
 
     React.useEffect(() => {
-        loadUserQuota().catch((error) => console.error(error));
-    }, [loadUserQuota]);
+        loadUser().catch((error) => console.error(error));
+    }, [loadUser]);
 
     return (
         <VStack
@@ -59,12 +65,20 @@ export const ProfileQuotaCard: React.FC = () => {
             >
                 <FormControl>
                     <FormLabel id='instances'>Instâncias</FormLabel>
-                    <Input
-                        id='instances'
-                        type='text'
-                        value={quota?.maxInstances ?? '-'}
-                        isReadOnly={true}
-                    />
+                    <InputGroup>
+                        <Input
+                            id='instances'
+                            type='text'
+                            value={user?.quota.maxInstances ?? '-'}
+                            isReadOnly={true}
+                        />
+                        <InputRightElement>
+                            <Spinner
+                                size='sm'
+                                hidden={!isLoading}
+                            />
+                        </InputRightElement>
+                    </InputGroup>
                     <FormHelperText>
                         Quantidade de instâncias simultâneas que o usuário pode ter
                     </FormHelperText>

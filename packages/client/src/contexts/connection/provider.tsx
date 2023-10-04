@@ -58,6 +58,7 @@ export const ConnectionProvider: React.FC<PropsWithChildren> = ({ children }) =>
                 position: 'bottom-left',
                 variant: 'left-accent',
             });
+            console.error(error);
         };
 
         newClient.onstatechange = (state) => {
