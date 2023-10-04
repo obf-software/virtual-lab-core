@@ -8,5 +8,6 @@ namespace NodeJS {
         APP_SYNC_API_URL: string;
         INSTANCE_PASSWORD: string;
         GUACAMOLE_CYPHER_KEY: string;
+        SERVICE_CATALOG_NOTIFICATION_ARN: string;
     }
 }

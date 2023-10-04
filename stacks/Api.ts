@@ -36,6 +36,16 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         },
     );
 
+    const provisionProductFunctionRole = new Role(stack, 'ProvisionProductFunctionRole', {
+        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+        managedPolicies: [
+            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
+            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
+        ],
+    });
+
     // TODO: arrumar isso e descobrir onde colocar
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
         onCreate: 'packages/api/modules/core/handlers/migrate-database.handler',
@@ -172,6 +182,13 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     permissions: ['s3:*'],
                 },
             },
+            'POST /api/v1/products/{productId}/provision': {
+                function: {
+                    handler: 'packages/api/modules/product/handlers/provision-product.handler',
+                    role: provisionProductFunctionRole,
+                    permissions: ['s3:*'],
+                },
+            },
 
             // User module
             'GET /api/v1/users': {
@@ -183,7 +200,6 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                 },
             },
             'GET /api/v1/users/{userId}': {
-                //TODO: trocar a rota do client de quota pra esse
                 function: {
                     handler: 'packages/api/modules/user/handlers/get-user.handler',
                     environment: {
@@ -239,6 +255,10 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         api,
         apiEventBus,
         migrateDbScript,
-        lambdaRoles: [listUserProductsFunctionRole, getProductProvisioningParametersFunctionRole],
+        lambdaRoles: [
+            listUserProductsFunctionRole,
+            getProductProvisioningParametersFunctionRole,
+            provisionProductFunctionRole,
+        ],
     };
 };

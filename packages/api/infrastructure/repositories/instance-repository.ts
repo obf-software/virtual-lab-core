@@ -67,6 +67,16 @@ export class InstanceRepository {
         } satisfies SeekPaginated<typeof schema.instance.$inferSelect>;
     }
 
+    async countByUser(userId: number) {
+        const [countResult] = await this.dbClient
+            .select({ count: sql`count(*)`.mapWith(Number).as('count') })
+            .from(schema.instance)
+            .where(eq(schema.instance.userId, userId))
+            .execute();
+
+        return countResult.count;
+    }
+
     async updateByAwsProvisionedProductName(
         awsProvisionedProductName: string,
         data: Partial<typeof schema.instance.$inferInsert>,

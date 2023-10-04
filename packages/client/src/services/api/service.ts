@@ -161,3 +161,20 @@ export const getProductProvisioningParameters = async (productId: string) =>
         path: `/api/v1/products/${productId}/provisioning-parameters`,
         method: 'GET',
     });
+
+export const provisionProduct = async (
+    userId: string | number | undefined,
+    productId: string,
+    launchPathId: string,
+    provisionParameters: { key: string; value: string }[],
+) =>
+    executeRequest<Instance>({
+        path: `/api/v1/products/{productId}/provision`,
+        method: 'POST',
+        body: {
+            userId,
+            productId,
+            launchPathId,
+            provisionParameters,
+        },
+    });

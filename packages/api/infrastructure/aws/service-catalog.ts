@@ -6,13 +6,17 @@ import {
     ServiceCatalogClient,
     TerminateProvisionedProductCommand,
     paginateSearchProductsAsAdmin,
+    ProvisionProductCommand,
 } from '@aws-sdk/client-service-catalog';
 import { randomUUID } from 'node:crypto';
 
 export class ServiceCatalog {
     private client: ServiceCatalogClient;
 
-    constructor(AWS_REGION: string) {
+    constructor(
+        AWS_REGION: string,
+        private readonly SERVICE_CATALOG_NOTIFICATION_ARN: string,
+    ) {
         this.client = new ServiceCatalogClient({ region: AWS_REGION });
     }
 
@@ -72,5 +76,32 @@ export class ServiceCatalog {
         });
         const { ProvisioningArtifactParameters } = await this.client.send(command);
         return ProvisioningArtifactParameters;
+    }
+
+    async provisionProduct(props: {
+        productId: string;
+        launchPathId: string;
+        provisioningParameters: { Key: string; Value: string }[];
+    }) {
+        const provisionedProductName = randomUUID();
+
+        const command = new ProvisionProductCommand({
+            ProductId: props.productId,
+            PathId: props.launchPathId,
+            ProvisionedProductName: provisionedProductName,
+            ProvisioningArtifactName: 'latest',
+            ProvisionToken: provisionedProductName,
+            NotificationArns: [this.SERVICE_CATALOG_NOTIFICATION_ARN],
+            ProvisioningParameters: props.provisioningParameters,
+            Tags: [
+                {
+                    Key: 'provisionedProductName',
+                    Value: provisionedProductName,
+                },
+            ],
+        });
+
+        await this.client.send(command);
+        return { provisionedProductName };
     }
 }
