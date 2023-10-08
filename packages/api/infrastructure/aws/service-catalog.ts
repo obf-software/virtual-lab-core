@@ -13,10 +13,7 @@ import { randomUUID } from 'node:crypto';
 export class ServiceCatalog {
     private client: ServiceCatalogClient;
 
-    constructor(
-        AWS_REGION: string,
-        private readonly SERVICE_CATALOG_NOTIFICATION_ARN: string,
-    ) {
+    constructor(AWS_REGION: string) {
         this.client = new ServiceCatalogClient({ region: AWS_REGION });
     }
 
@@ -82,6 +79,7 @@ export class ServiceCatalog {
         productId: string;
         launchPathId: string;
         provisioningParameters: { Key: string; Value: string }[];
+        notificationArns: string[];
     }) {
         const provisionedProductName = randomUUID();
 
@@ -91,7 +89,7 @@ export class ServiceCatalog {
             ProvisionedProductName: provisionedProductName,
             ProvisioningArtifactName: 'latest',
             ProvisionToken: provisionedProductName,
-            NotificationArns: [this.SERVICE_CATALOG_NOTIFICATION_ARN],
+            NotificationArns: props.notificationArns,
             ProvisioningParameters: props.provisioningParameters,
             Tags: [
                 {

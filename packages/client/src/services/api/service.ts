@@ -89,7 +89,7 @@ export const listUserInstances = async (
     });
 
 export const updateUserRole = async (userId: string | number, role: keyof typeof UserRole) =>
-    executeRequest({
+    executeRequest<User>({
         path: `/api/v1/users/${userId}/role`,
         method: 'PATCH',
         body: { role },

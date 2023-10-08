@@ -17,7 +17,7 @@ const logger = new Logger();
 const provisionProductUseCase = new ProvisionProductUseCase(
     new QuotaRepository(dbClient),
     new InstanceRepository(dbClient),
-    new ServiceCatalog(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN),
+    new ServiceCatalog(AWS_REGION),
 );
 
 export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
@@ -34,7 +34,7 @@ export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>
                     }),
                 ),
             })
-            .safeParse(JSON.parse(event.body ?? ''));
+            .safeParse(JSON.parse(event.body ?? '{}'));
 
         if (!body.success) {
             throw InvalidBodyError(body.error.message);
@@ -46,6 +46,7 @@ export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>
             launchPathId: body.data.launchPathId,
             provisionParameters: body.data.provisionParameters,
             productId: body.data.productId,
+            notificationArn: SERVICE_CATALOG_NOTIFICATION_ARN,
         });
 
         return {

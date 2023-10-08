@@ -43,7 +43,10 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
             const product = products.find((product) => product.data.awsProductId === awsProductId);
 
             if (product?.provisioningParameters !== undefined) {
-                return product.provisioningParameters;
+                return {
+                    launchPathId: product.launchPathId ?? '',
+                    provisioningParameters: product.provisioningParameters,
+                };
             }
 
             const { data, error } = await getProductProvisioningParameters(awsProductId);
@@ -65,7 +68,10 @@ export const ProductsProvider: React.FC<React.PropsWithChildren> = ({ children }
                 });
             });
 
-            return data.provisioningParameters;
+            return {
+                launchPathId: product?.launchPathId ?? '',
+                provisioningParameters: data.provisioningParameters,
+            };
         };
 
     return (

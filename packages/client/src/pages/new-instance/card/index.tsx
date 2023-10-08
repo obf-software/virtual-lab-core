@@ -29,6 +29,7 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
     const [isLoading, setIsLoading] = React.useState(false);
     const { loadProductProvisioningParameters } = useProductsContext();
     const [parameters, setParameters] = React.useState<ProductProvisioningParameter[]>([]);
+    const [launchPathId, setLaunchPathId] = React.useState<string>();
     const provisioningModalDisclosure = useDisclosure();
     const toast = useToast();
 
@@ -39,6 +40,7 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
                 onClose={provisioningModalDisclosure.onClose}
                 parameters={parameters}
                 product={product}
+                launchPath={launchPathId ?? ''}
             />
             <CardHeader>
                 <Stack
@@ -62,8 +64,9 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
                         onClick={() => {
                             setIsLoading(true);
                             loadProductProvisioningParameters(product.awsProductId)
-                                .then((provisioningParameters) => {
+                                .then(({ provisioningParameters, launchPathId }) => {
                                     setParameters(provisioningParameters);
+                                    setLaunchPathId(launchPathId);
                                     setIsLoading(false);
                                     provisioningModalDisclosure.onOpen();
                                 })

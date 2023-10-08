@@ -12,37 +12,24 @@ import {
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
-import { User, UserQuota } from '../../../services/api/protocols';
-import { getUser } from '../../../services/api/service';
+import { useUser } from '../../../hooks/user';
+import { getErrorMessage } from '../../../services/helpers';
 
 export const ProfileQuotaCard: React.FC = () => {
-    const [user, setUser] = React.useState<User & { quota: UserQuota }>();
-    const [isLoading, setIsLoading] = React.useState(false);
     const toast = useToast();
+    const { data: user, error, isError, isLoading } = useUser('me');
 
-    const loadUser = React.useCallback(async () => {
-        setIsLoading(true);
-        const response = await getUser(undefined);
-        setIsLoading(false);
-        if (response.error !== undefined) {
-            toast({
-                title: 'Erro ao carregar usuário!',
-                status: 'error',
-                duration: 3000,
-                colorScheme: 'red',
-                variant: 'left-accent',
-                description: `${response.error}`,
-                position: 'bottom-left',
-            });
-            return;
-        }
-
-        setUser(response.data);
-    }, [getUser, setUser]);
-
-    React.useEffect(() => {
-        loadUser().catch((error) => console.error(error));
-    }, [loadUser]);
+    if (isError) {
+        toast({
+            title: 'Erro ao carregar usuário!',
+            status: 'error',
+            duration: 3000,
+            colorScheme: 'red',
+            variant: 'left-accent',
+            description: getErrorMessage(error),
+            position: 'bottom-left',
+        });
+    }
 
     return (
         <VStack

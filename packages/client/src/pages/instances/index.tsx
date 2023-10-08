@@ -11,40 +11,35 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { InstanceCard } from './instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { useInstancesContext } from '../../contexts/instances/hook';
 import { Paginator } from '../../components/paginator';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useInstances } from '../../hooks/instances';
 
 const RESULTS_PER_PAGE = 20;
-const MILLISECONDS_BETWEEN_AUTO_LOADS = 900000;
 
 export const InstancesPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenuContext();
-    const {
-        numberOfResults,
-        lastLoadAt,
-        loadInstancesPage,
-        instances,
-        isLoading,
-        numberOfPages,
-        activePage,
-    } = useInstancesContext();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const { instancesQuery } = useInstances({
+        userId: 'me',
+        resultsPerPage: RESULTS_PER_PAGE,
+        page,
+    });
+    const { setActiveMenuItem } = useMenuContext();
 
-    useEffect(() => {
-        setActiveMenuItem('INSTANCES');
-
-        if (
-            (lastLoadAt === undefined ||
-                new Date().getTime() - lastLoadAt.getTime() > MILLISECONDS_BETWEEN_AUTO_LOADS) &&
-            isLoading === false
-        ) {
-            loadInstancesPage(1, RESULTS_PER_PAGE).catch(console.error);
+    React.useEffect(() => {
+        if (instancesQuery.data?.numberOfPages && page > instancesQuery.data?.numberOfPages) {
+            setSearchParams({ page: '1' });
+        } else {
+            setSearchParams({ page: page.toString() });
         }
-    }, []);
+
+        setActiveMenuItem('INSTANCES');
+    }, [page, instancesQuery.data?.numberOfPages]);
 
     return (
         <Box>
@@ -66,7 +61,7 @@ export const InstancesPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${numberOfResults} instâncias encontradas`}
+                            {`${instancesQuery.data?.numberOfResults ?? 0} instâncias encontradas`}
                         </Text>
                     </VStack>
 
@@ -75,9 +70,10 @@ export const InstancesPage: React.FC = () => {
                             aria-label='Recarregar'
                             variant={'outline'}
                             colorScheme='blue'
-                            isLoading={isLoading}
+                            hidden={instancesQuery.isLoading}
+                            isLoading={instancesQuery.isFetching}
                             onClick={() => {
-                                loadInstancesPage(1, RESULTS_PER_PAGE).catch(console.error);
+                                instancesQuery.refetch().catch(console.error);
                             }}
                         >
                             <FiRefreshCw />
@@ -86,7 +82,6 @@ export const InstancesPage: React.FC = () => {
                             variant={'solid'}
                             colorScheme='blue'
                             leftIcon={<FiPlus />}
-                            isDisabled={isLoading}
                             onClick={() => {
                                 navigate('/new-instance');
                             }}
@@ -96,7 +91,7 @@ export const InstancesPage: React.FC = () => {
                     </ButtonGroup>
                 </Stack>
 
-                {instances.length === 0 && !isLoading ? (
+                {instancesQuery.data?.data.length === 0 && !instancesQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -113,7 +108,7 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {isLoading ? (
+                {instancesQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -130,22 +125,23 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {!isLoading &&
-                    instances.map((instance) => (
-                        <Box
-                            pb={10}
-                            key={`instance-${instance.awsInstanceId}`}
-                        >
-                            <InstanceCard instance={instance} />
-                        </Box>
-                    ))}
+                {instancesQuery.data?.data.map((instance) => (
+                    <Box
+                        pb={10}
+                        key={`instance-${instance.awsInstanceId}`}
+                    >
+                        <InstanceCard instance={instance} />
+                    </Box>
+                ))}
 
-                {!isLoading && instances.length > 0 ? (
+                {instancesQuery.data &&
+                instancesQuery.data.numberOfPages > 0 &&
+                !instancesQuery.isLoading ? (
                     <Paginator
-                        activePage={activePage}
-                        totalPages={numberOfPages}
+                        activePage={page}
+                        totalPages={instancesQuery.data.numberOfPages ?? 0}
                         onPageChange={(page) => {
-                            loadInstancesPage(page, RESULTS_PER_PAGE).catch(console.error);
+                            navigate(`?page=${page}`);
                         }}
                     />
                 ) : null}

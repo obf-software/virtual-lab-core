@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 import {
     Box,
     Container,
@@ -13,25 +14,30 @@ import {
 } from '@chakra-ui/react';
 import { UsersTable } from './table';
 import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { useUsersContext } from '../../contexts/users/hook';
 import { Paginator } from '../../components/paginator';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useUsers } from '../../hooks/users';
 
 const RESULTS_PER_PAGE = 20;
 
 export const UsersPage: React.FC = () => {
-    const { setActiveMenuItem } = useMenuContext();
-    const usersContext = useUsersContext();
-    const [activePage, setActivePage] = useState<number>(1);
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const page = Math.max(1, Number(searchParams.get('page')) || 1);
+    const { usersQuery } = useUsers({ resultsPerPage: RESULTS_PER_PAGE, page });
+    const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
 
-    useEffect(() => {
-        setActiveMenuItem('ADMIN_USERS');
-
-        if (usersContext.isLoading === false) {
-            usersContext.loadUsersPage(1, RESULTS_PER_PAGE).catch(console.error);
+    React.useEffect(() => {
+        if (usersQuery.data?.numberOfPages && page > usersQuery.data?.numberOfPages) {
+            setSearchParams({ page: '1' });
+        } else {
+            setSearchParams({ page: page.toString() });
         }
-    }, []);
+
+        setActiveMenuItem('ADMIN_USERS');
+    }, [page, usersQuery.data?.numberOfPages]);
 
     return (
         <Box>
@@ -53,7 +59,7 @@ export const UsersPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${usersContext.numberOfResults} usuários encontrados`}
+                            {`${usersQuery.data?.numberOfResults ?? 0} usuários encontrados`}
                         </Text>
                     </VStack>
 
@@ -61,11 +67,10 @@ export const UsersPage: React.FC = () => {
                         aria-label='Recarregar'
                         variant={'outline'}
                         colorScheme='blue'
-                        isLoading={usersContext.isLoading}
+                        hidden={usersQuery.isLoading}
+                        isLoading={usersQuery.isFetching}
                         onClick={() => {
-                            usersContext
-                                .loadUsersPage(activePage, RESULTS_PER_PAGE)
-                                .catch(console.error);
+                            usersQuery.refetch().catch(console.error);
                         }}
                     >
                         <FiRefreshCw />
@@ -93,14 +98,16 @@ export const UsersPage: React.FC = () => {
                     </InputGroup>
                 </Stack>
 
-                <UsersTable />
+                <UsersTable
+                    resultsPerPage={RESULTS_PER_PAGE}
+                    page={page}
+                />
 
                 <Paginator
-                    activePage={activePage}
-                    totalPages={usersContext.numberOfPages}
+                    activePage={page}
+                    totalPages={usersQuery.data?.numberOfPages ?? 0}
                     onPageChange={(page) => {
-                        setActivePage(page);
-                        usersContext.loadUsersPage(page, RESULTS_PER_PAGE).catch(console.error);
+                        navigate(`?page=${page}`);
                     }}
                 />
             </Container>

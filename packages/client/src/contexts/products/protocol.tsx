@@ -2,9 +2,10 @@ import { ProductProvisioningParameter, Product } from '../../services/api/protoc
 
 export interface ProductsContextData {
     loadProducts: () => Promise<void>;
-    loadProductProvisioningParameters: (
-        awsProductId: string,
-    ) => Promise<ProductProvisioningParameter[]>;
+    loadProductProvisioningParameters: (awsProductId: string) => Promise<{
+        provisioningParameters: ProductProvisioningParameter[];
+        launchPathId: string;
+    }>;
     isLoading: boolean;
     products: {
         data: Product;

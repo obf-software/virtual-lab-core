@@ -7,7 +7,6 @@ import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
 import { SettingsPage } from './pages/settings';
 import { ProfilePage } from './pages/profile';
-import { UsersProvider } from './contexts/users/provider';
 import { GroupsProvider } from './contexts/groups/provider';
 import { MyGroupsProvider } from './contexts/my-groups/provider';
 import { MyGroupsPage } from './pages/my-groups';
@@ -54,11 +53,7 @@ export const Router: React.FC = () => {
 
                 {
                     path: 'admin/users',
-                    element: (
-                        <UsersProvider>
-                            <UsersPage />
-                        </UsersProvider>
-                    ),
+                    element: <UsersPage />,
                 },
                 {
                     path: 'admin/groups',

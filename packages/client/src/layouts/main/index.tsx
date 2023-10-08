@@ -3,16 +3,10 @@ import { Box, Drawer, DrawerContent, useColorModeValue, useDisclosure } from '@c
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './sidebar';
 import { Navbar } from './navbar';
-import React, { useEffect } from 'react';
-import { useConnectionContext } from '../../contexts/connection/hook';
+import React from 'react';
 
 export const MainLayout: React.FC = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const { reset } = useConnectionContext();
-
-    useEffect(() => {
-        reset();
-    }, []);
 
     return (
         <Box

@@ -16,17 +16,12 @@ import {
 import { Config } from './Config';
 import { Api } from './Api';
 import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
-import { Topic } from 'aws-cdk-lib/aws-sns';
 import { AppSyncApi } from './AppSyncApi';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { INSTANCE_PASSWORD, DATABASE_URL } = sst.use(Config);
-    const { lambdaRoles } = sst.use(Api);
+    const { lambdaRoles, snsTopic } = sst.use(Api);
     const { appSyncApi } = sst.use(AppSyncApi);
-
-    const snsTopic = new Topic(stack, 'ServiceCatalogTopic', {
-        displayName: 'Service Catalog Topic',
-    });
 
     const onProductLaunchComplete = new sst.Function(stack, 'onProductLaunchComplete', {
         handler: 'packages/api/modules/product/handlers/on-product-status-change.handler',

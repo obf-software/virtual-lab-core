@@ -29,17 +29,13 @@ import {
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useNavigate } from 'react-router-dom';
-import { useConnectionContext } from '../../../contexts/connection/hook';
 import { Instance, InstanceState } from '../../../services/api/protocols';
-import { useInstancesContext } from '../../../contexts/instances/hook';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import {
-    changeInstanceState,
-    deleteInstance,
-    getInstanceConnection,
-} from '../../../services/api/service';
-import { useNotificationsContext } from '../../../contexts/notifications/hook';
 import { ConfirmDeletionModal } from '../../../components/confirm-deletion-modal/index';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import * as api from '../../../services/api/service';
+import { queryClient } from '../../../services/query/service';
+import { useNotificationsContext } from '../../../contexts/notifications/hook';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -113,12 +109,11 @@ interface InstanceCardProps {
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
-    const [isMoreOptionsOpen, setIsMoreOptionsOpen] = React.useState(false);
-    const [isLoading, setIsLoading] = React.useState(false);
-    const { activePage, loadInstancesPage } = useInstancesContext();
     const { registerHandler, unregisterHandlerById } = useNotificationsContext();
-    const { connect } = useConnectionContext();
-    const { isOpen, onClose, onOpen } = useDisclosure();
+    const [isWaitingForInstanceStateChange, setIsWaitingForInstanceStateChange] =
+        React.useState<boolean>(false);
+    const moreOptionsDisclosure = useDisclosure();
+    const confirmDeletionDisclosure = useDisclosure();
     const navigate = useNavigate();
     const toast = useToast();
 
@@ -136,12 +131,60 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
         platformStyle = instancePlatformStyleMap.WINDOWS;
     }
 
+    const instanceConnectionQuery = useQuery({
+        queryKey: ['instanceConnection', instance.id],
+        queryFn: async () => {
+            const response = await api.getInstanceConnection('me', instance.id);
+            if (response.error !== undefined) throw new Error(response.error);
+            return response.data;
+        },
+        enabled: instance.awsInstanceId !== null && instance.state === 'running',
+        staleTime: 1000 * 60 * 5,
+    });
+
+    const changeInstanceStateMutation = useMutation({
+        mutationFn: async (data: { state: 'start' | 'stop' | 'reboot' }) => {
+            const response = await api.changeInstanceState('me', instance.id, data.state);
+            if (response.error !== undefined) throw new Error(response.error);
+            return data;
+        },
+        retry: 1,
+    });
+
+    const deleteInstanceMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.deleteInstance('me', instance.id);
+            if (response.error !== undefined) throw new Error(response.error);
+        },
+        onSuccess: () => {
+            // TODO: Use optimistic updates
+            queryClient.invalidateQueries(['instances']).catch(console.error);
+        },
+        onError: (error) => {
+            toast({
+                title: 'Erro ao mudar o estado da instância',
+                description: error instanceof Error ? error.message : 'Erro desconhecido',
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+                position: 'bottom-left',
+                variant: 'left-accent',
+            });
+        },
+        retry: 1,
+    });
+
+    const isLoading =
+        changeInstanceStateMutation.isLoading ||
+        deleteInstanceMutation.isLoading ||
+        isWaitingForInstanceStateChange;
+
     React.useEffect(() => {
         const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
             console.log('EC2_INSTANCE_STATE_CHANGED', data);
 
             if (data.id === instance.id) {
-                setIsLoading(false);
+                setIsWaitingForInstanceStateChange(false);
             }
         });
 
@@ -155,29 +198,11 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
             <ConfirmDeletionModal
                 title='Excluir Instância'
                 text={`Você tem certeza que deseja deletar a instância ${instance.name}? Essa ação não pode ser desfeita e todos os dados serão perdidos.`}
-                isOpen={isOpen}
-                onClose={onClose}
+                isOpen={confirmDeletionDisclosure.isOpen}
+                onClose={confirmDeletionDisclosure.onClose}
                 isLoading={isLoading}
                 onConfirm={() => {
-                    setIsLoading(true);
-                    deleteInstance(undefined, instance.id)
-                        .then(() => {
-                            setIsLoading(false);
-                            loadInstancesPage(activePage, 20).catch(console.error);
-                        })
-                        .catch((error) => {
-                            setIsLoading(false);
-                            toast({
-                                title: 'Erro ao excluir instância',
-                                description:
-                                    error instanceof Error ? error.message : 'Erro desconhecido',
-                                status: 'error',
-                                duration: 5000,
-                                isClosable: true,
-                                position: 'bottom-left',
-                                variant: 'left-accent',
-                            });
-                        });
+                    deleteInstanceMutation.mutate();
                 }}
             />
             <CardHeader>
@@ -275,29 +300,35 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                             instance.awsInstanceId === null
                         }
                         isDisabled={instance.state !== 'running'}
-                        isLoading={isLoading}
+                        isLoading={
+                            isLoading ||
+                            instanceConnectionQuery.isLoading ||
+                            instanceConnectionQuery.isFetching
+                        }
                         onClick={() => {
-                            setIsLoading(true);
-                            getInstanceConnection(undefined, instance.id)
-                                .then(({ data, error }) => {
-                                    setIsLoading(false);
-                                    if (error !== undefined) {
-                                        toast({
-                                            title: 'Erro ao obter string de conexão',
-                                            description: error,
-                                            status: 'error',
-                                            duration: 5000,
-                                            isClosable: true,
-                                            position: 'bottom-left',
-                                            variant: 'left-accent',
-                                        });
-                                        return;
-                                    }
+                            if (
+                                instanceConnectionQuery.isError ||
+                                instanceConnectionQuery.data === undefined
+                            ) {
+                                toast({
+                                    title: 'Erro ao conectar',
+                                    description:
+                                        instanceConnectionQuery.error instanceof Error
+                                            ? instanceConnectionQuery.error.message
+                                            : 'Erro desconhecido',
+                                    status: 'error',
+                                    duration: 5000,
+                                    isClosable: true,
+                                    position: 'bottom-left',
+                                    variant: 'left-accent',
+                                });
+                                return;
+                            }
 
-                                    connect(data.connectionString);
-                                    navigate('/connection');
-                                })
-                                .catch(console.error);
+                            const encodedConnectionString = encodeURIComponent(
+                                instanceConnectionQuery.data.connectionString,
+                            );
+                            navigate(`/connection?connectionString=${encodedConnectionString}`);
                         }}
                     >
                         Conectar
@@ -313,22 +344,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         isDisabled={instance.state !== 'running'}
                         isLoading={isLoading}
                         onClick={() => {
-                            setIsLoading(true);
-                            changeInstanceState(undefined, instance.id, 'stop').catch((error) => {
-                                toast({
-                                    title: 'Erro ao desligar instância',
-                                    description:
-                                        error instanceof Error
-                                            ? error.message
-                                            : 'Erro desconhecido',
-                                    status: 'error',
-                                    duration: 5000,
-                                    isClosable: true,
-                                    position: 'bottom-left',
-                                    variant: 'left-accent',
-                                });
-                                setIsLoading(false);
-                            });
+                            setIsWaitingForInstanceStateChange(true);
+                            changeInstanceStateMutation.mutate({ state: 'stop' });
                         }}
                     >
                         Desligar
@@ -345,22 +362,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         isDisabled={instance.state !== 'stopped'}
                         isLoading={isLoading}
                         onClick={() => {
-                            setIsLoading(true);
-                            changeInstanceState(undefined, instance.id, 'start').catch((error) => {
-                                setIsLoading(false);
-                                toast({
-                                    title: 'Erro ao ligar instância',
-                                    description:
-                                        error instanceof Error
-                                            ? error.message
-                                            : 'Erro desconhecido',
-                                    status: 'error',
-                                    duration: 5000,
-                                    isClosable: true,
-                                    position: 'bottom-left',
-                                    variant: 'left-accent',
-                                });
-                            });
+                            setIsWaitingForInstanceStateChange(true);
+                            changeInstanceStateMutation.mutate({ state: 'start' });
                         }}
                     >
                         Ligar
@@ -370,40 +373,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         leftIcon={<FiRefreshCw />}
                         colorScheme='blackAlpha'
                         hidden={
-                            !isMoreOptionsOpen ||
-                            instance.state !== 'running' ||
-                            instance.awsInstanceId === null
+                            !moreOptionsDisclosure.isOpen ||
+                            instance.awsInstanceId === null ||
+                            instance.state !== 'running'
                         }
                         isLoading={isLoading}
                         onClick={() => {
-                            setIsLoading(true);
-                            changeInstanceState(undefined, instance.id, 'reboot')
-                                .then(({ error }) => {
-                                    setIsLoading(false);
-                                    if (error !== undefined) {
-                                        toast({
-                                            title: 'Erro ao reiniciar instância',
-                                            description: error,
-                                            status: 'error',
-                                            duration: 5000,
-                                            isClosable: true,
-                                            position: 'bottom-left',
-                                            variant: 'left-accent',
-                                        });
-                                        return;
-                                    }
-
-                                    toast({
-                                        title: 'Instância reiniciada',
-                                        description: 'A instância foi reiniciada com sucesso',
-                                        status: 'success',
-                                        duration: 5000,
-                                        isClosable: true,
-                                        position: 'bottom-left',
-                                        variant: 'left-accent',
-                                    });
-                                })
-                                .catch(console.error);
+                            setIsWaitingForInstanceStateChange(true);
+                            changeInstanceStateMutation.mutate({ state: 'reboot' });
                         }}
                     >
                         Reiniciar
@@ -412,9 +389,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     <Button
                         leftIcon={<FiTrash />}
                         colorScheme='red'
-                        hidden={!isMoreOptionsOpen || instance.awsInstanceId === null}
+                        hidden={
+                            !moreOptionsDisclosure.isOpen ||
+                            instance.awsInstanceId === null ||
+                            instance.state === 'stopping' ||
+                            instance.state === 'pending'
+                        }
                         isLoading={isLoading}
-                        onClick={onOpen}
+                        onClick={confirmDeletionDisclosure.onOpen}
                     >
                         Excluir
                     </Button>
@@ -426,10 +408,13 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         hidden={
                             instance.state === 'stopping' ||
                             instance.state === 'pending' ||
-                            instance.awsInstanceId === null
+                            instance.awsInstanceId === null ||
+                            isLoading
                         }
-                        icon={isMoreOptionsOpen ? <FiChevronsLeft /> : <FiMoreVertical />}
-                        onClick={() => setIsMoreOptionsOpen(!isMoreOptionsOpen)}
+                        icon={
+                            moreOptionsDisclosure.isOpen ? <FiChevronsLeft /> : <FiMoreVertical />
+                        }
+                        onClick={() => moreOptionsDisclosure.onToggle()}
                     />
                 </Wrap>
             </CardFooter>

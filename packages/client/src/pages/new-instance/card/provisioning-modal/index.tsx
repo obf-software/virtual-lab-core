@@ -15,15 +15,18 @@ import {
     ModalOverlay,
     Select,
     Text,
+    useToast,
 } from '@chakra-ui/react';
 import { Product, ProductProvisioningParameter } from '../../../../services/api/protocols';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { FiUploadCloud } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { provisionProduct } from '../../../../services/api/service';
 
 interface ProvisioningModalProps {
     product: Product;
+    launchPath: string;
     parameters: ProductProvisioningParameter[];
     isOpen: boolean;
     onClose: () => void;
@@ -38,24 +41,46 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
     onClose,
     parameters,
     product,
+    launchPath,
 }) => {
     const formMethods = useForm<ProvisioProductFormData>();
     const [isLoading, setIsLoading] = React.useState(false);
     const navigate = useNavigate();
+    const toast = useToast();
 
     const submitHandler: SubmitHandler<ProvisioProductFormData> = async (data) => {
         setIsLoading(true);
 
-        /**
-         * TODO: Provision product route integration
-         */
-        await Promise.resolve(
-            setTimeout(() => {
-                setIsLoading(false);
-                alert(JSON.stringify(data.parameters));
-                navigate('/instances');
-            }, 2000),
+        const { error } = await provisionProduct(
+            'me',
+            product.awsProductId,
+            launchPath,
+            Object.entries(data.parameters).map(([key, value]) => ({ key, value })),
         );
+
+        setIsLoading(false);
+
+        if (error !== undefined) {
+            toast({
+                title: 'Erro ao provisionar produto',
+                description: error,
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        toast({
+            title: 'Produto provisionado',
+            description:
+                'Seu produto está sendo preparado para uso e será disponibilizado em breve',
+            status: 'success',
+            duration: 5000,
+            isClosable: true,
+        });
+
+        navigate(`/instances`);
     };
 
     const getParameterLabel = (parameter: ProductProvisioningParameter) => {

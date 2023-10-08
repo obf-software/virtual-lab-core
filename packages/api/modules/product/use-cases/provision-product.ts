@@ -19,6 +19,7 @@ export class ProvisionProductUseCase implements IUseCase {
         productId: string;
         launchPathId: string;
         provisionParameters: { key: string; value: string }[];
+        notificationArn: string;
     }) => {
         throwIfInsufficientRole('USER', props.principal.role);
 
@@ -57,6 +58,7 @@ export class ProvisionProductUseCase implements IUseCase {
                     Key: param.key,
                     Value: param.value,
                 })),
+                notificationArns: [props.notificationArn],
             }),
             this.serviceCatalog.getProduct(props.productId),
         ]);

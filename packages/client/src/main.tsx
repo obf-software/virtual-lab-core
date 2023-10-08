@@ -6,27 +6,25 @@ import { theme } from './styles/theme';
 import { MenuProvider } from './contexts/menu/provider.tsx';
 import { AuthProvider } from './contexts/auth/provider.tsx';
 import { Router } from './router.tsx';
-import { ConnectionProvider } from './contexts/connection/provider.tsx';
-import { InstancesProvider } from './contexts/instances/provider.tsx';
 import { NotificationsProvider } from './contexts/notifications/provider.tsx';
 import { ProductsProvider } from './contexts/products/provider.tsx';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './services/query/service.ts';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ChakraProvider theme={theme}>
-            <AuthProvider>
-                <NotificationsProvider>
-                    <MenuProvider>
-                        <ConnectionProvider>
-                            <InstancesProvider>
-                                <ProductsProvider>
-                                    <Router />
-                                </ProductsProvider>
-                            </InstancesProvider>
-                        </ConnectionProvider>
-                    </MenuProvider>
-                </NotificationsProvider>
-            </AuthProvider>
+            <QueryClientProvider client={queryClient}>
+                <AuthProvider>
+                    <NotificationsProvider>
+                        <MenuProvider>
+                            <ProductsProvider>
+                                <Router />
+                            </ProductsProvider>
+                        </MenuProvider>
+                    </NotificationsProvider>
+                </AuthProvider>
+            </QueryClientProvider>
         </ChakraProvider>
     </React.StrictMode>,
 );

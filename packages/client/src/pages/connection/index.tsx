@@ -1,17 +1,70 @@
-import React, { useEffect } from 'react';
-import { Center } from '@chakra-ui/react';
-import { useConnectionContext } from '../../contexts/connection/hook';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Box, Center, Text } from '@chakra-ui/react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useConnection } from '../../hooks/connection/use-connection';
 
 export const ConnectionPage: React.FC = () => {
-    const { element, connectionState } = useConnectionContext();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const connectionString = searchParams.get('connectionString');
 
-    useEffect(() => {
-        if (connectionState === 'DISCONNECTED' || connectionState === 'IDDLE') {
-            navigate('/instances');
-        }
-    }, [connectionState]);
+    if (!connectionString) {
+        return (
+            <Center height={'100vh'}>
+                <Text>
+                    Nenhuma conexão encontrada. Por favor, verifique o link e tente novamente.
+                </Text>
+            </Center>
+        );
+    }
 
-    return <Center>{element}</Center>;
+    const { display, state, bindControls } = useConnection({ connectionString });
+
+    display.onresize = (_width, height) => {
+        display.scale(window.innerHeight / height);
+    };
+
+    React.useEffect(() => {
+        const { unbindControls } = bindControls();
+
+        return () => {
+            unbindControls();
+        };
+    }, []);
+
+    // const displayHeight = display.getHeight();
+
+    // React.useEffect(() => {
+    //     console.log(displayHeight);
+    //     if (display.getHeight() === 0) {
+    //         return;
+    //     }
+
+    //     display.scale(window.innerHeight / displayHeight);
+    //     console.log(display.getScale());
+    // }, [displayHeight]);
+
+    // // Scale display to fit the screen Height
+    // console.log(window.innerHeight);
+    // console.log(display.getHeight());
+
+    // display.scale(window.innerHeight / display.getHeight());
+
+    // console.log(display.getScale());
+
+    return (
+        <Center>
+            <Text>{state}</Text>
+            <Box
+                w={'100%'}
+                h={'100vh'}
+                justifyContent={'center'}
+                alignItems={'center'}
+                display={'flex'}
+                ref={(ref) => {
+                    ref?.replaceChildren(display.getElement());
+                }}
+            />
+        </Center>
+    );
 };

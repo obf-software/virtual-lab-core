@@ -16,7 +16,7 @@ export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>
     async (event) => {
         const provisioningParameters = await getProductProvisioningParametersUseCase.execute({
             principal: getRequestPrincipal(event),
-            awsProductId: event.pathParameters?.awsProductId ?? '',
+            awsProductId: event.pathParameters?.productId ?? '',
         });
 
         return {

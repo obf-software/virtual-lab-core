@@ -4,11 +4,16 @@ import { Config } from './Config';
 import { AppSyncApi } from './AppSyncApi';
 import { EventBus } from 'aws-cdk-lib/aws-events';
 import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import { Topic } from 'aws-cdk-lib/aws-sns';
 
 export const Api = ({ stack, app }: sst.StackContext) => {
     const { userPool, userPoolClient } = sst.use(Auth);
     const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
+
+    const snsTopic = new Topic(stack, 'ServiceCatalogTopic', {
+        displayName: 'API Service Catalog Topic',
+    });
 
     const listUserProductsFunctionRole = new Role(stack, 'ListUserProductsFunctionRole', {
         assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
@@ -180,6 +185,9 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                         'packages/api/modules/product/handlers/get-product-provisioning-parameters.handler',
                     role: getProductProvisioningParametersFunctionRole,
                     permissions: ['s3:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
                 },
             },
             'POST /api/v1/products/{productId}/provision': {
@@ -187,6 +195,10 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     handler: 'packages/api/modules/product/handlers/provision-product.handler',
                     role: provisionProductFunctionRole,
                     permissions: ['s3:*'],
+                    environment: {
+                        DATABASE_URL,
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
+                    },
                 },
             },
 
@@ -255,6 +267,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         api,
         apiEventBus,
         migrateDbScript,
+        snsTopic,
         lambdaRoles: [
             listUserProductsFunctionRole,
             getProductProvisioningParametersFunctionRole,

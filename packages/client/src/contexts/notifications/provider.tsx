@@ -12,6 +12,8 @@ import type { ZenObservable } from 'zen-observable-ts';
 import { API, graphqlOperation } from 'aws-amplify';
 import { useToast } from '@chakra-ui/react';
 import { v4 } from 'uuid';
+import { queryClient } from '../../services/query/service';
+import { Instance, SeekPaginated } from '../../services/api/protocols';
 
 export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const { user } = useAuthenticator((context) => [context.user]);
@@ -43,6 +45,30 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                     if (data.type === 'EC2_INSTANCE_STATE_CHANGED') {
                         const typedData = data as NotificationTypeMap['EC2_INSTANCE_STATE_CHANGED'];
 
+                        /**
+                         * Update the instance state in the cache
+                         * It runs the callback function for each page of the query
+                         * and updates the state of the instance with the given id
+                         */
+                        queryClient.setQueriesData<SeekPaginated<Instance>>(
+                            ['instances'],
+                            (cachedInstances) => {
+                                if (cachedInstances === undefined) {
+                                    return cachedInstances;
+                                }
+
+                                return {
+                                    ...cachedInstances,
+                                    data: cachedInstances.data.map((instance) => {
+                                        if (instance.id === typedData.id) {
+                                            return { ...instance, state: typedData.state };
+                                        }
+                                        return instance;
+                                    }),
+                                };
+                            },
+                        );
+
                         const newNotification: ReadableNotification = {
                             id: v4(),
                             viewed: false,
@@ -53,6 +79,30 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
 
                     if (data.type === 'EC2_INSTANCE_PROVISIONED') {
                         const typedData = data as NotificationTypeMap['EC2_INSTANCE_PROVISIONED'];
+
+                        /**
+                         * Update the instance state in the cache
+                         * It runs the callback function for each page of the query
+                         * and updates the state of the instance with the given id
+                         */
+                        queryClient.setQueriesData<SeekPaginated<Instance>>(
+                            ['instances'],
+                            (cachedInstances) => {
+                                if (cachedInstances === undefined) {
+                                    return cachedInstances;
+                                }
+
+                                return {
+                                    ...cachedInstances,
+                                    data: cachedInstances.data.map((instance) => {
+                                        if (instance.id === typedData.instance.id) {
+                                            return { ...instance, ...typedData.instance };
+                                        }
+                                        return instance;
+                                    }),
+                                };
+                            },
+                        );
 
                         const newNotification: ReadableNotification = {
                             id: v4(),

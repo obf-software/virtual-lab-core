@@ -9,11 +9,16 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { useUsersContext } from '../../../contexts/users/hook';
 import { UsersTableRow } from './row';
+import { useUsers } from '../../../hooks/users';
 
-export const UsersTable: React.FC = () => {
-    const { isLoading, users } = useUsersContext();
+interface UsersTableProps {
+    resultsPerPage: number;
+    page: number;
+}
+
+export const UsersTable: React.FC<UsersTableProps> = ({ resultsPerPage, page }) => {
+    const { usersQuery } = useUsers({ resultsPerPage, page });
 
     return (
         <TableContainer
@@ -27,11 +32,11 @@ export const UsersTable: React.FC = () => {
                 variant='simple'
                 colorScheme='blue'
             >
-                {users.length === 0 && isLoading === false ? (
+                {usersQuery.data?.data.length === 0 && !usersQuery.isFetching ? (
                     <TableCaption>Nenhum usuário encontrado</TableCaption>
                 ) : null}
 
-                {isLoading !== false ? (
+                {usersQuery.isLoading ? (
                     <TableCaption>
                         <Spinner
                             size='xl'
@@ -49,17 +54,15 @@ export const UsersTable: React.FC = () => {
                         <Th>Cargo</Th>
                         <Th>Criado em</Th>
                         <Th>Último acesso</Th>
-                        <Th></Th>
                     </Tr>
                 </Thead>
                 <Tbody>
-                    {isLoading === false &&
-                        users.map((user, index) => (
-                            <UsersTableRow
-                                key={`users-table-row-${index}`}
-                                user={user}
-                            />
-                        ))}
+                    {usersQuery.data?.data.map((user, index) => (
+                        <UsersTableRow
+                            key={`users-table-row-${index}`}
+                            user={user}
+                        />
+                    ))}
                 </Tbody>
             </Table>
         </TableContainer>

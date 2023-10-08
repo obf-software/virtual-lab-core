@@ -56,3 +56,9 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
         displayRole,
     };
 };
+
+export const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    return 'Erro desconhecido';
+};

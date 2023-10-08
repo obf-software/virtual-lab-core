@@ -1,0 +1,40 @@
+import { useQuery } from '@tanstack/react-query';
+import * as api from '../../services/api/service';
+
+export const useUsers = (props: { resultsPerPage: number; page: number }) => {
+    const usersQuery = useQuery({
+        queryKey: ['users', props.page],
+        queryFn: async () => {
+            const response = await api.listUsers({
+                resultsPerPage: props.resultsPerPage,
+                page: props.page,
+            });
+            if (response.error !== undefined) throw new Error(response.error);
+            return response.data;
+        },
+        keepPreviousData: true,
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
+
+    // const updateUserRoleMutation = useMutation({
+    //     mutationFn: async (data: { userId: number; role: keyof typeof UserRole }) => {
+    //         const response = await api.updateUserRole(data.userId, data.role);
+    //         if (response.error !== undefined) throw new Error(response.error);
+    //         return response.data;
+    //     },
+    //     onSuccess: (data) => {
+    //         queryClient.setQueryData<User[]>(['users', props.page], (users) => {
+    //             return users?.map((user) => {
+    //                 if (user.id !== data.id) return user;
+    //                 return { ...user, role: data.role };
+    //             });
+    //         });
+    //     },
+    // });
+
+    return {
+        usersQuery,
+        // updateUserRoleMutation,
+    };
+};
