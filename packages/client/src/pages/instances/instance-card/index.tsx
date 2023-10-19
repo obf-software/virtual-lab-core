@@ -36,6 +36,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '../../../services/api/service';
 import { queryClient } from '../../../services/query/service';
 import { useNotificationsContext } from '../../../contexts/notifications/hook';
+import { getErrorMessage } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -163,7 +164,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
         onError: (error) => {
             toast({
                 title: 'Erro ao mudar o estado da instância',
-                description: error instanceof Error ? error.message : 'Erro desconhecido',
+                description: getErrorMessage(error),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
@@ -312,10 +313,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                             ) {
                                 toast({
                                     title: 'Erro ao conectar',
-                                    description:
-                                        instanceConnectionQuery.error instanceof Error
-                                            ? instanceConnectionQuery.error.message
-                                            : 'Erro desconhecido',
+                                    description: getErrorMessage(instanceConnectionQuery.error),
                                     status: 'error',
                                     duration: 5000,
                                     isClosable: true,

@@ -1,7 +1,6 @@
-/* eslint-disable react/prop-types */
 import '@aws-amplify/ui-react/styles.css';
 import { Authenticator } from '@aws-amplify/ui-react';
-import { PropsWithChildren } from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Amplify } from 'aws-amplify';
 import { Box, Heading } from '@chakra-ui/react';
 

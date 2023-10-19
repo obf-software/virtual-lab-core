@@ -17,24 +17,7 @@ export const useUsers = (props: { resultsPerPage: number; page: number }) => {
         refetchOnWindowFocus: false,
     });
 
-    // const updateUserRoleMutation = useMutation({
-    //     mutationFn: async (data: { userId: number; role: keyof typeof UserRole }) => {
-    //         const response = await api.updateUserRole(data.userId, data.role);
-    //         if (response.error !== undefined) throw new Error(response.error);
-    //         return response.data;
-    //     },
-    //     onSuccess: (data) => {
-    //         queryClient.setQueryData<User[]>(['users', props.page], (users) => {
-    //             return users?.map((user) => {
-    //                 if (user.id !== data.id) return user;
-    //                 return { ...user, role: data.role };
-    //             });
-    //         });
-    //     },
-    // });
-
     return {
         usersQuery,
-        // updateUserRoleMutation,
     };
 };

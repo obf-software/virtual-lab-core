@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import * as api from '../../services/api/service';
 
 export const useInstances = (props: {

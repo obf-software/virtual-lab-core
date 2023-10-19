@@ -79,7 +79,7 @@ export class BaseLinuxProduct extends ProductStack {
         const userData = UserData.forLinux();
         userData.addCommands(
             ...[
-                `yum update -y`,
+                // `yum update -y`,
                 `amazon-linux-extras install mate-desktop1.x`,
                 `echo 'PREFERRED=/usr/bin/mate-session' > /etc/sysconfig/desktop`,
                 `yum -y install tigervnc-server`,

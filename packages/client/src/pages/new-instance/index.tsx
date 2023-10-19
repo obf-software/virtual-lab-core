@@ -12,12 +12,25 @@ import {
 import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { useProductsContext } from '../../contexts/products/hook';
 import { NewInstanceCard } from './card';
+import { useQuery } from '@tanstack/react-query';
+import * as api from '../../services/api/service';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const { isLoading, products, loadProducts } = useProductsContext();
+
+    const productsQuery = useQuery({
+        queryKey: ['products'],
+        queryFn: async () => {
+            const { data, error } = await api.listUserProducts('me');
+            if (error !== undefined) throw new Error(error);
+            return data;
+        },
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
+
+    const numberOfProducts = productsQuery.data?.length ?? 0;
 
     useEffect(() => {
         setActiveMenuItem('INSTANCES');
@@ -43,9 +56,9 @@ export const NewInstancePage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${products.length === 0 ? 'Nenhum' : products.length} ${
-                                products.length > 1 ? 'produtos disponíveis' : 'produto disponível'
-                            }`}
+                            {numberOfProducts === 0 ? 'Nenhum produto disponível' : null}
+                            {numberOfProducts === 1 ? '1 produto disponível' : null}
+                            {numberOfProducts > 1 ? 'Produtos disponíveis' : null}
                         </Text>
                     </VStack>
 
@@ -54,9 +67,10 @@ export const NewInstancePage: React.FC = () => {
                             aria-label='Recarregar'
                             variant={'outline'}
                             colorScheme='blue'
-                            isLoading={isLoading}
+                            hidden={productsQuery.isLoading}
+                            isLoading={productsQuery.isFetching}
                             onClick={() => {
-                                loadProducts().catch(console.error);
+                                productsQuery.refetch().catch(console.error);
                             }}
                         >
                             <FiRefreshCw />
@@ -64,7 +78,7 @@ export const NewInstancePage: React.FC = () => {
                     </ButtonGroup>
                 </Stack>
 
-                {products.length === 0 && !isLoading ? (
+                {numberOfProducts === 0 && !productsQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -76,12 +90,12 @@ export const NewInstancePage: React.FC = () => {
                             fontSize='xl'
                             color='gray.600'
                         >
-                            Nenhuma instância encontrada
+                            Nenhum produto encontrado
                         </Text>
                     </Box>
                 ) : null}
 
-                {isLoading ? (
+                {productsQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -98,15 +112,14 @@ export const NewInstancePage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {!isLoading &&
-                    products.map((product) => (
-                        <Box
-                            pb={10}
-                            key={`product-${product.data.awsProductId}`}
-                        >
-                            <NewInstanceCard product={product.data} />
-                        </Box>
-                    ))}
+                {productsQuery.data?.map((product) => (
+                    <Box
+                        pb={10}
+                        key={`product-${product.awsProductId}`}
+                    >
+                        <NewInstanceCard product={product} />
+                    </Box>
+                ))}
             </Container>
         </Box>
     );

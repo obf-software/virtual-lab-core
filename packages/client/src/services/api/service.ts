@@ -12,6 +12,7 @@ import {
     UserQuota,
     UserRole,
 } from './protocols';
+import { getErrorMessage } from '../helpers';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -55,7 +56,7 @@ const executeRequest = async <T>(props: {
             error: undefined,
         };
     } catch (error) {
-        const reason = error instanceof Error ? error.message : 'Unknown error';
+        const reason = getErrorMessage(error);
         console.log(`Error while fetching API data: ${reason}`);
         return { error: reason, data: undefined };
     }
@@ -147,7 +148,7 @@ export const getInstanceConnection = async (
         method: 'GET',
     });
 
-export const listUserProducts = async (userId: string | number | undefined) =>
+export const listUserProducts = async (userId: number | 'me') =>
     executeRequest<Product[]>({
         path: `/api/v1/users/${userId ?? 'me'}/products`,
         method: 'GET',

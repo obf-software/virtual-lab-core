@@ -22,11 +22,14 @@ import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { FiUploadCloud } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { provisionProduct } from '../../../../services/api/service';
+import * as api from '../../../../services/api/service';
+import { useMutation } from '@tanstack/react-query';
+import { getErrorMessage } from '../../../../services/helpers';
+import { queryClient } from '../../../../services/query/service';
 
 interface ProvisioningModalProps {
     product: Product;
-    launchPath: string;
+    launchPathId: string;
     parameters: ProductProvisioningParameter[];
     isOpen: boolean;
     onClose: () => void;
@@ -41,46 +44,52 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
     onClose,
     parameters,
     product,
-    launchPath,
+    launchPathId,
 }) => {
     const formMethods = useForm<ProvisioProductFormData>();
-    const [isLoading, setIsLoading] = React.useState(false);
     const navigate = useNavigate();
     const toast = useToast();
 
-    const submitHandler: SubmitHandler<ProvisioProductFormData> = async (data) => {
-        setIsLoading(true);
-
-        const { error } = await provisionProduct(
-            'me',
-            product.awsProductId,
-            launchPath,
-            Object.entries(data.parameters).map(([key, value]) => ({ key, value })),
-        );
-
-        setIsLoading(false);
-
-        if (error !== undefined) {
+    const provisionProductMutation = useMutation({
+        mutationFn: async (mut: ProvisioProductFormData) => {
+            const { data, error } = await api.provisionProduct(
+                'me',
+                product.awsProductId,
+                launchPathId,
+                Object.entries(mut.parameters).map(([key, value]) => ({ key, value })),
+            );
+            if (error !== undefined) throw new Error(error);
+            return data;
+        },
+        onSuccess: (data) => {
             toast({
-                title: 'Erro ao provisionar produto',
-                description: error,
+                title: 'Instância em provisionamento',
+                description: `A instância ${data.name} está sendo provisionada. Você será notificado quando ela estiver pronta para uso.`,
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            });
+
+            queryClient
+                .invalidateQueries(['instances'])
+                .catch(console.error)
+                .finally(() => {
+                    navigate(`/instances`);
+                });
+        },
+        onError: (error) => {
+            toast({
+                title: 'Erro ao provisionar instância',
+                description: getErrorMessage(error),
                 status: 'error',
                 duration: 5000,
                 isClosable: true,
             });
-            return;
-        }
+        },
+    });
 
-        toast({
-            title: 'Produto provisionado',
-            description:
-                'Seu produto está sendo preparado para uso e será disponibilizado em breve',
-            status: 'success',
-            duration: 5000,
-            isClosable: true,
-        });
-
-        navigate(`/instances`);
+    const submitHandler: SubmitHandler<ProvisioProductFormData> = (data) => {
+        provisionProductMutation.mutate(data);
     };
 
     const getParameterLabel = (parameter: ProductProvisioningParameter) => {
@@ -103,12 +112,10 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
         <Modal
             isCentered
             size={{ base: '6xl', md: '2xl' }}
-            closeOnEsc
+            closeOnEsc={!provisionProductMutation.isLoading}
             scrollBehavior='outside'
             isOpen={isOpen}
-            onClose={() => {
-                onClose();
-            }}
+            onClose={onClose}
         >
             <ModalOverlay
                 bg={'blackAlpha.300'}
@@ -194,7 +201,7 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
                                 leftIcon={<FiUploadCloud />}
                                 colorScheme='blue'
                                 onClick={formMethods.handleSubmit(submitHandler)}
-                                isLoading={isLoading}
+                                isLoading={provisionProductMutation.isLoading}
                             >
                                 Provisionar
                             </Button>

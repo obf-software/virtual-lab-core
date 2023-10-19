@@ -13,10 +13,12 @@ import {
 import dayjs from 'dayjs';
 import React from 'react';
 import { FiUploadCloud } from 'react-icons/fi';
-import { Product, ProductProvisioningParameter } from '../../../services/api/protocols';
+import { Product } from '../../../services/api/protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { useProductsContext } from '../../../contexts/products/hook';
 import { ProvisioningModal } from './provisioning-modal';
+import { useQuery } from '@tanstack/react-query';
+import * as api from '../../../services/api/service';
+import { getErrorMessage } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -26,21 +28,30 @@ interface NewInstanceCardProps {
 }
 
 export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => {
-    const [isLoading, setIsLoading] = React.useState(false);
-    const { loadProductProvisioningParameters } = useProductsContext();
-    const [parameters, setParameters] = React.useState<ProductProvisioningParameter[]>([]);
-    const [launchPathId, setLaunchPathId] = React.useState<string>();
     const provisioningModalDisclosure = useDisclosure();
     const toast = useToast();
+
+    const provisioningParametersQuery = useQuery({
+        queryKey: ['productsProvisioningParameters', product.awsProductId],
+        queryFn: async () => {
+            const { data, error } = await api.getProductProvisioningParameters(
+                product.awsProductId,
+            );
+            if (error !== undefined) throw new Error(error);
+            return data;
+        },
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
 
     return (
         <Card>
             <ProvisioningModal
                 isOpen={provisioningModalDisclosure.isOpen}
                 onClose={provisioningModalDisclosure.onClose}
-                parameters={parameters}
+                parameters={provisioningParametersQuery.data?.provisioningParameters ?? []}
                 product={product}
-                launchPath={launchPathId ?? ''}
+                launchPathId={provisioningParametersQuery.data?.launchPathId ?? ''}
             />
             <CardHeader>
                 <Stack
@@ -60,29 +71,31 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
                     <Button
                         leftIcon={<FiUploadCloud />}
                         colorScheme='blue'
-                        isLoading={isLoading}
+                        isLoading={
+                            provisioningParametersQuery.isLoading ||
+                            provisioningParametersQuery.isFetching
+                        }
                         onClick={() => {
-                            setIsLoading(true);
-                            loadProductProvisioningParameters(product.awsProductId)
-                                .then(({ provisioningParameters, launchPathId }) => {
-                                    setParameters(provisioningParameters);
-                                    setLaunchPathId(launchPathId);
-                                    setIsLoading(false);
-                                    provisioningModalDisclosure.onOpen();
-                                })
-                                .catch((error) => {
-                                    setIsLoading(false);
-                                    toast({
-                                        title: 'Erro ao carregar parâmetros de provisionamento',
-                                        description:
-                                            error instanceof Error
-                                                ? error.message
-                                                : 'Erro desconhecido',
-                                        status: 'error',
-                                        duration: 5000,
-                                        isClosable: true,
+                            if (provisioningParametersQuery.data === undefined) {
+                                provisioningParametersQuery
+                                    .refetch()
+                                    .then(({ data }) => {
+                                        if (data === undefined)
+                                            throw new Error('Erro desconhecido');
+                                        provisioningModalDisclosure.onOpen();
+                                    })
+                                    .catch((error) => {
+                                        toast({
+                                            title: 'Erro ao carregar parâmetros de provisionamento',
+                                            description: getErrorMessage(error),
+                                            status: 'error',
+                                            isClosable: true,
+                                        });
                                     });
-                                });
+                                return;
+                            }
+
+                            provisioningModalDisclosure.onOpen();
                         }}
                     >
                         Provisionar

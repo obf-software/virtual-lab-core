@@ -194,7 +194,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                 function: {
                     handler: 'packages/api/modules/product/handlers/provision-product.handler',
                     role: provisionProductFunctionRole,
-                    permissions: ['s3:*'],
+                    permissions: ['s3:*', 'ssm:*', 'sns:*', 'ec2:*', 'iam:*'],
                     environment: {
                         DATABASE_URL,
                         SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
