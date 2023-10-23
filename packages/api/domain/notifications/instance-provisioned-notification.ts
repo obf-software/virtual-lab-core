@@ -9,7 +9,7 @@ export class InstanceProvisionedNotification extends Notification {
         readonly instanceState: keyof typeof VirtualInstanceState,
     ) {
         super(username, 'INSTANCE_PROVISIONED', {
-            instance: { ...instance.toJSON(), id: instance.id, state: instanceState },
+            instance: { ...instance.toJSON(), state: instanceState },
         });
     }
 }

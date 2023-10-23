@@ -9,7 +9,7 @@ export class InstanceStateChangedNotification extends Notification {
         readonly instanceState: keyof typeof VirtualInstanceState,
     ) {
         super(username, 'INSTANCE_STATE_CHANGED', {
-            instance: { ...instance.toJSON(), id: instance.id, state: instanceState },
+            instance: { ...instance.toJSON(), state: instanceState },
         });
     }
 }

@@ -49,7 +49,7 @@ export const GroupsTableRow: React.FC<GroupsTableRowProps> = ({ group }) => {
                 </Tooltip>
             </Td>
             <Td onClick={onOpenGroup}>
-                <Tag>{group.awsPortfolioId}</Tag>
+                <Tag>{group.portfolioId}</Tag>
             </Td>
 
             <Td

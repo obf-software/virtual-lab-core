@@ -74,7 +74,7 @@ export const MyGroupsTable: React.FC = () => {
                                     </Tooltip>
                                 </Td>
                                 <Td>
-                                    <Tag>{group.awsPortfolioId}</Tag>
+                                    <Tag>{group.portfolioId}</Tag>
                                 </Td>
 
                                 <Td>{dayjs(group.createdAt).format('DD/MM/YYYY')}</Td>

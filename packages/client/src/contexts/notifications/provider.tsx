@@ -43,8 +43,8 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                 console.log(`Received notification for ${data.type}`, data);
 
                 setNotifications((currentNotifications) => {
-                    if (data.type === 'EC2_INSTANCE_STATE_CHANGED') {
-                        const typedData = data as NotificationTypeMap['EC2_INSTANCE_STATE_CHANGED'];
+                    if (data.type === 'INSTANCE_STATE_CHANGED') {
+                        const typedData = data as NotificationTypeMap['INSTANCE_STATE_CHANGED'];
 
                         /**
                          * Update the instance state in the cache
@@ -61,8 +61,8 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                                 return {
                                     ...cachedInstances,
                                     data: cachedInstances.data.map((instance) => {
-                                        if (instance.id === typedData.id) {
-                                            return { ...instance, state: typedData.state };
+                                        if (instance.id === typedData.instance.id) {
+                                            return { ...instance, state: typedData.instance.state };
                                         }
                                         return instance;
                                     }),
@@ -73,13 +73,13 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                         const newNotification: ReadableNotification = {
                             id: v4(),
                             viewed: false,
-                            text: `Instância ${typedData.name} mudou de estado para ${typedData.state}`,
+                            text: `Instância ${typedData.instance.name} mudou de estado para ${typedData.instance.state}`,
                         };
                         return [newNotification, ...currentNotifications];
                     }
 
-                    if (data.type === 'EC2_INSTANCE_PROVISIONED') {
-                        const typedData = data as NotificationTypeMap['EC2_INSTANCE_PROVISIONED'];
+                    if (data.type === 'INSTANCE_PROVISIONED') {
+                        const typedData = data as NotificationTypeMap['INSTANCE_PROVISIONED'];
 
                         /**
                          * Update the instance state in the cache

@@ -29,7 +29,7 @@ import {
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useNavigate } from 'react-router-dom';
-import { Instance, InstanceState } from '../../../services/api/protocols';
+import { Instance, VirtualInstanceState } from '../../../services/api/protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ConfirmDeletionModal } from '../../../components/confirm-deletion-modal/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -42,35 +42,35 @@ dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 const instanceStateStyleMap: Record<
-    keyof typeof InstanceState | 'unknown' | 'provisioning',
+    keyof typeof VirtualInstanceState | 'unknown' | 'provisioning',
     { label: string; colorScheme: string; hasSpinner: boolean }
 > = {
-    'shutting-down': {
+    SHUTTING_DOWN: {
         label: 'Terminando',
         colorScheme: 'red',
         hasSpinner: true,
     },
-    pending: {
+    PENDING: {
         label: 'Pendente',
         colorScheme: 'orange',
         hasSpinner: true,
     },
-    running: {
+    RUNNING: {
         label: 'Ativa',
         colorScheme: 'green',
         hasSpinner: false,
     },
-    stopped: {
+    STOPPED: {
         label: 'Desligada',
         colorScheme: 'red',
         hasSpinner: false,
     },
-    stopping: {
+    STOPPING: {
         label: 'Desligando',
         colorScheme: 'red',
         hasSpinner: true,
     },
-    terminated: {
+    TERMINATED: {
         label: 'Excluída',
         colorScheme: 'gray',
         hasSpinner: false,
@@ -119,7 +119,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const toast = useToast();
 
     const stateStyle =
-        instance.awsInstanceId === null
+        instance.logicalId === null
             ? instanceStateStyleMap.provisioning
             : Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
             ? instanceStateStyleMap[instance.state ?? 'unknown']
@@ -139,15 +139,30 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
             if (response.error !== undefined) throw new Error(response.error);
             return response.data;
         },
-        enabled: instance.awsInstanceId !== null && instance.state === 'running',
+        enabled: instance.logicalId !== null && instance.state === 'RUNNING',
         staleTime: 1000 * 60 * 5,
     });
 
-    const changeInstanceStateMutation = useMutation({
-        mutationFn: async (data: { state: 'start' | 'stop' | 'reboot' }) => {
-            const response = await api.changeInstanceState('me', instance.id, data.state);
+    const turnInstanceOnMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.turnInstanceOn('me', instance.id);
             if (response.error !== undefined) throw new Error(response.error);
-            return data;
+        },
+        retry: 1,
+    });
+
+    const turnInstanceOffMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.turnInstanceOff('me', instance.id);
+            if (response.error !== undefined) throw new Error(response.error);
+        },
+        retry: 1,
+    });
+
+    const rebootInstanceMutation = useMutation({
+        mutationFn: async () => {
+            const response = await api.rebootInstance('me', instance.id);
+            if (response.error !== undefined) throw new Error(response.error);
         },
         retry: 1,
     });
@@ -176,15 +191,17 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     });
 
     const isLoading =
-        changeInstanceStateMutation.isLoading ||
+        rebootInstanceMutation.isLoading ||
+        turnInstanceOffMutation.isLoading ||
+        turnInstanceOnMutation.isLoading ||
         deleteInstanceMutation.isLoading ||
         isWaitingForInstanceStateChange;
 
     React.useEffect(() => {
-        const handlerId = registerHandler('EC2_INSTANCE_STATE_CHANGED', (data) => {
-            console.log('EC2_INSTANCE_STATE_CHANGED', data);
+        const handlerId = registerHandler('INSTANCE_STATE_CHANGED', (data) => {
+            console.log('INSTANCE_STATE_CHANGED', data);
 
-            if (data.id === instance.id) {
+            if (data.instance.id === instance.id) {
                 setIsWaitingForInstanceStateChange(false);
             }
         });
@@ -237,7 +254,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     direction='row'
                     align='center'
                     mt={'5%'}
-                    hidden={instance.awsInstanceId === null}
+                    hidden={instance.logicalId === null}
                 >
                     <Icon
                         aria-label={platformStyle.label}
@@ -249,7 +266,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
 
                 <Wrap
                     mt={'5%'}
-                    hidden={instance.awsInstanceId === null}
+                    hidden={instance.logicalId === null}
                 >
                     {[
                         ['Tipo', instance.instanceType ?? '-'],
@@ -291,16 +308,16 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     ))}
                 </Wrap>
             </CardBody>
-            <CardFooter hidden={instance.awsInstanceId === null}>
+            <CardFooter hidden={instance.logicalId === null}>
                 <Wrap spacingY={4}>
                     <Button
                         leftIcon={<FiPlay />}
                         colorScheme='green'
                         hidden={
-                            (instance.state !== 'pending' && instance.state !== 'running') ||
-                            instance.awsInstanceId === null
+                            (instance.state !== 'PENDING' && instance.state !== 'RUNNING') ||
+                            instance.logicalId === null
                         }
-                        isDisabled={instance.state !== 'running'}
+                        isDisabled={instance.state !== 'RUNNING'}
                         isLoading={
                             isLoading ||
                             instanceConnectionQuery.isLoading ||
@@ -336,14 +353,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         leftIcon={<FiPower />}
                         colorScheme='red'
                         hidden={
-                            (instance.state !== 'pending' && instance.state !== 'running') ||
-                            instance.awsInstanceId === null
+                            (instance.state !== 'PENDING' && instance.state !== 'RUNNING') ||
+                            instance.logicalId === null
                         }
-                        isDisabled={instance.state !== 'running'}
+                        isDisabled={instance.state !== 'RUNNING'}
                         isLoading={isLoading}
                         onClick={() => {
                             setIsWaitingForInstanceStateChange(true);
-                            changeInstanceStateMutation.mutate({ state: 'stop' });
+                            turnInstanceOffMutation.mutate();
                         }}
                     >
                         Desligar
@@ -354,14 +371,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='green'
                         transition={'all 1s'}
                         hidden={
-                            (instance.state !== 'stopped' && instance.state !== 'stopping') ||
-                            instance.awsInstanceId === null
+                            (instance.state !== 'STOPPED' && instance.state !== 'STOPPING') ||
+                            instance.logicalId === null
                         }
-                        isDisabled={instance.state !== 'stopped'}
+                        isDisabled={instance.state !== 'STOPPED'}
                         isLoading={isLoading}
                         onClick={() => {
                             setIsWaitingForInstanceStateChange(true);
-                            changeInstanceStateMutation.mutate({ state: 'start' });
+                            turnInstanceOnMutation.mutate();
                         }}
                     >
                         Ligar
@@ -372,13 +389,13 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='blackAlpha'
                         hidden={
                             !moreOptionsDisclosure.isOpen ||
-                            instance.awsInstanceId === null ||
-                            instance.state !== 'running'
+                            instance.logicalId === null ||
+                            instance.state !== 'RUNNING'
                         }
                         isLoading={isLoading}
                         onClick={() => {
                             setIsWaitingForInstanceStateChange(true);
-                            changeInstanceStateMutation.mutate({ state: 'reboot' });
+                            rebootInstanceMutation.mutate();
                         }}
                     >
                         Reiniciar
@@ -389,9 +406,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={
                             !moreOptionsDisclosure.isOpen ||
-                            instance.awsInstanceId === null ||
-                            instance.state === 'stopping' ||
-                            instance.state === 'pending'
+                            instance.logicalId === null ||
+                            instance.state === 'STOPPING' ||
+                            instance.state === 'PENDING'
                         }
                         isLoading={isLoading}
                         onClick={confirmDeletionDisclosure.onOpen}
@@ -404,9 +421,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         variant={'outline'}
                         colorScheme='blue'
                         hidden={
-                            instance.state === 'stopping' ||
-                            instance.state === 'pending' ||
-                            instance.awsInstanceId === null ||
+                            instance.state === 'STOPPING' ||
+                            instance.state === 'PENDING' ||
+                            instance.logicalId === null ||
                             isLoading
                         }
                         icon={

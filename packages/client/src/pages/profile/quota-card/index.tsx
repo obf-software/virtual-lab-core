@@ -56,7 +56,7 @@ export const ProfileQuotaCard: React.FC = () => {
                         <Input
                             id='instances'
                             type='text'
-                            value={user?.quota.maxInstances ?? '-'}
+                            value={user?.maxInstances ?? '-'}
                             isReadOnly={true}
                         />
                         <InputRightElement>

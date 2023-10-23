@@ -20,7 +20,7 @@ export const MyGroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
             const { userId } = parseSessionData(user);
 
-            const response = await listUserGroups(userId, { page, resultsPerPage });
+            const response = await listUserGroups(userId ?? 'me', { page, resultsPerPage });
             if (response.error !== undefined) throw new Error(response.error);
             const { data, numberOfPages, numberOfResults } = response.data;
 

@@ -30,7 +30,7 @@ interface CreateGroupModalProps {
 interface CreateGroupFormData {
     name: string;
     description: string;
-    awsPortfolioId: string;
+    portfolioId: string;
 }
 
 export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose }) => {
@@ -48,7 +48,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
         const { error } = await createGroup({
             name: values.name,
             description: values.description,
-            awsPortfolioId: values.awsPortfolioId,
+            portfolioId: values.portfolioId,
         });
 
         if (error !== undefined) {
@@ -141,12 +141,12 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                         <FormControl
                             mt={'2%'}
                             isRequired
-                            isInvalid={formMethods.formState.errors.awsPortfolioId !== undefined}
+                            isInvalid={formMethods.formState.errors.portfolioId !== undefined}
                         >
-                            <FormLabel htmlFor='awsPortfolioId'>Id do Portfólio</FormLabel>
+                            <FormLabel htmlFor='portfolioId'>Id do Portfólio</FormLabel>
                             <Input
-                                id='awsPortfolioId'
-                                {...formMethods.register('awsPortfolioId', {
+                                id='portfolioId'
+                                {...formMethods.register('portfolioId', {
                                     required: 'Campo obrigatório',
                                     minLength: {
                                         value: 1,
@@ -159,7 +159,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                                 })}
                             />
                             <FormErrorMessage>
-                                {formMethods.formState.errors.awsPortfolioId?.message}
+                                {formMethods.formState.errors.portfolioId?.message}
                             </FormErrorMessage>
                             <FormHelperText>
                                 O id do portfólio pode ser encontrado no AWS Service Catalog. O

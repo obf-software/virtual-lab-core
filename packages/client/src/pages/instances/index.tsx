@@ -128,7 +128,7 @@ export const InstancesPage: React.FC = () => {
                 {instancesQuery.data?.data.map((instance) => (
                     <Box
                         pb={10}
-                        key={`instance-${instance.awsInstanceId}`}
+                        key={`instance-${instance.logicalId}`}
                     >
                         <InstanceCard instance={instance} />
                     </Box>

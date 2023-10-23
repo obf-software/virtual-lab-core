@@ -1,4 +1,4 @@
-import { Instance, InstanceState } from '../../services/api/protocols';
+import { Instance } from '../../services/api/protocols';
 
 export interface NotificationPayload {
     value: {
@@ -12,8 +12,8 @@ export interface NotificationPayload {
 }
 
 export enum NotificationType {
-    'EC2_INSTANCE_STATE_CHANGED' = 'EC2_INSTANCE_STATE_CHANGED',
-    'EC2_INSTANCE_PROVISIONED' = 'EC2_INSTANCE_PROVISIONED',
+    'INSTANCE_STATE_CHANGED' = 'INSTANCE_STATE_CHANGED',
+    'INSTANCE_PROVISIONED' = 'INSTANCE_PROVISIONED',
 }
 
 export interface NotificationData {
@@ -21,17 +21,8 @@ export interface NotificationData {
 }
 
 export type NotificationTypeMap = Record<keyof typeof NotificationType, unknown> & {
-    [NotificationType.EC2_INSTANCE_STATE_CHANGED]: {
-        type: NotificationType.EC2_INSTANCE_STATE_CHANGED;
-        id: number;
-        awsInstanceId: string;
-        name: string;
-        state: keyof typeof InstanceState;
-    };
-    [NotificationType.EC2_INSTANCE_PROVISIONED]: {
-        type: NotificationType.EC2_INSTANCE_PROVISIONED;
-        instance: Instance;
-    };
+    [NotificationType.INSTANCE_STATE_CHANGED]: NotificationData & { instance: Instance };
+    [NotificationType.INSTANCE_PROVISIONED]: NotificationData & { instance: Instance };
 };
 
 export interface ReadableNotification {

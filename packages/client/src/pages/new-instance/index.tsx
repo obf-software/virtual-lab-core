@@ -115,7 +115,7 @@ export const NewInstancePage: React.FC = () => {
                 {productsQuery.data?.map((product) => (
                     <Box
                         pb={10}
-                        key={`product-${product.awsProductId}`}
+                        key={`product-${product.id}`}
                     >
                         <NewInstanceCard product={product} />
                     </Box>

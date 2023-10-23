@@ -29,7 +29,6 @@ import { queryClient } from '../../../../services/query/service';
 
 interface ProvisioningModalProps {
     product: Product;
-    launchPathId: string;
     parameters: ProductProvisioningParameter[];
     isOpen: boolean;
     onClose: () => void;
@@ -44,7 +43,6 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
     onClose,
     parameters,
     product,
-    launchPathId,
 }) => {
     const formMethods = useForm<ProvisioProductFormData>();
     const navigate = useNavigate();
@@ -52,12 +50,7 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
 
     const provisionProductMutation = useMutation({
         mutationFn: async (mut: ProvisioProductFormData) => {
-            const { data, error } = await api.provisionProduct(
-                'me',
-                product.awsProductId,
-                launchPathId,
-                Object.entries(mut.parameters).map(([key, value]) => ({ key, value })),
-            );
+            const { data, error } = await api.provisionProduct('me', product.id, mut.parameters);
             if (error !== undefined) throw new Error(error);
             return data;
         },
@@ -90,22 +83,6 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
 
     const submitHandler: SubmitHandler<ProvisioProductFormData> = (data) => {
         provisionProductMutation.mutate(data);
-    };
-
-    const getParameterLabel = (parameter: ProductProvisioningParameter) => {
-        if (parameter.Description === 'Instance Type') {
-            return 'Tipo de instância';
-        }
-
-        if (parameter.Description !== undefined) {
-            return parameter.Description;
-        }
-
-        if (parameter.ParameterKey !== undefined) {
-            return parameter.ParameterKey;
-        }
-
-        return 'Parâmetro sem nome';
     };
 
     return (
@@ -152,44 +129,39 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
                             </Heading>
 
                             {parameters
-                                .filter((parameter) => parameter.ParameterType === 'String')
+                                // .filter((parameter) => parameter.ParameterType === 'String')
                                 .map((parameter, i) => (
                                     <FormControl
                                         mb={'2%'}
                                         key={`provisioning-parameter-${i}`}
-                                        isRequired={parameter.DefaultValue === undefined}
+                                        isRequired={parameter.defaultValue === undefined}
                                     >
-                                        <FormLabel>{getParameterLabel(parameter)}</FormLabel>
-                                        {parameter.ParameterConstraints.AllowedValues ===
-                                            undefined ||
-                                        parameter.ParameterConstraints.AllowedValues.length ===
-                                            0 ? (
+                                        <FormLabel>{parameter.label}</FormLabel>
+                                        {parameter.allowedValues === undefined ||
+                                        parameter.allowedValues.length === 0 ? (
                                             <Input
-                                                defaultValue={parameter.DefaultValue}
+                                                defaultValue={parameter.defaultValue}
                                                 {...formMethods.register(
-                                                    `parameters.${parameter.ParameterKey}`,
+                                                    `parameters.${parameter.key}`,
                                                 )}
                                             ></Input>
                                         ) : (
                                             <Select
                                                 {...formMethods.register(
-                                                    `parameters.${parameter.ParameterKey}`,
+                                                    `parameters.${parameter.key}`,
                                                 )}
                                             >
-                                                {parameter.ParameterConstraints.AllowedValues.map(
-                                                    (allowedValue, i) => (
-                                                        <option
-                                                            key={`allowed-value-${i}`}
-                                                            value={allowedValue}
-                                                            selected={
-                                                                allowedValue ===
-                                                                parameter.DefaultValue
-                                                            }
-                                                        >
-                                                            {allowedValue}
-                                                        </option>
-                                                    ),
-                                                )}
+                                                {parameter.allowedValues.map((allowedValue, i) => (
+                                                    <option
+                                                        key={`allowed-value-${i}`}
+                                                        value={allowedValue}
+                                                        selected={
+                                                            allowedValue === parameter.defaultValue
+                                                        }
+                                                    >
+                                                        {allowedValue}
+                                                    </option>
+                                                ))}
                                             </Select>
                                         )}
                                     </FormControl>

@@ -32,11 +32,9 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
     const toast = useToast();
 
     const provisioningParametersQuery = useQuery({
-        queryKey: ['productsProvisioningParameters', product.awsProductId],
+        queryKey: ['productsProvisioningParameters', product.id],
         queryFn: async () => {
-            const { data, error } = await api.getProductProvisioningParameters(
-                product.awsProductId,
-            );
+            const { data, error } = await api.getProductProvisioningParameters(product.id);
             if (error !== undefined) throw new Error(error);
             return data;
         },
@@ -49,9 +47,8 @@ export const NewInstanceCard: React.FC<NewInstanceCardProps> = ({ product }) => 
             <ProvisioningModal
                 isOpen={provisioningModalDisclosure.isOpen}
                 onClose={provisioningModalDisclosure.onClose}
-                parameters={provisioningParametersQuery.data?.provisioningParameters ?? []}
+                parameters={provisioningParametersQuery.data ?? []}
                 product={product}
-                launchPathId={provisioningParametersQuery.data?.launchPathId ?? ''}
             />
             <CardHeader>
                 <Stack

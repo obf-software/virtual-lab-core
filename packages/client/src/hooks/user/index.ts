@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getUser } from '../../services/api/service';
 
-export const useUser = (userId: 'me' | number) => {
+export const useUser = (userId: number | 'me') => {
     const userQuery = useQuery({
         queryKey: ['user', userId],
         queryFn: async () => {
