@@ -1,105 +1,106 @@
-import {
-    DescribePortfolioCommand,
-    DescribeProductAsAdminCommand,
-    DescribeProvisioningParametersCommand,
-    ListLaunchPathsCommand,
-    ServiceCatalogClient,
-    TerminateProvisionedProductCommand,
-    paginateSearchProductsAsAdmin,
-    ProvisionProductCommand,
-} from '@aws-sdk/client-service-catalog';
-import { randomUUID } from 'node:crypto';
+// import {
+//     DescribePortfolioCommand,
+//     DescribeProductAsAdminCommand,
+//     DescribeProvisioningParametersCommand,
+//     ListLaunchPathsCommand,
+//     ServiceCatalogClient,
+//     TerminateProvisionedProductCommand,
+//     paginateSearchProductsAsAdmin,
+//     ProvisionProductCommand,
+// } from '@aws-sdk/client-service-catalog';
+// import { randomUUID } from 'node:crypto';
 
-export class ServiceCatalog {
-    private client: ServiceCatalogClient;
+// export class ServiceCatalog {
+//     private client: ServiceCatalogClient;
 
-    constructor(AWS_REGION: string) {
-        this.client = new ServiceCatalogClient({ region: AWS_REGION });
-    }
+//     constructor(AWS_REGION: string) {
+//         this.client = new ServiceCatalogClient({ region: AWS_REGION });
+//     }
 
-    async portfolioExists(portfolioId: string) {
-        try {
-            const command = new DescribePortfolioCommand({ Id: portfolioId });
-            const { PortfolioDetail } = await this.client.send(command);
-            return PortfolioDetail !== undefined;
-        } catch {
-            return false;
-        }
-    }
+//     async portfolioExists(portfolioId: string) {
+//         try {
+//             const command = new DescribePortfolioCommand({ Id: portfolioId });
+//             const { PortfolioDetail } = await this.client.send(command);
+//             return PortfolioDetail !== undefined;
+//         } catch {
+//             return false;
+//         }
+//     }
 
-    paginateListPortfolioProducts(portfolioId: string) {
-        return paginateSearchProductsAsAdmin(
-            { client: this.client },
-            { PortfolioId: portfolioId, PageSize: 1000 },
-        );
-    }
+//     paginateListPortfolioProducts(portfolioId: string) {
+//         return paginateSearchProductsAsAdmin(
+//             { client: this.client },
+//             { PortfolioId: portfolioId, PageSize: 1000 },
+//         );
+//     }
 
-    async getProduct(productId: string) {
-        const command = new DescribeProductAsAdminCommand({ Id: productId });
-        const { ProductViewDetail, ProvisioningArtifactSummaries, Tags } =
-            await this.client.send(command);
-        return { ProductViewDetail, ProvisioningArtifactSummaries, Tags };
-    }
+//     async getProduct(productId: string) {
+//         const command = new DescribeProductAsAdminCommand({ Id: productId });
+//         const { ProductViewDetail, ProvisioningArtifactSummaries, Tags } =
+//             await this.client.send(command);
+//         return { ProductViewDetail, ProvisioningArtifactSummaries, Tags };
+//     }
 
-    async terminateProvisionedProductByName(provisionedProductName: string) {
-        const command = new TerminateProvisionedProductCommand({
-            ProvisionedProductName: provisionedProductName,
-            IgnoreErrors: true,
-            RetainPhysicalResources: false,
-            TerminateToken: randomUUID(),
-        });
-        await this.client.send(command);
-    }
+//     async terminateProvisionedProductByName(provisionedProductName: string) {
+//         const command = new TerminateProvisionedProductCommand({
+//             ProvisionedProductName: provisionedProductName,
+//             IgnoreErrors: true,
+//             RetainPhysicalResources: false,
+//             TerminateToken: randomUUID(),
+//         });
+//         await this.client.send(command);
+//     }
 
-    async getProductLaunchPath(productId: string) {
-        const command = new ListLaunchPathsCommand({ ProductId: productId });
-        const { LaunchPathSummaries } = await this.client.send(command);
-        if (LaunchPathSummaries === undefined || LaunchPathSummaries.length === 0) {
-            return undefined;
-        }
+//     async getProductLaunchPath(productId: string) {
+//         const command = new ListLaunchPathsCommand({ ProductId: productId });
+//         const { LaunchPathSummaries } = await this.client.send(command);
+//         if (LaunchPathSummaries === undefined || LaunchPathSummaries.length === 0) {
+//             return undefined;
+//         }
 
-        return LaunchPathSummaries[0];
-    }
+//         return LaunchPathSummaries[0];
+//     }
 
-    async getProductProvisioningParameters(
-        productId: string,
-        artifactName: string,
-        launchPathId: string,
-    ) {
-        const command = new DescribeProvisioningParametersCommand({
-            ProductId: productId,
-            ProvisioningArtifactName: artifactName,
-            PathId: launchPathId,
-        });
-        const { ProvisioningArtifactParameters } = await this.client.send(command);
-        return ProvisioningArtifactParameters;
-    }
+//     async getProductProvisioningParameters(
+//         productId: string,
+//         artifactName: string,
+//         launchPathId: string,
+//     ) {
+//         const command = new DescribeProvisioningParametersCommand({
+//             ProductId: productId,
+//             ProvisioningArtifactName: artifactName,
+//             PathId: launchPathId,
+//         });
+//         const { ProvisioningArtifactParameters } = await this.client.send(command);
+//         return ProvisioningArtifactParameters;
+//     }
 
-    async provisionProduct(props: {
-        productId: string;
-        launchPathId: string;
-        provisioningParameters: { Key: string; Value: string }[];
-        notificationArns: string[];
-    }) {
-        const provisionedProductName = randomUUID();
+//     async provisionProduct(props: {
+//         productId: string;
+//         launchPathId: string;
+//         provisioningParameters: { Key: string; Value: string }[];
+//         notificationArns: string[];
+//     }) {
+//         const provisionedProductName = randomUUID();
 
-        const command = new ProvisionProductCommand({
-            ProductId: props.productId,
-            PathId: props.launchPathId,
-            ProvisionedProductName: provisionedProductName,
-            ProvisioningArtifactName: 'latest',
-            ProvisionToken: provisionedProductName,
-            NotificationArns: props.notificationArns,
-            ProvisioningParameters: props.provisioningParameters,
-            Tags: [
-                {
-                    Key: 'provisionedProductName',
-                    Value: provisionedProductName,
-                },
-            ],
-        });
+//         const command = new ProvisionProductCommand({
+//             ProductId: props.productId,
+//             PathId: props.launchPathId,
+//             ProvisionedProductName: provisionedProductName,
+//             ProvisioningArtifactName: 'latest',
+//             ProvisionToken: provisionedProductName,
+//             NotificationArns: props.notificationArns,
+//             ProvisioningParameters: props.provisioningParameters,
+//             Tags: [
+//                 {
+//                     Key: 'provisionedProductName',
+//                     Value: provisionedProductName,
+//                 },
+//             ],
+//         });
 
-        await this.client.send(command);
-        return { provisionedProductName };
-    }
-}
+//         await this.client.send(command);
+
+//         return { provisionedProductName };
+//     }
+// }
