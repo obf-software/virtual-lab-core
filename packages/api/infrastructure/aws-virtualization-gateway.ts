@@ -98,6 +98,8 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     listInstanceStates = async (
         instanceIds: string[],
     ): Promise<Record<string, VirtualInstanceState>> => {
+        if (instanceIds.length === 0) return {};
+
         const command = new DescribeInstanceStatusCommand({
             IncludeAllInstances: true,
             InstanceIds: instanceIds,

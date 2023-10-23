@@ -12,5 +12,6 @@ const signUpUser = new SignUpUser(logger, userRepository);
 export const handler = HandlerAdapter.create(logger).adapt<PostConfirmationTriggerHandler>(
     async (event) => {
         await signUpUser.execute({ username: event.userName });
+        return event;
     },
 );
