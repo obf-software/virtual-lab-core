@@ -14,6 +14,7 @@ import { useToast } from '@chakra-ui/react';
 import { v4 } from 'uuid';
 import { queryClient } from '../../services/query/service';
 import { Instance, SeekPaginated } from '../../services/api/protocols';
+import { getErrorMessage } from '../../services/helpers';
 
 export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const { user } = useAuthenticator((context) => [context.user]);
@@ -123,11 +124,9 @@ export const NotificationsProvider: React.FC<PropsWithChildren> = ({ children })
                 });
             },
             error: (error) => {
-                const reason = error instanceof Error ? error.message : 'Unknown error';
-                console.error('Error receiving notification', reason);
                 toast({
                     title: 'Error receiving notification',
-                    description: reason,
+                    description: getErrorMessage(error),
                     status: 'error',
                     duration: 5000,
                     isClosable: true,

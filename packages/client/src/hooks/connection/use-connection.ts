@@ -59,13 +59,8 @@ export const useConnection = (props: { connectionString: string }) => {
     }, [client]);
 
     const bindControls = () => {
-        console.log('bindControls');
-
         const newKeyboard = new Guacamole.Keyboard(document);
-        newKeyboard.onkeydown = (keysym) => {
-            console.log('keydown', keysym);
-            client.sendKeyEvent(1, keysym);
-        };
+        newKeyboard.onkeydown = (keysym) => client.sendKeyEvent(1, keysym);
         newKeyboard.onkeyup = (keysym) => client.sendKeyEvent(0, keysym);
 
         const newMouse = new Guacamole.Mouse(display.getElement());
@@ -89,7 +84,6 @@ export const useConnection = (props: { connectionString: string }) => {
             mouse: newMouse,
             keyboard: newKeyboard,
             unbindControls: () => {
-                console.log('unbindControls');
                 newKeyboard.onkeydown = null;
                 newKeyboard.onkeyup = null;
                 newMouse.onmousedown = null;

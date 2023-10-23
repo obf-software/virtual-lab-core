@@ -51,21 +51,15 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         ],
     });
 
-    // TODO: arrumar isso e descobrir onde colocar
     const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
-        onCreate: 'packages/api/modules/core/handlers/migrate-database.handler',
-        onUpdate: 'packages/api/modules/core/handlers/migrate-database.handler',
+        onCreate: 'packages/api/interfaces/jobs/migrate-database.handler',
+        onUpdate: 'packages/api/interfaces/jobs/migrate-database.handler',
         defaults: {
             function: {
                 environment: {
                     DATABASE_URL,
                 },
-                copyFiles: [
-                    {
-                        from: 'packages/api/infrastructure/drizzle',
-                        to: 'drizzle',
-                    },
-                ],
+                copyFiles: [{ from: 'packages/api/infrastructure/database', to: 'drizzle' }],
             },
         },
         params: {
@@ -96,16 +90,25 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             // Group module
             'POST /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/create-group.handler',
+                    handler: 'packages/api/interfaces/api/group/create-group.handler',
                     permissions: ['servicecatalog:*'],
                     environment: {
                         DATABASE_URL,
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
                     },
                 },
             },
             'DELETE /api/v1/groups/{groupId}': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/delete-group.handler',
+                    handler: 'packages/api/interfaces/api/group/delete-group.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'POST /api/v1/groups/{groupId}/link-users': {
+                function: {
+                    handler: 'packages/api/interfaces/api/group/link-users-to-group.handler',
                     environment: {
                         DATABASE_URL,
                     },
@@ -113,7 +116,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/list-groups.handler',
+                    handler: 'packages/api/interfaces/api/group/list-groups.handler',
                     environment: {
                         DATABASE_URL,
                     },
@@ -121,7 +124,23 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/users/{userId}/groups': {
                 function: {
-                    handler: 'packages/api/modules/group/handlers/list-user-groups.handler',
+                    handler: 'packages/api/interfaces/api/group/list-user-groups.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'POST /api/v1/groups/{groupId}/unlink-users': {
+                function: {
+                    handler: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'PATCH /api/v1/groups/{groupId}': {
+                function: {
+                    handler: 'packages/api/interfaces/api/group/update-group.handler',
                     environment: {
                         DATABASE_URL,
                     },
@@ -129,28 +148,19 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
 
             // Instance module
-            'POST /api/v1/users/{userId}/instances/{instanceId}/state': {
-                function: {
-                    handler: 'packages/api/modules/instance/handlers/change-instance-state.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
-            },
             'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/delete-instance.handler',
-                    permissions: ['ec2:*'],
+                    handler: 'packages/api/interfaces/api/instance/delete-instance.handler',
+                    permissions: ['ec2:*', 'servicecatalog:*'],
                     environment: {
                         DATABASE_URL,
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
                     },
                 },
             },
             'GET /api/v1/users/{userId}/instances/{instanceId}/connection': {
                 function: {
-                    handler:
-                        'packages/api/modules/instance/handlers/get-instance-connection.handler',
+                    handler: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
                     permissions: ['ec2:*'],
                     environment: {
                         DATABASE_URL,
@@ -161,7 +171,34 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'GET /api/v1/users/{userId}/instances': {
                 function: {
-                    handler: 'packages/api/modules/instance/handlers/list-user-instances.handler',
+                    handler: 'packages/api/interfaces/api/instance/list-user-instances.handler',
+                    permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'POST /api/v1/users/{userId}/instances/{instanceId}/reboot': {
+                function: {
+                    handler: 'packages/api/interfaces/api/instance/reboot-instance.handler',
+                    permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'POST /api/v1/users/{userId}/instances/{instanceId}/turn-off': {
+                function: {
+                    handler: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
+                    permissions: ['ec2:*'],
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'POST /api/v1/users/{userId}/instances/{instanceId}/turn-on': {
+                function: {
+                    handler: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
                     permissions: ['ec2:*'],
                     environment: {
                         DATABASE_URL,
@@ -170,31 +207,41 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
 
             // Product module
-            'GET /api/v1/users/{userId}/products': {
-                function: {
-                    handler: 'packages/api/modules/product/handlers/list-user-products.handler',
-                    role: listUserProductsFunctionRole,
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
-            },
             'GET /api/v1/products/{productId}/provisioning-parameters': {
                 function: {
                     handler:
-                        'packages/api/modules/product/handlers/get-product-provisioning-parameters.handler',
+                        'packages/api/interfaces/api/product/get-product-provisioning-parameters.handler',
                     role: getProductProvisioningParametersFunctionRole,
                     permissions: ['s3:*'],
                     environment: {
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
+                    },
+                },
+            },
+            'GET /api/v1/portfolios': {
+                function: {
+                    handler: 'packages/api/interfaces/api/product/list-portfolios.handler',
+                    permissions: ['servicecatalog:*'],
+                    environment: {
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
+                    },
+                },
+            },
+            'GET /api/v1/users/{userId}/products': {
+                function: {
+                    handler: 'packages/api/interfaces/api/product/list-user-products.handler',
+                    role: listUserProductsFunctionRole,
+                    environment: {
                         DATABASE_URL,
+                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
                     },
                 },
             },
             'POST /api/v1/products/{productId}/provision': {
                 function: {
-                    handler: 'packages/api/modules/product/handlers/provision-product.handler',
+                    handler: 'packages/api/interfaces/api/product/provision-product.handler',
                     role: provisionProductFunctionRole,
-                    permissions: ['s3:*'],
+                    permissions: ['s3:*', 'ssm:*', 'sns:*', 'ec2:*', 'iam:*'],
                     environment: {
                         DATABASE_URL,
                         SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
@@ -203,17 +250,33 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
 
             // User module
-            'GET /api/v1/users': {
+            'GET /api/v1/users/{userId}': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers/list-users.handler',
+                    handler: 'packages/api/interfaces/api/user/get-user.handler',
                     environment: {
                         DATABASE_URL,
                     },
                 },
             },
-            'GET /api/v1/users/{userId}': {
+            'GET /api/v1/groups/{groupId}/users': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers/get-user.handler',
+                    handler: 'packages/api/interfaces/api/user/list-group-users.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'GET /api/v1/users': {
+                function: {
+                    handler: 'packages/api/interfaces/api/user/list-users.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
+            'PATCH /api/v1/users/{userId}/quotas': {
+                function: {
+                    handler: 'packages/api/interfaces/api/user/update-user-quotas.handler',
                     environment: {
                         DATABASE_URL,
                     },
@@ -221,7 +284,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             },
             'PATCH /api/v1/users/{userId}/role': {
                 function: {
-                    handler: 'packages/api/modules/user/handlers/update-user-role.handler',
+                    handler: 'packages/api/interfaces/api/user/update-user-role.handler',
                     environment: {
                         DATABASE_URL,
                     },
@@ -245,7 +308,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                         type: 'function',
                         function: {
                             handler:
-                                'packages/api/modules/instance/handlers/on-ec2-instance-state-change.handler',
+                                'packages/api/interfaces/events/on-ec2-instance-state-change.handler',
                             permissions: ['ec2:*', 'appsync:GraphQL'],
                             environment: {
                                 DATABASE_URL,

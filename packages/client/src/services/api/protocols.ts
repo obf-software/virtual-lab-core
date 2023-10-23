@@ -9,12 +9,6 @@ export interface SeekPaginated<T> {
     numberOfResults: number;
 }
 
-export interface KeysetPaginated<T> {
-    data: T[];
-    numberOfResults: number;
-    nextCursor: string | null;
-}
-
 interface SuccessResponse<T> {
     data: T;
     error: undefined;

@@ -3,6 +3,7 @@ import { GroupsContext } from './context';
 import { Group } from '../../services/api/protocols';
 import { useToast } from '@chakra-ui/react';
 import { listGroups } from '../../services/api/service';
+import { getErrorMessage } from '../../services/helpers';
 
 export const GroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,11 +26,10 @@ export const GroupsProvider: React.FC<PropsWithChildren> = ({ children }) => {
             setIsLoading(false);
         } catch (error) {
             setIsLoading(false);
-            const reason = error instanceof Error ? error.message : 'Erro desconhecido';
             toast({
                 colorScheme: 'red',
                 title: 'Erro ao listar grupos',
-                description: reason,
+                description: getErrorMessage(error),
                 isClosable: true,
                 duration: 5000,
                 status: 'error',
