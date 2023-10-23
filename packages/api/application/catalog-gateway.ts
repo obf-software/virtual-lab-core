@@ -36,6 +36,6 @@ export interface CatalogGateway {
     getProductById(productId: string): Promise<Product>;
     getProductProvisioningParameters(productId: string): Promise<ProductProvisioningParameter[]>;
     provisionProduct(productId: string, parameters: Record<string, string>): Promise<string>;
-    terminateProvisionedProductById(provisionedProductId: string): Promise<void>;
+    terminateProvisionedProductByProvisionToken(provisionToken: string): Promise<void>;
     getProvisionedProductByStackName(stackName: string): Promise<ProvisionedProduct>;
 }

@@ -142,11 +142,11 @@ export class AwsCatalogGateway implements CatalogGateway {
         return provisionToken;
     };
 
-    terminateProvisionedProductById = async (provisionedProductId: string): Promise<void> => {
+    terminateProvisionedProductByProvisionToken = async (provisionToken: string): Promise<void> => {
         await this.scClient.send(
             new TerminateProvisionedProductCommand({
-                ProvisionedProductId: provisionedProductId,
-                TerminateToken: provisionedProductId,
+                ProvisionedProductName: provisionToken,
+                TerminateToken: provisionToken,
                 IgnoreErrors: true,
             }),
         );

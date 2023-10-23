@@ -43,8 +43,8 @@ export class DeleteInstance {
 
         await Promise.allSettled([
             this.instanceRepository.delete(instance),
-            this.catalogGateway.terminateProvisionedProductById(
-                instance.getData().provisionedProductId,
+            this.catalogGateway.terminateProvisionedProductByProvisionToken(
+                instance.getData().provisionToken,
             ),
         ]);
     };
