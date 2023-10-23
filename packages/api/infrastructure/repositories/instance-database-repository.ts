@@ -1,4 +1,4 @@
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { PostgresJsDatabase, drizzle } from 'drizzle-orm/postgres-js';
 import { InstanceRepository } from '../../application/repositories/instance-repository';
 import { SeekPaginated } from '../../domain/dtos/seek-paginated';
 import { SeekPaginationInput } from '../../domain/dtos/seek-pagination-input';
@@ -7,9 +7,14 @@ import * as dbSchema from '../database/schema';
 import createHttpError from 'http-errors';
 import { InstanceConnectionType } from '../../domain/dtos/instance-connection-type';
 import { eq, sql } from 'drizzle-orm';
+import postgres from 'postgres';
 
 export class InstanceDatabaseRepository implements InstanceRepository {
-    constructor(private readonly dbClient: PostgresJsDatabase<typeof dbSchema>) {}
+    private dbClient: PostgresJsDatabase<typeof dbSchema>;
+
+    constructor(DATABASE_URL: string) {
+        this.dbClient = drizzle(postgres(DATABASE_URL), { schema: dbSchema });
+    }
 
     save = async (instance: Instance): Promise<number> => {
         const instanceData = instance.getData();

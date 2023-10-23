@@ -1,34 +1,37 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import { Logger } from '@aws-lambda-powertools/logger';
-import { GroupRepository, schema } from '../../../infrastructure/repositories';
-import { ListUserProductsUseCase } from '../list-user-products';
-import { ServiceCatalog } from '../../../infrastructure/aws/service-catalog';
-import { handlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import { getRequestPrincipal } from '../../../infrastructure/auth/old/get-user-principal';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { ListUserProducts } from '../../../application/use-cases/product/list-user-products';
+import { CognitoAuth } from '../../../infrastructure/cognito-auth';
+import { GroupDatabaseRepository } from '../../../infrastructure/repositories/group-database-repository';
+import { AwsCatalogGateway } from '../../../infrastructure/aws-catalog-gateway';
+import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
+import createHttpError from 'http-errors';
 
-const { AWS_REGION, DATABASE_URL } = process.env;
-const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+const { AWS_REGION, DATABASE_URL, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;
 const logger = new Logger();
+const auth = new CognitoAuth();
+const groupRepository = new GroupDatabaseRepository(DATABASE_URL);
+const catalogGateway = new AwsCatalogGateway(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN);
+const listUserProducts = new ListUserProducts(logger, auth, groupRepository, catalogGateway);
 
-const listUserProductsUseCase = new ListUserProductsUseCase(
-    new GroupRepository(dbClient),
-    new ServiceCatalog(AWS_REGION),
-);
+export const handler = HandlerAdapter.create(
+    logger,
+).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
+    const userIdString = event.pathParameters?.userId;
+    const userId = Number(userIdString);
 
-export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
-    async (event) => {
-        const userProducts = await listUserProductsUseCase.execute({
-            principal: getRequestPrincipal(event),
-            userId: event.pathParameters?.userId,
-        });
+    if (userIdString !== 'me' && Number.isNaN(userId)) {
+        throw new createHttpError.BadRequest('Invalid userId');
+    }
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(userProducts),
-            headers: { 'Content-Type': 'application/json' },
-        };
-    },
-    { isHttp: true, logger },
-);
+    const output = await listUserProducts.execute({
+        principal: CognitoAuth.extractPrincipal(event),
+        userId: userIdString === 'me' ? undefined : userId,
+    });
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(output),
+        headers: { 'Content-Type': 'application/json' },
+    };
+});

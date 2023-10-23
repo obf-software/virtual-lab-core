@@ -27,7 +27,7 @@ export class AwsCatalogGateway implements CatalogGateway {
 
     constructor(
         AWS_REGION: string,
-        private readonly NOTIFICATION_ARN: string,
+        private readonly SERVICE_CATALOG_NOTIFICATION_ARN: string,
     ) {
         this.scClient = new ServiceCatalogClient({ region: AWS_REGION });
         this.cfClient = new CloudFormationClient({ region: AWS_REGION });
@@ -130,7 +130,7 @@ export class AwsCatalogGateway implements CatalogGateway {
                 ProvisioningArtifactName: 'latest',
                 ProvisionedProductName: provisionToken,
                 ProvisionToken: provisionToken,
-                NotificationArns: [this.NOTIFICATION_ARN],
+                NotificationArns: [this.SERVICE_CATALOG_NOTIFICATION_ARN],
                 ProvisioningParameters: Object.entries(parameters).map(([key, value]) => ({
                     Key: key,
                     Value: value,

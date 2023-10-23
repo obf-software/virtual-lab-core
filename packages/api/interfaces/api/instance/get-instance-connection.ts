@@ -1,37 +1,47 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import { Logger } from '@aws-lambda-powertools/logger';
-import { InstanceRepository, schema } from '../../../infrastructure/repositories';
-import { handlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import { GetInstanceConnectionUseCase } from '../get-instance-connection';
-import { Guacamole } from '../../../infrastructure/connection-encoder/old/guacamole/guacamole';
-import { EC2 } from '../../../infrastructure/aws/ec2';
-import { getRequestPrincipal } from '../../../infrastructure/auth/old/get-user-principal';
+import { GetInstanceConnection } from '../../../application/use-cases/instance/get-instance-connection';
+import { CognitoAuth } from '../../../infrastructure/cognito-auth';
+import { InstanceDatabaseRepository } from '../../../infrastructure/repositories/instance-database-repository';
+import { GuacamoleConnectionEncoder } from '../../../infrastructure/guacamole-connection-encoder';
+import { AwsVirtualizationGateway } from '../../../infrastructure/aws-virtualization-gateway';
+import createHttpError from 'http-errors';
 
 const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
-const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+
 const logger = new Logger();
-
-const getInstanceConnectionUseCase = new GetInstanceConnectionUseCase(
+const auth = new CognitoAuth();
+const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
+const connectionEncoder = new GuacamoleConnectionEncoder(GUACAMOLE_CYPHER_KEY);
+const virtualizationGateway = new AwsVirtualizationGateway(AWS_REGION);
+const getInstanceConnection = new GetInstanceConnection(
+    logger,
+    auth,
+    instanceRepository,
+    connectionEncoder,
+    virtualizationGateway,
     INSTANCE_PASSWORD,
-    new InstanceRepository(dbClient),
-    new Guacamole(GUACAMOLE_CYPHER_KEY),
-    new EC2(AWS_REGION),
 );
 
-export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
-    async (event) => {
-        const connection = await getInstanceConnectionUseCase.execute({
-            principal: getRequestPrincipal(event),
-            instanceId: Number(event.pathParameters?.instanceId),
-        });
+export const handler = HandlerAdapter.create(
+    logger,
+).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
+    const instanceIdString = event.pathParameters?.instanceId;
+    const instanceId = Number(instanceIdString);
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(connection),
-            headers: { 'Content-Type': 'application/json' },
-        };
-    },
-    { isHttp: true, logger },
-);
+    if (Number.isNaN(instanceId)) {
+        throw new createHttpError.BadRequest('Invalid instanceId');
+    }
+
+    const output = await getInstanceConnection.execute({
+        principal: CognitoAuth.extractPrincipal(event),
+        instanceId,
+    });
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(output),
+        headers: { 'Content-Type': 'application/json' },
+    };
+});

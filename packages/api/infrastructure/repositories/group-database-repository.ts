@@ -1,4 +1,4 @@
-import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { PostgresJsDatabase, drizzle } from 'drizzle-orm/postgres-js';
 import { GroupRepository } from '../../application/repositories/group-repository';
 import { SeekPaginated } from '../../domain/dtos/seek-paginated';
 import { Group } from '../../domain/entities/group';
@@ -6,9 +6,14 @@ import * as dbSchema from '../database/schema';
 import createHttpError from 'http-errors';
 import { SeekPaginationInput } from '../../domain/dtos/seek-pagination-input';
 import { and, eq, inArray, sql } from 'drizzle-orm';
+import postgres from 'postgres';
 
 export class GroupDatabaseRepository implements GroupRepository {
-    constructor(private readonly dbClient: PostgresJsDatabase<typeof dbSchema>) {}
+    private dbClient: PostgresJsDatabase<typeof dbSchema>;
+
+    constructor(DATABASE_URL: string) {
+        this.dbClient = drizzle(postgres(DATABASE_URL), { schema: dbSchema });
+    }
 
     save = async (group: Group): Promise<number> => {
         const groupData = group.getData();

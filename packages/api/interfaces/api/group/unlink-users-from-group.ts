@@ -1,42 +1,42 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { z } from 'zod';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { CognitoAuth } from '../../../infrastructure/cognito-auth';
-import { CreateGroup } from '../../../application/use-cases/group/create-group';
 import { GroupDatabaseRepository } from '../../../infrastructure/repositories/group-database-repository';
-import { AwsCatalogGateway } from '../../../infrastructure/aws-catalog-gateway';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import createHttpError from 'http-errors';
+import { z } from 'zod';
+import { UnlinkUsersFromGroup } from '../../../application/use-cases/group/unlink-users-from-group';
 
-const { AWS_REGION, DATABASE_URL, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;
+const { DATABASE_URL } = process.env;
 const logger = new Logger();
 const auth = new CognitoAuth();
 const groupRepository = new GroupDatabaseRepository(DATABASE_URL);
-const catalogGateway = new AwsCatalogGateway(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN);
-const createGroupUseCase = new CreateGroup(logger, auth, groupRepository, catalogGateway);
+const unlinkUsersfromGroup = new UnlinkUsersFromGroup(logger, auth, groupRepository);
 
 export const handler = HandlerAdapter.create(
     logger,
 ).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
     const body = z
-        .object({
-            name: z.string().max(128).nonempty(),
-            description: z.string().nonempty(),
-            portfolioId: z.string().max(50).nonempty(),
-        })
+        .object({ userIds: z.array(z.number().int().positive().max(50)) })
         .safeParse(JSON.parse(event.body ?? '{}'));
     if (!body.success) throw new createHttpError.BadRequest('Invalid body');
 
-    const output = await createGroupUseCase.execute({
+    const groupIdString = event.pathParameters?.groupId;
+    const groupId = Number(groupIdString);
+
+    if (Number.isNaN(groupId)) {
+        throw new createHttpError.BadRequest('Invalid groupId');
+    }
+
+    await unlinkUsersfromGroup.execute({
         principal: CognitoAuth.extractPrincipal(event),
-        name: body.data.name,
-        description: body.data.description,
-        portfolioId: body.data.portfolioId,
+        groupId,
+        userIds: body.data.userIds,
     });
 
     return {
-        statusCode: 201,
-        body: JSON.stringify(output),
+        statusCode: 200,
+        body: JSON.stringify({}),
         headers: { 'Content-Type': 'application/json' },
     };
 });

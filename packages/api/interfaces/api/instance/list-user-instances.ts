@@ -1,50 +1,56 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { z } from 'zod';
-import { InvalidQueryParamsError } from '../../core/errors';
-import { handlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import { Logger } from '@aws-lambda-powertools/logger';
-import { ListUserInstancesUseCase } from '../list-user-instances';
-import { InstanceRepository, schema } from '../../../infrastructure/repositories';
-import { getRequestPrincipal } from '../../../infrastructure/auth/old/get-user-principal';
-import { EC2 } from '../../../infrastructure/aws/ec2';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
+import { InstanceDatabaseRepository } from '../../../infrastructure/repositories/instance-database-repository';
+import { ListUserInstances } from '../../../application/use-cases/instance/list-user-instances';
+import { CognitoAuth } from '../../../infrastructure/cognito-auth';
+import { AwsVirtualizationGateway } from '../../../infrastructure/aws-virtualization-gateway';
+import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
+import { z } from 'zod';
+import createHttpError from 'http-errors';
 
 const { AWS_REGION, DATABASE_URL } = process.env;
-const dbClient = drizzle(postgres(DATABASE_URL), { schema });
+
 const logger = new Logger();
-const listUserInstancesUseCase = new ListUserInstancesUseCase(
-    new InstanceRepository(dbClient),
-    new EC2(AWS_REGION),
+const auth = new CognitoAuth();
+const virtualizationGateway = new AwsVirtualizationGateway(AWS_REGION);
+const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
+const listUserInstances = new ListUserInstances(
+    logger,
+    auth,
+    instanceRepository,
+    virtualizationGateway,
 );
 
-export const handler = handlerAdapter<APIGatewayProxyHandlerV2WithJWTAuthorizer>(
-    async (event) => {
-        const query = z
-            .object({
-                resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
-                page: z.number({ coerce: true }).min(1).default(1),
-            })
-            .safeParse({ ...event.queryStringParameters });
+export const handler = HandlerAdapter.create(
+    logger,
+).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
+    const query = z
+        .object({
+            resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
+            page: z.number({ coerce: true }).min(1).default(1),
+        })
+        .safeParse({ ...event.queryStringParameters });
+    if (!query.success) throw createHttpError.BadRequest(query.error.message);
 
-        if (!query.success) {
-            throw InvalidQueryParamsError(query.error.message);
-        }
+    const userIdString = event.pathParameters?.userId;
+    const userId = Number(userIdString);
 
-        const userInstances = await listUserInstancesUseCase.execute({
-            principal: getRequestPrincipal(event),
-            userId: event.pathParameters?.userId,
-            pagination: {
-                resultsPerPage: query.data.resultsPerPage,
-                page: query.data.page,
-            },
-        });
+    if (userIdString !== 'me' && Number.isNaN(userId)) {
+        throw new createHttpError.BadRequest('Invalid userId');
+    }
 
-        return {
-            statusCode: 200,
-            body: JSON.stringify(userInstances),
-            headers: { 'Content-Type': 'application/json' },
-        };
-    },
-    { isHttp: true, logger },
-);
+    const output = await listUserInstances.execute({
+        principal: CognitoAuth.extractPrincipal(event),
+        userId: userIdString === 'me' ? undefined : userId,
+        pagination: {
+            resultsPerPage: query.data.resultsPerPage,
+            page: query.data.page,
+        },
+    });
+
+    return {
+        statusCode: 200,
+        body: JSON.stringify(output),
+        headers: { 'Content-Type': 'application/json' },
+    };
+});

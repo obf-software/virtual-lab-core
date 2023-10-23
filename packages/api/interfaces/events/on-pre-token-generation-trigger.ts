@@ -5,7 +5,6 @@ import { SignInUser } from '../../application/use-cases/user/sign-in-user';
 import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
 
 const { DATABASE_URL } = process.env;
-
 const logger = new Logger();
 const userRepository = new UserDatabaseRepository(DATABASE_URL);
 const signInUser = new SignInUser(logger, userRepository);

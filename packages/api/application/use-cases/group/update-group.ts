@@ -1,4 +1,5 @@
 import { Principal } from '../../../domain/dtos/principal';
+import { Group } from '../../../domain/entities/group';
 import { ApplicationError } from '../../../domain/errors/application-error';
 import { AuthError } from '../../../domain/errors/auth-error';
 import { Auth } from '../../auth';
@@ -12,7 +13,7 @@ export interface UpdateGroupInput {
     description?: string;
 }
 
-export type UpdateGroupOutput = void;
+export type UpdateGroupOutput = Group;
 
 export class UpdateGroup {
     constructor(
@@ -34,5 +35,6 @@ export class UpdateGroup {
         if (!group) throw ApplicationError.resourceNotFound();
         group.update({ name: input.name, description: input.description });
         await this.groupRepository.update(group);
+        return group;
     };
 }
