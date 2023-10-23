@@ -163,10 +163,7 @@ export class GroupDatabaseRepository implements GroupRepository {
             .where(eq(dbSchema.userToGroup.groupId, groupId))
             .execute();
 
-        await this.dbClient
-            .delete(dbSchema.userToGroup)
-            .where(eq(dbSchema.userToGroup.groupId, groupId))
-            .execute();
+        await this.dbClient.delete(dbSchema.group).where(eq(dbSchema.group.id, groupId)).execute();
     };
 
     linkUsers = async (groupId: number, userIds: number[]): Promise<void> => {
