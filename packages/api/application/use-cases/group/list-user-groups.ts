@@ -40,25 +40,4 @@ export class ListUserGroups {
 
         return await this.groupRepository.listByUser(userId, input.pagination);
     };
-
-    // execute = async (props: {
-    //     principal: Principal;
-    //     userId?: string;
-    //     pagination: { resultsPerPage: number; page: number };
-    // }) => {
-    //     throwIfInsufficientRole('USER', props.principal.role);
-
-    //     const userIdAsNumber = Number(props.userId);
-    //     let userIdToUse = props.principal.userId;
-
-    //     if (hasRoleOrAbove('ADMIN', props.principal.role) && props.userId !== 'me') {
-    //         if (Number.isNaN(userIdAsNumber)) {
-    //             throw new createHttpError.NotFound('User not found');
-    //         }
-
-    //         userIdToUse = userIdAsNumber;
-    //     }
-
-    //     return await this.groupRepository.listByUser(userIdToUse, props.pagination);
-    // };
 }

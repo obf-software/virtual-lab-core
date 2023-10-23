@@ -32,12 +32,4 @@ export class ListGroups {
 
         return await this.groupRepository.list(input.pagination);
     };
-
-    // execute = async (props: {
-    //     principal: Principal;
-    //     pagination: { resultsPerPage: number; page: number };
-    // }) => {
-    //     throwIfInsufficientRole('ADMIN', props.principal.role);
-    //     return await this.groupRepository.list(props.pagination);
-    // };
 }

@@ -32,20 +32,3 @@ export class GetProductProvisioningParameters {
         return await this.catalogGateway.getProductProvisioningParameters(input.productId);
     };
 }
-
-// const launchPath = await this.serviceCatalog.getProductLaunchPath(props.awsProductId);
-// if (!launchPath?.Id) {
-//     throw new createHttpError.NotFound('Product launch path not found');
-// }
-// const provisioningParameters = await this.serviceCatalog.getProductProvisioningParameters(
-//     props.awsProductId,
-//     'latest',
-//     launchPath.Id,
-// );
-// if (!provisioningParameters) {
-//     throw new createHttpError.NotFound('Product provisioning parameters not found');
-// }
-// return {
-//     provisioningParameters: provisioningParameters,
-//     launchPathId: launchPath.Id,
-// };

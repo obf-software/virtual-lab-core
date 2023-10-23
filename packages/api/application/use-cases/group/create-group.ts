@@ -44,31 +44,4 @@ export class CreateGroup {
         newGroup.setId(newGroupId);
         return newGroup;
     };
-
-    // execute = async (props: {
-    //     principal: Principal;
-    //     name: string;
-    //     description: string;
-    //     awsPortfolioId: string;
-    // }) => {
-    //     throwIfInsufficientRole('ADMIN', props.principal.role);
-
-    //     const portfilioExists = await this.serviceCatalog.portfolioExists(props.awsPortfolioId);
-
-    //     if (!portfilioExists) {
-    //         throw new createHttpError.BadRequest('Invalid AWS Portfolio ID');
-    //     }
-
-    //     const group = await this.groupRepository.create({
-    //         name: props.name,
-    //         description: props.description,
-    //         awsPortfolioId: props.awsPortfolioId,
-    //     });
-
-    //     if (!group) {
-    //         throw new createHttpError.InternalServerError('Failed to create group');
-    //     }
-
-    //     return group;
-    // };
 }
