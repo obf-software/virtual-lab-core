@@ -27,11 +27,14 @@ export const handler = HandlerAdapter.create(
     logger,
 ).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
     const body = z
-        .object({ parameters: z.record(z.string()) })
+        .object({
+            userId: z.string().or(z.number()).default('me'),
+            parameters: z.record(z.string()),
+        })
         .safeParse(JSON.parse(event.body ?? '{}'));
     if (!body.success) throw new createHttpError.BadRequest('Invalid body');
 
-    const userIdString = event.pathParameters?.userId;
+    const userIdString = body.data.userId;
     const userId = Number(userIdString);
 
     if (userIdString !== 'me' && Number.isNaN(userId)) {

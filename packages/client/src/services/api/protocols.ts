@@ -9,6 +9,11 @@ export interface SeekPaginated<T> {
     numberOfResults: number;
 }
 
+export interface SeekPaginationInput {
+    resultsPerPage: number;
+    page: number;
+}
+
 interface SuccessResponse<T> {
     data: T;
     error: undefined;
@@ -21,59 +26,51 @@ interface ErrorResponse {
 
 export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
-// ENTITIES
-
-export enum UserRole {
+export enum Role {
     NONE = 'NONE',
     PENDING = 'PENDING',
     USER = 'USER',
     ADMIN = 'ADMIN',
 }
 
+export enum InstanceConnectionType {
+    RDP = 'RDP',
+    VNC = 'VNC',
+}
+
+export enum VirtualInstanceState {
+    PENDING = 'PENDING',
+    RUNNING = 'RUNNING',
+    STOPPING = 'STOPPING',
+    STOPPED = 'STOPPED',
+    SHUTTING_DOWN = 'SHUTTING_DOWN',
+    TERMINATED = 'TERMINATED',
+}
+
 export interface User {
     id: number;
     username: string;
-    role: keyof typeof UserRole;
+    role: keyof typeof Role;
     createdAt: string;
     updatedAt: string;
     lastLoginAt: string | null;
-}
-
-export interface UserQuota {
-    id: number;
-    userId: number;
     maxInstances: number;
 }
 
 export interface Group {
     id: number;
+    portfolioId: string;
     name: string;
     description: string;
-    awsPortfolioId: string;
     createdAt: string;
     updatedAt: string;
-}
-
-export enum InstanceConnectionType {
-    SSH = 'SSH',
-    VNC = 'VNC',
-    RDP = 'RDP',
-}
-
-export enum InstanceState {
-    'pending' = 'pending',
-    'running' = 'running',
-    'shutting-down' = 'shutting-down',
-    'stopped' = 'stopped',
-    'stopping' = 'stopping',
-    'terminated' = 'terminated',
 }
 
 export interface Instance {
     id: number;
     userId: number;
-    awsInstanceId: string | null;
-    awsProvisionedProductName: string;
+    logicalId: string | null;
+    provisionToken: string;
     name: string;
     description: string;
     connectionType: keyof typeof InstanceConnectionType | null;
@@ -84,40 +81,30 @@ export interface Instance {
     memoryInGb: string | null;
     storageInGb: string | null;
     createdAt: string;
+    updatedAt: string;
     lastConnectionAt: string | null;
+    state: keyof typeof VirtualInstanceState | null;
+}
 
-    /**
-     * This property is not stored in the database. It is added by the API.
-     * If the value is undefined, ti means the instance is not running or the
-     * API has not been able to fetch the status from AWS.
-     */
-    state?: keyof typeof InstanceState;
+export interface ProductProvisioningParameter {
+    key: string;
+    label: string;
+    allowedValues?: string[];
+    defaultValue?: string;
+}
+
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+}
+
+export interface Portfolio {
+    id: string;
+    name: string;
+    description: string;
 }
 
 export interface InstanceConnection {
     connectionString: string;
-}
-
-export interface Product {
-    awsProductId: string;
-    name: string;
-    description: string;
-    createdAt: string;
-}
-
-export interface ProductProvisioningParameter {
-    ParameterKey: string;
-    DefaultValue?: string;
-    ParameterType: string;
-    IsNoEcho: boolean;
-    Description?: string;
-    ParameterConstraints: {
-        AllowedValues?: string[];
-        AllowedPattern?: string;
-        ConstraintDescription?: string;
-        MaxLength?: string;
-        MinLength?: string;
-        MaxValue?: string;
-        MinValue?: string;
-    };
 }

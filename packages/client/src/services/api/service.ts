@@ -4,13 +4,14 @@ import {
     Group,
     Instance,
     InstanceConnection,
+    Portfolio,
     Product,
     ProductProvisioningParameter,
+    Role,
     SeekPaginated,
+    SeekPaginationInput,
     UrlPath,
     User,
-    UserQuota,
-    UserRole,
 } from './protocols';
 import { getErrorMessage } from '../helpers';
 
@@ -51,8 +52,17 @@ const executeRequest = async <T>(props: {
             return { error: reason, data: undefined };
         }
 
+        let data = undefined;
+
+        try {
+            data = (await response.json()) as T;
+        } catch (error) {
+            console.error(`Api call to ${props.path} returned invalid JSON`);
+            data = {} as T;
+        }
+
         return {
-            data: (await response.json()) as T,
+            data,
             error: undefined,
         };
     } catch (error) {
@@ -62,48 +72,9 @@ const executeRequest = async <T>(props: {
     }
 };
 
-export const listUsers = async (pagination: { resultsPerPage: number; page: number }) =>
-    executeRequest<SeekPaginated<User>>({
-        path: '/api/v1/users',
-        method: 'GET',
-        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
-    });
+// GROUP MODULE
 
-export const listUserGroups = async (
-    userId: string | number | undefined,
-    pagination: { resultsPerPage: number; page: number },
-) =>
-    executeRequest<SeekPaginated<Group>>({
-        path: `/api/v1/users/${userId ?? 'me'}/groups`,
-        method: 'GET',
-        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
-    });
-
-export const listUserInstances = async (
-    userId: string | number | undefined,
-    pagination: { resultsPerPage: number; page: number },
-) =>
-    executeRequest<SeekPaginated<Instance>>({
-        path: `/api/v1/users/${userId ?? 'me'}/instances`,
-        method: 'GET',
-        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
-    });
-
-export const updateUserRole = async (userId: string | number, role: keyof typeof UserRole) =>
-    executeRequest<User>({
-        path: `/api/v1/users/${userId}/role`,
-        method: 'PATCH',
-        body: { role },
-    });
-
-export const listGroups = async (pagination: { resultsPerPage: number; page: number }) =>
-    executeRequest<SeekPaginated<Group>>({
-        path: '/api/v1/groups',
-        method: 'GET',
-        queryParams: { resultsPerPage: pagination.resultsPerPage, page: pagination.page },
-    });
-
-export const createGroup = async (data: Pick<Group, 'name' | 'description' | 'awsPortfolioId'>) =>
+export const createGroup = async (data: Pick<Group, 'name' | 'description' | 'portfolioId'>) =>
     executeRequest<Group>({
         path: '/api/v1/groups',
         method: 'POST',
@@ -111,71 +82,151 @@ export const createGroup = async (data: Pick<Group, 'name' | 'description' | 'aw
     });
 
 export const deleteGroup = async (groupId: number) =>
-    executeRequest({
+    executeRequest<void>({
         path: `/api/v1/groups/${groupId}`,
         method: 'DELETE',
     });
 
-export const getUser = async (userId: string | number | undefined) =>
-    executeRequest<User & { quota: UserQuota }>({
-        path: `/api/v1/users/${userId ?? 'me'}`,
-        method: 'GET',
-    });
-
-export const changeInstanceState = async (
-    userId: string | number | undefined,
-    instanceId: number,
-    state: 'start' | 'stop' | 'reboot',
-) =>
-    executeRequest({
-        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}/state`,
+export const linkUsersToGroup = async (groupId: number, userIds: number[]) =>
+    executeRequest<void>({
+        path: `/api/v1/groups/${groupId}/link-users`,
         method: 'POST',
-        body: { state },
+        body: { userIds },
     });
 
-export const deleteInstance = async (userId: string | number | undefined, instanceId: number) =>
-    executeRequest({
-        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}`,
+export const listGroups = async (pagination: SeekPaginationInput) =>
+    executeRequest<SeekPaginated<Group>>({
+        path: '/api/v1/groups',
+        method: 'GET',
+        queryParams: { ...pagination },
+    });
+
+export const listUserGroups = async (userId: number | 'me', pagination: SeekPaginationInput) =>
+    executeRequest<SeekPaginated<Group>>({
+        path: `/api/v1/users/${userId}/groups`,
+        method: 'GET',
+        queryParams: { ...pagination },
+    });
+
+export const unlinkUsersFromGroup = async (groupId: number, userIds: number[]) =>
+    executeRequest<void>({
+        path: `/api/v1/groups/${groupId}/unlink-users`,
+        method: 'POST',
+        body: { userIds },
+    });
+
+export const updateGroup = async (
+    groupId: number,
+    data: Partial<Pick<Group, 'name' | 'description'>>,
+) =>
+    executeRequest<Group>({
+        path: `/api/v1/groups/${groupId}`,
+        method: 'PATCH',
+        body: { ...data },
+    });
+
+// INSTANCE MODULE
+
+export const deleteInstance = async (userId: number | 'me', instanceId: number) =>
+    executeRequest<void>({
+        path: `/api/v1/users/${userId}/instances/${instanceId}`,
         method: 'DELETE',
     });
 
-export const getInstanceConnection = async (
-    userId: string | number | undefined,
-    instanceId: number,
-) =>
+export const getInstanceConnection = async (userId: number | 'me', instanceId: number) =>
     executeRequest<InstanceConnection>({
-        path: `/api/v1/users/${userId ?? 'me'}/instances/${instanceId}/connection`,
+        path: `/api/v1/users/${userId}/instances/${instanceId}/connection`,
+        method: 'GET',
+    });
+
+export const listUserInstances = async (userId: number | 'me', pagination: SeekPaginationInput) =>
+    executeRequest<SeekPaginated<Instance>>({
+        path: `/api/v1/users/${userId}/instances`,
+        method: 'GET',
+        queryParams: { ...pagination },
+    });
+
+export const rebootInstance = async (userId: number | 'me', instanceId: number) =>
+    executeRequest<void>({
+        path: `/api/v1/users/${userId}/instances/${instanceId}/reboot`,
+        method: 'POST',
+    });
+
+export const turnInstanceOff = async (userId: number | 'me', instanceId: number) =>
+    executeRequest<void>({
+        path: `/api/v1/users/${userId}/instances/${instanceId}/turn-off`,
+        method: 'POST',
+    });
+
+export const turnInstanceOn = async (userId: number | 'me', instanceId: number) =>
+    executeRequest<void>({
+        path: `/api/v1/users/${userId}/instances/${instanceId}/turn-on`,
+        method: 'POST',
+    });
+
+// PRODUCT MODULE
+
+export const getProductProvisioningParameters = async (productId: string) =>
+    executeRequest<ProductProvisioningParameter[]>({
+        path: `/api/v1/products/${productId}/provisioning-parameters`,
+        method: 'GET',
+    });
+
+export const listPortfolios = async () =>
+    executeRequest<Portfolio[]>({
+        path: `/api/v1/portfolios`,
         method: 'GET',
     });
 
 export const listUserProducts = async (userId: number | 'me') =>
     executeRequest<Product[]>({
-        path: `/api/v1/users/${userId ?? 'me'}/products`,
-        method: 'GET',
-    });
-
-export const getProductProvisioningParameters = async (productId: string) =>
-    executeRequest<{
-        provisioningParameters: ProductProvisioningParameter[];
-        launchPathId: string;
-    }>({
-        path: `/api/v1/products/${productId}/provisioning-parameters`,
+        path: `/api/v1/users/${userId}/products`,
         method: 'GET',
     });
 
 export const provisionProduct = async (
-    userId: string | number | undefined,
+    userId: number | 'me',
     productId: string,
-    launchPathId: string,
-    provisionParameters: { key: string; value: string }[],
+    parameters: Record<string, string>,
 ) =>
     executeRequest<Instance>({
-        path: `/api/v1/products/{productId}/provision`,
+        path: `/api/v1/products/${productId}/provision`,
         method: 'POST',
-        body: {
-            userId,
-            productId,
-            launchPathId,
-            provisionParameters,
-        },
+        body: { userId, parameters },
+    });
+
+// USER MODULE
+
+export const getUser = async (userId: number | 'me') =>
+    executeRequest<User>({
+        path: `/api/v1/users/${userId}`,
+        method: 'GET',
+    });
+
+export const listGroupUsers = async (groupId: number, pagination: SeekPaginationInput) =>
+    executeRequest<SeekPaginated<User>>({
+        path: `/api/v1/groups/${groupId}/users`,
+        method: 'GET',
+        queryParams: { ...pagination },
+    });
+
+export const listUsers = async (pagination: SeekPaginationInput) =>
+    executeRequest<SeekPaginated<User>>({
+        path: '/api/v1/users',
+        method: 'GET',
+        queryParams: { ...pagination },
+    });
+
+export const updateUserQuotas = async (userId: number | 'me', maxInstances: number) =>
+    executeRequest<User>({
+        path: `/api/v1/users/${userId}/quotas`,
+        method: 'PATCH',
+        body: { maxInstances },
+    });
+
+export const updateUserRole = async (userId: string | number, role: keyof typeof Role) =>
+    executeRequest<User>({
+        path: `/api/v1/users/${userId}/role`,
+        method: 'PATCH',
+        body: { role },
     });
