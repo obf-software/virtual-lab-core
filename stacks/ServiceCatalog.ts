@@ -24,7 +24,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { appSyncApi } = sst.use(AppSyncApi);
 
     const onProductLaunchComplete = new sst.Function(stack, 'onProductLaunchComplete', {
-        handler: 'packages/api/modules/product/handlers/on-product-status-change.handler',
+        handler: 'packages/api/interfaces/events/on-product-status-change.handler',
         permissions: ['cloudformation:*', 'ec2:*', 'appsync:GraphQL'],
         environment: {
             DATABASE_URL,

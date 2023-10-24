@@ -63,7 +63,7 @@ export class GetInstanceConnection {
 
         instance.onUserConnection();
 
-        await this.instanceRepository.save(instance);
+        await this.instanceRepository.update(instance);
 
         const connectionString =
             connectionType === InstanceConnectionType.VNC
