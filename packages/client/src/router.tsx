@@ -9,9 +9,10 @@ import { SettingsPage } from './pages/settings';
 import { ProfilePage } from './pages/profile';
 import { GroupsProvider } from './contexts/groups/provider';
 import { MyGroupsProvider } from './contexts/my-groups/provider';
-import { MyGroupsPage } from './pages/my-groups';
+
 import { ConnectionPage } from './pages/connection';
 import { NewInstancePage } from './pages/new-instance';
+import { UserGroupsPage } from './pages/user-groups';
 
 /**
  * TODO: Filter routes based on user's authorization
@@ -38,7 +39,7 @@ export const Router: React.FC = () => {
                     path: 'my-groups',
                     element: (
                         <MyGroupsProvider>
-                            <MyGroupsPage />
+                            <UserGroupsPage />
                         </MyGroupsProvider>
                     ),
                 },

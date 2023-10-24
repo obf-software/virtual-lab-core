@@ -19,8 +19,10 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { createGroup } from '../../../services/api/service';
+import { createGroup, listPortfolios } from '../../../services/api/service';
 import { useGroupsContext } from '../../../contexts/groups/hook';
+import { Select } from 'chakra-react-select';
+import { useQuery } from '@tanstack/react-query';
 
 interface CreateGroupModalProps {
     isOpen: boolean;
@@ -43,6 +45,18 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
             formMethods.reset();
         };
     }, []);
+
+    const portfoliosQuery = useQuery({
+        queryKey: ['portfolios'],
+        queryFn: async () => {
+            const response = await listPortfolios();
+            if (response.error !== undefined) throw new Error(response.error);
+            console.log(response.data);
+            return response.data;
+        },
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+    });
 
     const submitHandler: SubmitHandler<CreateGroupFormData> = async (values) => {
         const { error } = await createGroup({
@@ -143,8 +157,20 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                             isRequired
                             isInvalid={formMethods.formState.errors.portfolioId !== undefined}
                         >
-                            <FormLabel htmlFor='portfolioId'>Id do Portfólio</FormLabel>
-                            <Input
+                            <FormLabel htmlFor='portfolioId'>Portfólio</FormLabel>
+                            <Select
+                                name='Portfólio'
+                                placeholder='Selecione'
+                                isLoading={portfoliosQuery.isLoading || portfoliosQuery.isFetching}
+                                options={portfoliosQuery.data?.map((option) => ({
+                                    value: option.id,
+                                    label: `${option.name} (${option.id})`,
+                                }))}
+                                onChange={(option) => {
+                                    formMethods.setValue('portfolioId', option?.value ?? '');
+                                }}
+                            />
+                            {/* <Input
                                 id='portfolioId'
                                 {...formMethods.register('portfolioId', {
                                     required: 'Campo obrigatório',
@@ -157,7 +183,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                                         message: 'O campo deve ter no máximo 50 caracteres',
                                     },
                                 })}
-                            />
+                            /> */}
                             <FormErrorMessage>
                                 {formMethods.formState.errors.portfolioId?.message}
                             </FormErrorMessage>
