@@ -34,6 +34,8 @@ export const UserGroupsPage: React.FC = () => {
     const [selectedGroup, setSelectedGroup] = React.useState<Group>();
     const toast = useToast();
 
+    const numberOfGroups = userGroupsQuery.data?.numberOfResults ?? 0;
+
     React.useEffect(() => {
         if (userGroupsQuery.data?.numberOfPages && page > userGroupsQuery.data?.numberOfPages) {
             setSearchParams((prev) => {
@@ -92,7 +94,9 @@ export const UserGroupsPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${userGroupsQuery.data?.numberOfResults} grupos encontrados`}
+                            {numberOfGroups === 0 ? 'Nenhum grupo encontrado' : null}
+                            {numberOfGroups === 1 ? `${numberOfGroups} grupo encontrado` : null}
+                            {numberOfGroups > 1 ? `${numberOfGroups} grupos encontrados` : null}
                         </Text>
                     </VStack>
 

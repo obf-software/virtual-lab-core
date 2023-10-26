@@ -38,6 +38,8 @@ export const UsersPage: React.FC = () => {
         setActiveMenuItem('ADMIN_USERS');
     }, [page, usersQuery.data?.numberOfPages]);
 
+    const numberOfUsers = usersQuery.data?.numberOfResults ?? 0;
+
     return (
         <Box>
             <Container maxW={'6xl'}>
@@ -58,7 +60,9 @@ export const UsersPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${usersQuery.data?.numberOfResults ?? 0} usuários encontrados`}
+                            {numberOfUsers === 0 ? 'Nenhum usuário encontrado' : null}
+                            {numberOfUsers === 1 ? `${numberOfUsers} usuário encontrado` : null}
+                            {numberOfUsers > 1 ? `${numberOfUsers} usuários encontrados` : null}
                         </Text>
                     </VStack>
 

@@ -41,6 +41,8 @@ export const InstancesPage: React.FC = () => {
         setActiveMenuItem('INSTANCES');
     }, [page, instancesQuery.data?.numberOfPages]);
 
+    const numberOfInstances = instancesQuery.data?.numberOfResults ?? 0;
+
     return (
         <Box>
             <Container maxW={'6xl'}>
@@ -61,7 +63,13 @@ export const InstancesPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${instancesQuery.data?.numberOfResults ?? 0} instâncias encontradas`}
+                            {numberOfInstances === 0 ? 'Nenhuma instância encontrada' : null}
+                            {numberOfInstances === 1
+                                ? `${numberOfInstances} instância encontrada`
+                                : null}
+                            {numberOfInstances > 1
+                                ? `${numberOfInstances} instâncias encontradas`
+                                : null}
                         </Text>
                     </VStack>
 

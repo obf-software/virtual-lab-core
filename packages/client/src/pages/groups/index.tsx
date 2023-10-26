@@ -51,6 +51,8 @@ export const GroupsPage: React.FC = () => {
         setActiveMenuItem('ADMIN_GROUPS');
     }, [page, groupsQuery.data?.numberOfPages]);
 
+    const numberOfGroups = groupsQuery.data?.numberOfResults ?? 0;
+
     return (
         <Box>
             <CreateGroupModal
@@ -76,7 +78,9 @@ export const GroupsPage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`${groupsQuery.data?.numberOfResults} grupos encontrados`}
+                            {numberOfGroups === 0 ? 'Nenhum grupo encontrado' : null}
+                            {numberOfGroups === 1 ? `${numberOfGroups} grupo encontrado` : null}
+                            {numberOfGroups > 1 ? `${numberOfGroups} grupos encontrados` : null}
                         </Text>
                     </VStack>
 
