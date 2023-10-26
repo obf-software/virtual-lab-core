@@ -31,7 +31,7 @@ import { IconType } from 'react-icons';
 import { useNavigate } from 'react-router-dom';
 import { Instance, VirtualInstanceState } from '../../../services/api/protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { ConfirmDeletionModal } from '../../../components/confirm-deletion-modal/index';
+import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '../../../services/api/service';
 import { queryClient } from '../../../services/query/service';
@@ -114,7 +114,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const [isWaitingForInstanceStateChange, setIsWaitingForInstanceStateChange] =
         React.useState<boolean>(false);
     const moreOptionsDisclosure = useDisclosure();
-    const confirmDeletionDisclosure = useDisclosure();
+    const confirmDeletionAlertDialogDisclosure = useDisclosure();
     const navigate = useNavigate();
     const toast = useToast();
 
@@ -213,11 +213,11 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
 
     return (
         <Card>
-            <ConfirmDeletionModal
+            <ConfirmDeletionAlertDialog
                 title='Excluir Instância'
                 text={`Você tem certeza que deseja deletar a instância ${instance.name}? Essa ação não pode ser desfeita e todos os dados serão perdidos.`}
-                isOpen={confirmDeletionDisclosure.isOpen}
-                onClose={confirmDeletionDisclosure.onClose}
+                isOpen={confirmDeletionAlertDialogDisclosure.isOpen}
+                onClose={confirmDeletionAlertDialogDisclosure.onClose}
                 isLoading={isLoading}
                 onConfirm={() => {
                     deleteInstanceMutation.mutate();
@@ -411,7 +411,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                             instance.state === 'PENDING'
                         }
                         isLoading={isLoading}
-                        onClick={confirmDeletionDisclosure.onOpen}
+                        onClick={confirmDeletionAlertDialogDisclosure.onOpen}
                     >
                         Excluir
                     </Button>

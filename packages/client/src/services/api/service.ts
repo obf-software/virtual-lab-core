@@ -217,6 +217,13 @@ export const listUsers = async (pagination: SeekPaginationInput) =>
         queryParams: { ...pagination },
     });
 
+export const searchUsers = async (textQuery: string) =>
+    executeRequest<User[]>({
+        path: `/api/v1/search-users`,
+        method: 'GET',
+        queryParams: { textQuery },
+    });
+
 export const updateUserQuotas = async (userId: number | 'me', maxInstances: number) =>
     executeRequest<User>({
         path: `/api/v1/users/${userId}/quotas`,

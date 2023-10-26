@@ -9,7 +9,7 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 
-interface ConfirmDeletionModalProps {
+interface ConfirmDeletionAlertDialogProps {
     title: string;
     text: string;
 
@@ -19,7 +19,7 @@ interface ConfirmDeletionModalProps {
     isLoading: boolean;
 }
 
-export const ConfirmDeletionModal: React.FC<ConfirmDeletionModalProps> = ({
+export const ConfirmDeletionAlertDialog: React.FC<ConfirmDeletionAlertDialogProps> = ({
     title,
     text,
     isOpen,

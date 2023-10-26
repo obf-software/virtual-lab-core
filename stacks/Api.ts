@@ -274,6 +274,14 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     },
                 },
             },
+            'GET /api/v1/search-users': {
+                function: {
+                    handler: 'packages/api/interfaces/api/user/search-users.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
             'PATCH /api/v1/users/{userId}/quotas': {
                 function: {
                     handler: 'packages/api/interfaces/api/user/update-user-quotas.handler',

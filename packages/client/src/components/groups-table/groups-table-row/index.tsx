@@ -67,17 +67,6 @@ export const GroupsTableRow: React.FC<GroupsTableRowProps> = ({ group, onClick, 
                     </Tooltip>
                 </ButtonGroup>
             </Td>
-
-            {/* <ConfirmDeletionModal
-                title='Excluir grupo'
-                text={`Tem certeza que deseja excluir o grupo ${group.name}? Todos os usuários associados a ele serão desassociados. Essa ação não pode ser desfeita.`}
-                isOpen={confirmDeletionModalDisclosure.isOpen}
-                onClose={confirmDeletionModalDisclosure.onClose}
-                isLoading={isDeleting === true}
-                onConfirm={() => {
-                    onDelete?.();
-                }}
-            /> */}
         </Tr>
     );
 };

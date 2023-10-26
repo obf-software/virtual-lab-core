@@ -134,6 +134,32 @@ export class UserDatabaseRepository implements UserRepository {
         };
     };
 
+    search = async (textQuery: string): Promise<User[]> => {
+        const users = await this.dbClient.query.user.findMany({
+            where: (user, builder) => builder.ilike(user.username, `%${textQuery}%`),
+            with: {
+                quota: {
+                    columns: {
+                        maxInstances: true,
+                    },
+                },
+            },
+            limit: 50,
+        });
+
+        return users.map((user) =>
+            User.restore({
+                id: user.id,
+                username: user.username,
+                role: Role[user.role],
+                maxInstances: user.quota.maxInstances,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+                lastLoginAt: user.lastLoginAt,
+            }),
+        );
+    };
+
     listByGroup = async (
         groupId: number,
         pagination: SeekPaginationInput,

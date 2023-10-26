@@ -7,6 +7,7 @@ export interface UserRepository {
     getById: (id: number) => Promise<User | undefined>;
     getByUsername: (username: string) => Promise<User | undefined>;
     list(pagination: SeekPaginationInput): Promise<SeekPaginated<User>>;
+    search(textQuery: string): Promise<User[]>;
     listByGroup(groupId: number, pagination: SeekPaginationInput): Promise<SeekPaginated<User>>;
     update(user: User): Promise<void>;
 }

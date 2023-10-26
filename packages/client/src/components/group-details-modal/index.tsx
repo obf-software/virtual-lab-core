@@ -1,19 +1,15 @@
 import {
-    AlertDialog,
-    AlertDialogBody,
-    AlertDialogCloseButton,
-    AlertDialogContent,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogOverlay,
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
     Button,
     HStack,
     Heading,
     IconButton,
-    Input,
-    InputGroup,
-    InputLeftElement,
-    InputRightElement,
     Stack,
     Tab,
     TabList,
@@ -22,6 +18,7 @@ import {
     Tabs,
     Text,
     useToast,
+    Box,
 } from '@chakra-ui/react';
 import React from 'react';
 import { Group } from '../../services/api/protocols';
@@ -30,13 +27,15 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
 import { GroupUsersTable } from '../group-users-table';
-import { FiPlus, FiRefreshCw, FiX } from 'react-icons/fi';
+import { FiRefreshCw } from 'react-icons/fi';
 import { Paginator } from '../paginator';
 import { useGroupsUsers } from '../../hooks/group-users';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { getErrorMessage, parseSessionData } from '../../services/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { queryClient } from '../../services/query/service';
+import { AsyncSelect, Select } from 'chakra-react-select';
+import { useSearchUsers } from '../../hooks/search-users';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -48,11 +47,23 @@ interface GroupDetailsModalProps {
 }
 
 export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isOpen, onClose }) => {
-    const cancelRef = React.useRef<HTMLButtonElement>(null);
     const [page, setPage] = React.useState(1);
     const toast = useToast();
     const { user } = useAuthenticator((state) => [state.user]);
     const { role } = parseSessionData(user);
+    const [textQuery, setTextQuery] = React.useState('');
+    const [textQueryDebounced, setTextQueryDebounced] = React.useState(textQuery);
+
+    React.useEffect(() => {
+        const timeout = setTimeout(() => {
+            setTextQueryDebounced(textQuery);
+        }, 500);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [textQuery]);
+
+    const { searchUsersQuery } = useSearchUsers({ textQuery: textQueryDebounced });
 
     const { groupUsersQuery } =
         role === 'ADMIN'
@@ -70,7 +81,27 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
         },
         onError: (error) => {
             toast({
-                title: 'Falha ao criar grupo',
+                title: 'Falha ao remover usuário do grupo',
+                status: 'error',
+                description: getErrorMessage(error),
+                duration: 5000,
+                isClosable: true,
+            });
+        },
+    });
+
+    const linkUsersToGroupMutation = useMutation({
+        mutationFn: async (mut: { groupId: number; userIds: number[] }) => {
+            const { error } = await api.linkUsersToGroup(mut.groupId, mut.userIds);
+            if (error !== undefined) throw new Error(error);
+            return mut;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries([`groupUsers_${data.groupId}`]).catch(console.error);
+        },
+        onError: (error) => {
+            toast({
+                title: 'Falha ao adicionar usuários ao grupo',
                 status: 'error',
                 description: getErrorMessage(error),
                 duration: 5000,
@@ -97,37 +128,32 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
     ];
 
     return (
-        <AlertDialog
+        <Modal
             isOpen={isOpen}
             onClose={onClose}
             motionPreset='scale'
             isCentered
             closeOnEsc
             closeOnOverlayClick
-            leastDestructiveRef={cancelRef}
-            size={{
-                base: 'sm',
-                md: '6xl',
-            }}
+            size={{ base: 'sm', md: '6xl' }}
         >
-            <AlertDialogOverlay>
-                <AlertDialogContent>
-                    <AlertDialogCloseButton />
+            <ModalOverlay>
+                <ModalContent>
+                    <ModalCloseButton />
 
-                    <AlertDialogHeader fontSize='lg'>
+                    <ModalHeader fontSize='lg'>
                         <Heading
                             size='lg'
                             fontWeight='semibold'
                         >
                             Grupo {group?.name}
                         </Heading>
-                    </AlertDialogHeader>
+                    </ModalHeader>
 
-                    <AlertDialogBody>
+                    <ModalBody>
                         <Tabs>
                             <TabList>
                                 <Tab>Info</Tab>
-
                                 <Tab isDisabled={role !== 'ADMIN'}>Usuários</Tab>
                             </TabList>
                             <TabPanels>
@@ -160,27 +186,33 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                         mt={'2%'}
                                         spacing={'6'}
                                     >
-                                        <HStack>
-                                            <InputGroup boxShadow={'sm'}>
-                                                <InputLeftElement pointerEvents='none'>
-                                                    <FiPlus color='gray.300' />
-                                                </InputLeftElement>
-                                                <Input
-                                                    type='text'
-                                                    placeholder='Buscar Usuário'
-                                                    bgColor={'white'}
+                                        <HStack alignItems={'center'}>
+                                            <Box w={'100%'}>
+                                                <AsyncSelect
+                                                    isMulti
+                                                    name='Portfólio'
+                                                    placeholder='Selecione os usuários'
+                                                    isLoading={searchUsersQuery?.isFetching}
+                                                    loadOptions={(_inputValue, callback) => {
+                                                        callback(
+                                                            searchUsersQuery?.data?.map((user) => ({
+                                                                label: user.username,
+                                                                value: user.id,
+                                                            })) ?? [],
+                                                        );
+                                                    }}
+                                                    onInputChange={(value) => {
+                                                        setTextQuery(value);
+                                                    }}
                                                 />
-                                                <InputRightElement>
-                                                    <IconButton
-                                                        aria-label='Limpar pesquisa'
-                                                        variant={'ghost'}
-                                                        size={'sm'}
-                                                        icon={<FiX />}
-                                                    />
-                                                </InputRightElement>
-                                            </InputGroup>
+                                            </Box>
 
-                                            <Button colorScheme={'blue'}>Adicionar</Button>
+                                            <Button
+                                                colorScheme={'blue'}
+                                                px={10}
+                                            >
+                                                Adicionar Usuários
+                                            </Button>
                                             <IconButton
                                                 aria-label='Recarregar'
                                                 variant={'outline'}
@@ -219,11 +251,11 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                 </TabPanel>
                             </TabPanels>
                         </Tabs>
-                    </AlertDialogBody>
+                    </ModalBody>
 
-                    <AlertDialogFooter />
-                </AlertDialogContent>
-            </AlertDialogOverlay>
-        </AlertDialog>
+                    <ModalFooter />
+                </ModalContent>
+            </ModalOverlay>
+        </Modal>
     );
 };

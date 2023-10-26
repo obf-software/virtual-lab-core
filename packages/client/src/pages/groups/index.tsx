@@ -23,7 +23,7 @@ import { CreateGroupModal } from './create-group-modal';
 import { useSearchParams } from 'react-router-dom';
 import { useGroups } from '../../hooks/groups';
 import { GroupsTable } from '../../components/groups-table';
-import { ConfirmDeletionModal } from '../../components/confirm-deletion-modal';
+import { ConfirmDeletionAlertDialog } from '../../components/confirm-deletion-alert-dialog';
 import { Group } from '../../services/api/protocols';
 import { GroupDetailsModal } from '../../components/group-details-modal';
 import { useMutation } from '@tanstack/react-query';
@@ -39,7 +39,7 @@ export const GroupsPage: React.FC = () => {
     const [selectedGroup, setSelectedGroup] = React.useState<Group>();
     const groupDetailsModalDisclosure = useDisclosure();
     const createGroupModalDisclosure = useDisclosure();
-    const confirmDeletionModalDisclosure = useDisclosure();
+    const confirmDeletionAlertDialogDisclosure = useDisclosure();
     const toast = useToast();
 
     React.useEffect(() => {
@@ -77,7 +77,7 @@ export const GroupsPage: React.FC = () => {
 
             queryClient.invalidateQueries(['groups']).catch(console.error);
             setSelectedGroup(undefined);
-            confirmDeletionModalDisclosure.onClose();
+            confirmDeletionAlertDialogDisclosure.onClose();
         },
         onError: (error) => {
             toast({
@@ -106,11 +106,11 @@ export const GroupsPage: React.FC = () => {
                 }}
             />
 
-            <ConfirmDeletionModal
+            <ConfirmDeletionAlertDialog
                 title={`Deletar grupo ${selectedGroup?.name ?? ''}`}
                 text={`Você tem certeza que deseja deletar o grupo selecionado? Essa ação não pode ser desfeita.`}
-                isOpen={confirmDeletionModalDisclosure.isOpen}
-                onClose={confirmDeletionModalDisclosure.onClose}
+                isOpen={confirmDeletionAlertDialogDisclosure.isOpen}
+                onClose={confirmDeletionAlertDialogDisclosure.onClose}
                 onConfirm={() => {
                     if (selectedGroup === undefined) return;
                     deleteGroupMutation.mutate({ groupId: selectedGroup.id });
@@ -197,7 +197,7 @@ export const GroupsPage: React.FC = () => {
                         }}
                         onDelete={(group) => {
                             setSelectedGroup(group);
-                            confirmDeletionModalDisclosure.onOpen();
+                            confirmDeletionAlertDialogDisclosure.onOpen();
                         }}
                     />
 
