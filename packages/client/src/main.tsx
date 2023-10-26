@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './styles/theme';
 import { MenuProvider } from './contexts/menu/provider.tsx';
-import { AuthProvider } from './contexts/auth/provider.tsx';
+import { AuthProvider } from './components/auth-provider/index.tsx';
 import { Router } from './router.tsx';
 import { NotificationsProvider } from './contexts/notifications/provider.tsx';
 import { QueryClientProvider } from '@tanstack/react-query';

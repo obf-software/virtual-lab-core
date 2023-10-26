@@ -1,15 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import * as api from '../../services/api/service';
+import * as api from '../services/api/service';
 
-export const useInstances = (props: {
-    userId: number | 'me';
-    resultsPerPage: number;
-    page: number;
-}) => {
-    const instancesQuery = useQuery({
-        queryKey: ['instances', props.page],
+export const useUsers = (props: { resultsPerPage: number; page: number }) => {
+    const usersQuery = useQuery({
+        queryKey: ['users', props.page],
         queryFn: async () => {
-            const response = await api.listUserInstances(props.userId, {
+            const response = await api.listUsers({
                 resultsPerPage: props.resultsPerPage,
                 page: props.page,
             });
@@ -22,6 +18,6 @@ export const useInstances = (props: {
     });
 
     return {
-        instancesQuery,
+        usersQuery,
     };
 };

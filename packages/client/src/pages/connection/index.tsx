@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Center, Text } from '@chakra-ui/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useConnection } from '../../hooks/connection/use-connection';
+import { useConnection } from '../../hooks/connection';
 
 export const ConnectionPage: React.FC = () => {
     const navigate = useNavigate();
