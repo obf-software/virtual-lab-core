@@ -7,8 +7,6 @@ import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
 import { SettingsPage } from './pages/settings';
 import { ProfilePage } from './pages/profile';
-import { GroupsProvider } from './contexts/groups/provider';
-import { MyGroupsProvider } from './contexts/my-groups/provider';
 
 import { ConnectionPage } from './pages/connection';
 import { NewInstancePage } from './pages/new-instance';
@@ -37,11 +35,7 @@ export const Router: React.FC = () => {
                 },
                 {
                     path: 'my-groups',
-                    element: (
-                        <MyGroupsProvider>
-                            <UserGroupsPage />
-                        </MyGroupsProvider>
-                    ),
+                    element: <UserGroupsPage />,
                 },
                 {
                     path: 'settings',
@@ -58,11 +52,7 @@ export const Router: React.FC = () => {
                 },
                 {
                     path: 'admin/groups',
-                    element: (
-                        <GroupsProvider>
-                            <GroupsPage />
-                        </GroupsProvider>
-                    ),
+                    element: <GroupsPage />,
                 },
             ],
             // errorElement: <div>error</div>,

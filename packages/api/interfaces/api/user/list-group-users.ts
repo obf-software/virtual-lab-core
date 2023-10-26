@@ -25,11 +25,11 @@ export const handler = HandlerAdapter.create(
         .safeParse({ ...event.queryStringParameters });
     if (!query.success) throw new createHttpError.BadRequest(query.error.message);
 
-    const groupIdString = event.pathParameters?.userId;
+    const groupIdString = event.pathParameters?.groupId;
     const groupId = Number(groupIdString);
 
     if (Number.isNaN(groupId)) {
-        throw new createHttpError.BadRequest('Invalid groupId');
+        throw new createHttpError.BadRequest(`Invalid groupId: ${groupIdString}`);
     }
 
     const output = await listGroupUsers.execute({

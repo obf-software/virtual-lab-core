@@ -114,7 +114,7 @@ export const UserGroupsPage: React.FC = () => {
                     </IconButton>
                 </Stack>
 
-                <Stack pb={5}>
+                <Stack spacing={6}>
                     <InputGroup boxShadow={'sm'}>
                         <InputLeftElement pointerEvents='none'>
                             <FiSearch color='gray.300' />
@@ -135,27 +135,27 @@ export const UserGroupsPage: React.FC = () => {
                             />
                         </InputRightElement>
                     </InputGroup>
+
+                    <GroupsTable
+                        groups={userGroupsQuery.data?.data ?? []}
+                        isLoading={userGroupsQuery.isLoading}
+                        onSelect={(group) => {
+                            setSelectedGroup(group);
+                            groupDetailsModalDisclosure.onOpen();
+                        }}
+                    />
+
+                    <Paginator
+                        activePage={page}
+                        totalPages={userGroupsQuery.data?.numberOfPages ?? 0}
+                        onPageChange={(selectedPage) => {
+                            setSearchParams((prev) => {
+                                prev.set('page', selectedPage.toString());
+                                return prev;
+                            });
+                        }}
+                    />
                 </Stack>
-
-                <GroupsTable
-                    groups={userGroupsQuery.data?.data ?? []}
-                    isLoading={userGroupsQuery.isLoading}
-                    onSelect={(group) => {
-                        setSelectedGroup(group);
-                        groupDetailsModalDisclosure.onOpen();
-                    }}
-                />
-
-                <Paginator
-                    activePage={page}
-                    totalPages={userGroupsQuery.data?.numberOfPages ?? 0}
-                    onPageChange={(selectedPage) => {
-                        setSearchParams((prev) => {
-                            prev.set('page', selectedPage.toString());
-                            return prev;
-                        });
-                    }}
-                />
 
                 <GroupDetailsModal
                     group={selectedGroup ?? ({} as Group)}

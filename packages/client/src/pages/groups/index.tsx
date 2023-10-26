@@ -98,7 +98,7 @@ export const GroupsPage: React.FC = () => {
             />
 
             <GroupDetailsModal
-                group={selectedGroup}
+                group={selectedGroup ?? ({} as Group)}
                 isOpen={groupDetailsModalDisclosure.isOpen}
                 onClose={() => {
                     groupDetailsModalDisclosure.onClose();
@@ -166,7 +166,7 @@ export const GroupsPage: React.FC = () => {
                     </ButtonGroup>
                 </Stack>
 
-                <Stack pb={5}>
+                <Stack spacing={6}>
                     <InputGroup boxShadow={'sm'}>
                         <InputLeftElement pointerEvents='none'>
                             <FiSearch color='gray.300' />
@@ -187,31 +187,31 @@ export const GroupsPage: React.FC = () => {
                             />
                         </InputRightElement>
                     </InputGroup>
+
+                    <GroupsTable
+                        groups={groupsQuery.data?.data ?? []}
+                        isLoading={groupsQuery.isLoading}
+                        onSelect={(group) => {
+                            setSelectedGroup(group);
+                            groupDetailsModalDisclosure.onOpen();
+                        }}
+                        onDelete={(group) => {
+                            setSelectedGroup(group);
+                            confirmDeletionModalDisclosure.onOpen();
+                        }}
+                    />
+
+                    <Paginator
+                        activePage={page}
+                        totalPages={groupsQuery.data?.numberOfPages ?? 0}
+                        onPageChange={(selectedPage) => {
+                            setSearchParams((prev) => {
+                                prev.set('page', selectedPage.toString());
+                                return prev;
+                            });
+                        }}
+                    />
                 </Stack>
-
-                <GroupsTable
-                    groups={groupsQuery.data?.data ?? []}
-                    isLoading={groupsQuery.isLoading}
-                    onSelect={(group) => {
-                        setSelectedGroup(group);
-                        groupDetailsModalDisclosure.onOpen();
-                    }}
-                    onDelete={(group) => {
-                        setSelectedGroup(group);
-                        confirmDeletionModalDisclosure.onOpen();
-                    }}
-                />
-
-                <Paginator
-                    activePage={page}
-                    totalPages={groupsQuery.data?.numberOfPages ?? 0}
-                    onPageChange={(selectedPage) => {
-                        setSearchParams((prev) => {
-                            prev.set('page', selectedPage.toString());
-                            return prev;
-                        });
-                    }}
-                />
             </Container>
         </Box>
     );

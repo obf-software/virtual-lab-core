@@ -80,7 +80,7 @@ export const UsersPage: React.FC = () => {
                     </IconButton>
                 </Stack>
 
-                <Stack pb={5}>
+                <Stack spacing={6}>
                     <InputGroup boxShadow={'sm'}>
                         <InputLeftElement pointerEvents='none'>
                             <FiSearch color='gray.300' />
@@ -101,20 +101,20 @@ export const UsersPage: React.FC = () => {
                             />
                         </InputRightElement>
                     </InputGroup>
+
+                    <UsersTable
+                        resultsPerPage={RESULTS_PER_PAGE}
+                        page={page}
+                    />
+
+                    <Paginator
+                        activePage={page}
+                        totalPages={usersQuery.data?.numberOfPages ?? 0}
+                        onPageChange={(page) => {
+                            navigate(`?page=${page}`);
+                        }}
+                    />
                 </Stack>
-
-                <UsersTable
-                    resultsPerPage={RESULTS_PER_PAGE}
-                    page={page}
-                />
-
-                <Paginator
-                    activePage={page}
-                    totalPages={usersQuery.data?.numberOfPages ?? 0}
-                    onPageChange={(page) => {
-                        navigate(`?page=${page}`);
-                    }}
-                />
             </Container>
         </Box>
     );

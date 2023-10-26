@@ -27,7 +27,7 @@ export const Paginator: React.FC<PaginatorProps> = ({ activePage, totalPages, on
         paginationButtons[paginationButtons.length - 1] !== totalPages;
 
     return (
-        <Box py={6}>
+        <Box>
             <Container maxW={'6xl'}>
                 <Stack
                     spacing={4}
