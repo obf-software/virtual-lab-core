@@ -21,7 +21,7 @@ dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 interface GroupDetailsModalProps {
-    group: Group;
+    group?: Group;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -43,7 +43,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                 <AlertDialogContent>
                     <AlertDialogCloseButton />
 
-                    <AlertDialogHeader fontSize='lg'>Grupo {group.name}</AlertDialogHeader>
+                    <AlertDialogHeader fontSize='lg'>Grupo {group?.name}</AlertDialogHeader>
 
                     <AlertDialogBody>
                         <Stack
@@ -60,7 +60,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                 fontSize='md'
                                 fontWeight='semibold'
                             >
-                                {group.description}
+                                {group?.description}
                             </Text>
                             <Text
                                 fontSize='sm'
@@ -72,7 +72,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                 fontSize='md'
                                 fontWeight='semibold'
                             >
-                                {group.portfolioId}
+                                {group?.portfolioId}
                             </Text>
                             <Text
                                 fontSize='sm'
@@ -84,7 +84,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                 fontSize='md'
                                 fontWeight='semibold'
                             >
-                                {dayjs(group.createdAt).format('DD/MM/YYYY')}
+                                {dayjs(group?.createdAt).format('DD/MM/YYYY')}
                             </Text>
                             <Text
                                 fontSize='sm'
@@ -96,7 +96,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                 fontSize='md'
                                 fontWeight='semibold'
                             >
-                                {dayjs(group.updatedAt).fromNow()}
+                                {dayjs(group?.updatedAt).fromNow()}
                             </Text>
                         </Stack>
                     </AlertDialogBody>

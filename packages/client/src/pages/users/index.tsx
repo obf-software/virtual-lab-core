@@ -89,6 +89,7 @@ export const UsersPage: React.FC = () => {
                             type='text'
                             placeholder='Pesquisar'
                             bgColor={'white'}
+                            disabled
                         />
                         <InputRightElement>
                             <IconButton
@@ -96,6 +97,7 @@ export const UsersPage: React.FC = () => {
                                 variant={'ghost'}
                                 size={'sm'}
                                 icon={<FiX />}
+                                isDisabled
                             />
                         </InputRightElement>
                     </InputGroup>

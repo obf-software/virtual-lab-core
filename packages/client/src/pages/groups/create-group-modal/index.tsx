@@ -19,10 +19,11 @@ import {
 } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { createGroup, listPortfolios } from '../../../services/api/service';
-import { useGroupsContext } from '../../../contexts/groups/hook';
+import * as api from '../../../services/api/service';
 import { Select } from 'chakra-react-select';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { queryClient } from '../../../services/query/service';
+import { getErrorMessage } from '../../../services/helpers';
 
 interface CreateGroupModalProps {
     isOpen: boolean;
@@ -36,7 +37,6 @@ interface CreateGroupFormData {
 }
 
 export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onClose }) => {
-    const { loadGroupsPage } = useGroupsContext();
     const formMethods = useForm<CreateGroupFormData>();
     const toast = useToast();
 
@@ -49,7 +49,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
     const portfoliosQuery = useQuery({
         queryKey: ['portfolios'],
         queryFn: async () => {
-            const response = await listPortfolios();
+            const response = await api.listPortfolios();
             if (response.error !== undefined) throw new Error(response.error);
             console.log(response.data);
             return response.data;
@@ -58,27 +58,38 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
         refetchOnWindowFocus: false,
     });
 
-    const submitHandler: SubmitHandler<CreateGroupFormData> = async (values) => {
-        const { error } = await createGroup({
-            name: values.name,
-            description: values.description,
-            portfolioId: values.portfolioId,
-        });
-
-        if (error !== undefined) {
+    const createGroupMutation = useMutation({
+        mutationFn: async (mut: CreateGroupFormData) => {
+            const { data, error } = await api.createGroup(mut);
+            if (error !== undefined) throw new Error(error);
+            return data;
+        },
+        onSuccess: (data) => {
             toast({
-                title: 'Erro ao criar grupo',
-                description: error,
-                status: 'error',
+                title: `Grupo criado`,
+                description: `O grupo ${data.name} foi criado com sucesso.`,
+                status: 'success',
                 duration: 5000,
                 isClosable: true,
             });
-            return;
-        }
 
-        loadGroupsPage(1, 20).catch(console.error);
-        formMethods.reset();
-        onClose();
+            queryClient.invalidateQueries(['groups']).catch(console.error);
+            formMethods.reset();
+            onClose();
+        },
+        onError: (error) => {
+            toast({
+                title: 'Falha ao criar grupo',
+                status: 'error',
+                description: getErrorMessage(error),
+                duration: 5000,
+                isClosable: true,
+            });
+        },
+    });
+
+    const submitHandler: SubmitHandler<CreateGroupFormData> = (values) => {
+        createGroupMutation.mutate(values);
     };
 
     return (
@@ -170,20 +181,6 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                                     formMethods.setValue('portfolioId', option?.value ?? '');
                                 }}
                             />
-                            {/* <Input
-                                id='portfolioId'
-                                {...formMethods.register('portfolioId', {
-                                    required: 'Campo obrigatório',
-                                    minLength: {
-                                        value: 1,
-                                        message: 'O campo deve ter no mínimo 1 caracter',
-                                    },
-                                    maxLength: {
-                                        value: 50,
-                                        message: 'O campo deve ter no máximo 50 caracteres',
-                                    },
-                                })}
-                            /> */}
                             <FormErrorMessage>
                                 {formMethods.formState.errors.portfolioId?.message}
                             </FormErrorMessage>
@@ -199,7 +196,9 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
                             colorScheme={'blue'}
                             variant='solid'
                             onClick={formMethods.handleSubmit(submitHandler)}
-                            isLoading={formMethods.formState.isSubmitting}
+                            isLoading={
+                                formMethods.formState.isSubmitting || createGroupMutation.isLoading
+                            }
                         >
                             Adicionar
                         </Button>
