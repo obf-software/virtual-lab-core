@@ -9,17 +9,16 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { UsersTableRow } from './row';
-import { useUsers } from '../../../hooks/users';
+import { UsersTableRow } from './users-table-row';
+import { User } from '../../services/api/protocols';
 
 interface UsersTableProps {
-    resultsPerPage: number;
-    page: number;
+    users: User[];
+    isLoading: boolean;
+    onSelect?: (user: User) => void;
 }
 
-export const UsersTable: React.FC<UsersTableProps> = ({ resultsPerPage, page }) => {
-    const { usersQuery } = useUsers({ resultsPerPage, page });
-
+export const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, onSelect }) => {
     return (
         <TableContainer
             bgColor={'white'}
@@ -32,11 +31,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({ resultsPerPage, page }) 
                 variant='simple'
                 colorScheme='blue'
             >
-                {usersQuery.data?.data.length === 0 && !usersQuery.isFetching ? (
+                {users.length === 0 && isLoading === false ? (
                     <TableCaption>Nenhum usuário encontrado</TableCaption>
                 ) : null}
 
-                {usersQuery.isLoading ? (
+                {isLoading !== false ? (
                     <TableCaption>
                         <Spinner
                             size='xl'
@@ -56,13 +55,16 @@ export const UsersTable: React.FC<UsersTableProps> = ({ resultsPerPage, page }) 
                         <Th>Último acesso</Th>
                     </Tr>
                 </Thead>
+
                 <Tbody>
-                    {usersQuery.data?.data.map((user, index) => (
-                        <UsersTableRow
-                            key={`users-table-row-${index}`}
-                            user={user}
-                        />
-                    ))}
+                    {isLoading === false &&
+                        users.map((user, index) => (
+                            <UsersTableRow
+                                key={`users-table-row-${user.username}-${index}`}
+                                user={user}
+                                onClick={() => onSelect?.(user)}
+                            />
+                        ))}
                 </Tbody>
             </Table>
         </TableContainer>

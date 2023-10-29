@@ -7,7 +7,6 @@ import {
     Stack,
     IconButton,
     useDisclosure,
-    useToast,
     InputGroup,
     InputLeftElement,
     Input,
@@ -17,62 +16,43 @@ import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useSearchParams } from 'react-router-dom';
 import { useUserGroups } from '../../hooks/user-groups';
 import { GroupsTable } from '../../components/groups-table';
 import { Group } from '../../services/api/protocols';
 import { GroupDetailsModal } from '../../components/group-details-modal';
-import { getErrorMessage } from '../../services/helpers';
+import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
+import { useUserIdSearchParam } from '../../hooks/user-id-search-param';
 
 export const UserGroupsPage: React.FC = () => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const page = Math.max(1, Number(searchParams.get('page')) || 1);
-    const userId = searchParams.get('userId');
-    const { userGroupsQuery } = useUserGroups(userId ?? 'me', { resultsPerPage: 20, page });
+    const { page, setPage } = usePaginationSearchParam();
+    const { userId } = useUserIdSearchParam();
+    const { userGroupsQuery } = useUserGroups(userId, { resultsPerPage: 20, page });
     const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
     const groupDetailsModalDisclosure = useDisclosure();
     const [selectedGroup, setSelectedGroup] = React.useState<Group>();
-    const toast = useToast();
 
+    const userGroups = userGroupsQuery.data?.data ?? [];
     const numberOfGroups = userGroupsQuery.data?.numberOfResults ?? 0;
+    const numberOfPages = userGroupsQuery.data?.numberOfPages ?? 0;
 
     React.useEffect(() => {
-        if (userGroupsQuery.data?.numberOfPages && page > userGroupsQuery.data?.numberOfPages) {
-            setSearchParams((prev) => {
-                prev.set('page', '1');
-                return prev;
-            });
-        } else {
-            setSearchParams((prev) => {
-                prev.set('page', page.toString());
-                return prev;
-            });
-        }
-
-        if (userId === null || Number.isNaN(userId)) {
-            setSearchParams((prev) => {
-                prev.set('userId', 'me');
-                return prev;
-            });
+        if (numberOfPages > 0 && page > numberOfPages) {
+            setPage(1);
         }
 
         if (userId === 'me') {
             setActiveMenuItem('MY_GROUPS');
         }
-    }, [page, userId, userGroupsQuery.data?.numberOfPages]);
-
-    if (userGroupsQuery.error) {
-        toast({
-            title: 'Erro ao carregar grupos',
-            description: getErrorMessage(userGroupsQuery.error),
-            status: 'error',
-            duration: 5000,
-            isClosable: true,
-        });
-    }
+    }, [page, userId, numberOfPages]);
 
     return (
         <Box>
+            <GroupDetailsModal
+                group={selectedGroup ?? ({} as Group)}
+                isOpen={groupDetailsModalDisclosure.isOpen}
+                onClose={groupDetailsModalDisclosure.onClose}
+            />
+
             <Container maxW={'6xl'}>
                 <Stack
                     pb={10}
@@ -137,7 +117,7 @@ export const UserGroupsPage: React.FC = () => {
                     </InputGroup>
 
                     <GroupsTable
-                        groups={userGroupsQuery.data?.data ?? []}
+                        groups={userGroups}
                         isLoading={userGroupsQuery.isLoading}
                         onSelect={(group) => {
                             setSelectedGroup(group);
@@ -149,19 +129,10 @@ export const UserGroupsPage: React.FC = () => {
                         activePage={page}
                         totalPages={userGroupsQuery.data?.numberOfPages ?? 0}
                         onPageChange={(selectedPage) => {
-                            setSearchParams((prev) => {
-                                prev.set('page', selectedPage.toString());
-                                return prev;
-                            });
+                            setPage(selectedPage);
                         }}
                     />
                 </Stack>
-
-                <GroupDetailsModal
-                    group={selectedGroup ?? ({} as Group)}
-                    isOpen={groupDetailsModalDisclosure.isOpen}
-                    onClose={groupDetailsModalDisclosure.onClose}
-                />
             </Container>
         </Box>
     );

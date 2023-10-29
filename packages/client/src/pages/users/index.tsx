@@ -10,38 +10,48 @@ import {
     InputLeftElement,
     InputRightElement,
     IconButton,
+    useDisclosure,
 } from '@chakra-ui/react';
-import { UsersTable } from './table';
 import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUsers } from '../../hooks/users';
-
-const RESULTS_PER_PAGE = 20;
+import { User } from '../../services/api/protocols';
+import { UserDetailsModal } from '../../components/user-details-modal';
+import { UsersTable } from '../../components/users-table';
+import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
 
 export const UsersPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const page = Math.max(1, Number(searchParams.get('page')) || 1);
-    const { usersQuery } = useUsers({ resultsPerPage: RESULTS_PER_PAGE, page });
+    const { page, setPage } = usePaginationSearchParam();
+    const { usersQuery } = useUsers({ resultsPerPage: 20, page });
     const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
+    const [selectedUser, setSelectedUser] = React.useState<User>();
+    const userDetailsModalDisclosure = useDisclosure();
+
+    const users = usersQuery.data?.data ?? [];
+    const numberOfUsers = usersQuery.data?.numberOfResults ?? 0;
+    const numberOfPages = usersQuery.data?.numberOfPages ?? 0;
 
     React.useEffect(() => {
-        if (usersQuery.data?.numberOfPages && page > usersQuery.data?.numberOfPages) {
-            setSearchParams({ page: '1' });
-        } else {
-            setSearchParams({ page: page.toString() });
+        if (numberOfPages > 0 && page > numberOfPages) {
+            setPage(1);
         }
 
         setActiveMenuItem('ADMIN_USERS');
-    }, [page, usersQuery.data?.numberOfPages]);
-
-    const numberOfUsers = usersQuery.data?.numberOfResults ?? 0;
+    }, [page, numberOfPages]);
 
     return (
         <Box>
+            <UserDetailsModal
+                user={selectedUser ?? ({} as User)}
+                isOpen={userDetailsModalDisclosure.isOpen}
+                onClose={() => {
+                    userDetailsModalDisclosure.onClose();
+                    setSelectedUser(undefined);
+                }}
+            />
+
             <Container maxW={'6xl'}>
                 <Stack
                     pb={10}
@@ -103,15 +113,19 @@ export const UsersPage: React.FC = () => {
                     </InputGroup>
 
                     <UsersTable
-                        resultsPerPage={RESULTS_PER_PAGE}
-                        page={page}
+                        users={users}
+                        isLoading={usersQuery.isLoading}
+                        onSelect={(user) => {
+                            setSelectedUser(user);
+                            userDetailsModalDisclosure.onOpen();
+                        }}
                     />
 
                     <Paginator
                         activePage={page}
-                        totalPages={usersQuery.data?.numberOfPages ?? 0}
-                        onPageChange={(page) => {
-                            navigate(`?page=${page}`);
+                        totalPages={numberOfPages}
+                        onPageChange={(selectedPage) => {
+                            setPage(selectedPage);
                         }}
                     />
                 </Stack>

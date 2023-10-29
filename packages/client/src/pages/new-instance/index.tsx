@@ -13,24 +13,13 @@ import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { NewInstanceCard } from './card';
-import { useQuery } from '@tanstack/react-query';
-import * as api from '../../services/api/service';
+import { useUserProducts } from '../../hooks/user-products';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-
-    const productsQuery = useQuery({
-        queryKey: ['products'],
-        queryFn: async () => {
-            const { data, error } = await api.listUserProducts('me');
-            if (error !== undefined) throw new Error(error);
-            return data;
-        },
-        staleTime: 1000 * 60 * 5,
-        refetchOnWindowFocus: false,
+    const { products, numberOfProducts, isFetching, isLoading, refetch } = useUserProducts({
+        userId: 'me',
     });
-
-    const numberOfProducts = productsQuery.data?.length ?? 0;
 
     useEffect(() => {
         setActiveMenuItem('INSTANCES');
@@ -67,18 +56,16 @@ export const NewInstancePage: React.FC = () => {
                             aria-label='Recarregar'
                             variant={'outline'}
                             colorScheme='blue'
-                            hidden={productsQuery.isLoading}
-                            isLoading={productsQuery.isFetching}
-                            onClick={() => {
-                                productsQuery.refetch().catch(console.error);
-                            }}
+                            hidden={isLoading}
+                            isLoading={isFetching}
+                            onClick={refetch}
                         >
                             <FiRefreshCw />
                         </IconButton>
                     </ButtonGroup>
                 </Stack>
 
-                {numberOfProducts === 0 && !productsQuery.isLoading ? (
+                {numberOfProducts === 0 && !isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -95,7 +82,7 @@ export const NewInstancePage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {productsQuery.isLoading ? (
+                {isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -112,7 +99,7 @@ export const NewInstancePage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {productsQuery.data?.map((product) => (
+                {products.map((product) => (
                     <Box
                         pb={10}
                         key={`product-${product.id}`}

@@ -15,33 +15,27 @@ import React from 'react';
 import { InstanceCard } from './instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useInstances } from '../../hooks/instances';
-
-const RESULTS_PER_PAGE = 20;
+import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
+import { useNavigate } from 'react-router-dom';
 
 export const InstancesPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
-    const page = Math.max(1, Number(searchParams.get('page')) || 1);
-    const { instancesQuery } = useInstances({
-        userId: 'me',
-        resultsPerPage: RESULTS_PER_PAGE,
-        page,
-    });
+    const { page, setPage } = usePaginationSearchParam();
+    const { instancesQuery } = useInstances({ userId: 'me', resultsPerPage: 20, page });
     const { setActiveMenuItem } = useMenuContext();
+    const navigate = useNavigate();
+
+    const instances = instancesQuery.data?.data ?? [];
+    const numberOfInstances = instancesQuery.data?.numberOfResults ?? 0;
+    const numberOfPages = instancesQuery.data?.numberOfPages ?? 0;
 
     React.useEffect(() => {
-        if (instancesQuery.data?.numberOfPages && page > instancesQuery.data?.numberOfPages) {
-            setSearchParams({ page: '1' });
-        } else {
-            setSearchParams({ page: page.toString() });
+        if (numberOfPages > 0 && page > numberOfPages) {
+            setPage(1);
         }
 
         setActiveMenuItem('INSTANCES');
-    }, [page, instancesQuery.data?.numberOfPages]);
-
-    const numberOfInstances = instancesQuery.data?.numberOfResults ?? 0;
+    }, [page, numberOfPages]);
 
     return (
         <Box>
@@ -99,7 +93,7 @@ export const InstancesPage: React.FC = () => {
                     </ButtonGroup>
                 </Stack>
 
-                {instancesQuery.data?.data.length === 0 && !instancesQuery.isLoading ? (
+                {instances.length === 0 && !instancesQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -133,7 +127,7 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {instancesQuery.data?.data.map((instance) => (
+                {instances.map((instance) => (
                     <Box
                         pb={10}
                         key={`instance-${instance.logicalId}`}
@@ -142,14 +136,12 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ))}
 
-                {instancesQuery.data &&
-                instancesQuery.data.numberOfPages > 0 &&
-                !instancesQuery.isLoading ? (
+                {instances.length > 0 && !instancesQuery.isLoading ? (
                     <Paginator
                         activePage={page}
-                        totalPages={instancesQuery.data.numberOfPages ?? 0}
-                        onPageChange={(page) => {
-                            navigate(`?page=${page}`);
+                        totalPages={numberOfPages}
+                        onPageChange={(selectedPage) => {
+                            setPage(selectedPage);
                         }}
                     />
                 ) : null}
