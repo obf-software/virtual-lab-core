@@ -19,6 +19,7 @@ import {
     Text,
     useToast,
     Box,
+    Input,
 } from '@chakra-ui/react';
 import React from 'react';
 import { Group } from '../../services/api/protocols';
@@ -54,22 +55,11 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
     const [textQuery, setTextQuery] = React.useState('');
     const [textQueryDebounced, setTextQueryDebounced] = React.useState(textQuery);
     const [usersToLink, setUsersToLink] = React.useState<number[]>([]);
-
-    React.useEffect(() => {
-        const timeout = setTimeout(() => {
-            setTextQueryDebounced(textQuery);
-        }, 500);
-        return () => {
-            clearTimeout(timeout);
-        };
-    }, [textQuery]);
-
     const { searchUsersQuery } = useSearchUsers({ textQuery: textQueryDebounced });
-
-    const { groupUsersQuery } =
-        role === 'ADMIN'
-            ? useGroupsUsers(group.id, { page, resultsPerPage: 5 })
-            : { groupUsersQuery: undefined };
+    const isAdmin = role === 'ADMIN';
+    const { groupUsersQuery } = isAdmin
+        ? useGroupsUsers(group.id, { page, resultsPerPage: 5 })
+        : { groupUsersQuery: undefined };
 
     const unlinkUsersFromGroupMutation = useMutation({
         mutationFn: async (mut: { groupId: number; userIds: number[] }) => {
@@ -90,6 +80,9 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
             });
         },
     });
+
+    const [groupName, setGroupName] = React.useState(group.name);
+    const [groupDescription, setGroupDescription] = React.useState(group.description);
 
     const linkUsersToGroupMutation = useMutation({
         mutationFn: async (mut: { groupId: number; userIds: number[] }) => {
@@ -112,8 +105,73 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
         },
     });
 
-    const infoTabData: { label: string; value: string }[] = [
-        { label: 'Descrição', value: group?.description ?? 'Nenhuma descrição' },
+    const updateGroupMutation = useMutation({
+        mutationFn: async (mut: { groupId: number; name?: string; description?: string }) => {
+            const { data, error } = await api.updateGroup(mut.groupId, {
+                name: mut.name,
+                description: mut.description,
+            });
+            if (error !== undefined) throw new Error(error);
+            return data;
+        },
+        onSuccess: (data) => {
+            // TODO: use optimistic updates instead
+            queryClient.invalidateQueries([`groups`]).catch(console.error);
+            toast({
+                title: 'Deuj boa',
+                description: `${JSON.stringify(data)}`,
+                status: 'success',
+                duration: 5000,
+                isClosable: true,
+            });
+        },
+        onError: (error) => {
+            toast({
+                title: 'Falha ao atualizar o grupo',
+                status: 'error',
+                description: getErrorMessage(error),
+                duration: 5000,
+                isClosable: true,
+            });
+        },
+    });
+
+    React.useEffect(() => {
+        const timeout = setTimeout(() => {
+            setTextQueryDebounced(textQuery);
+        }, 500);
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [textQuery]);
+
+    React.useEffect(() => {
+        setGroupName(group.name);
+        setGroupDescription(group.description);
+    }, [group.name, group.description]);
+
+    const infoTabData: {
+        label: string;
+        value: string;
+        editable?: boolean;
+        onChange?: (value: string) => void;
+    }[] = [
+        {
+            label: 'Nome',
+            value: groupName,
+            editable: true,
+            onChange: (value) => {
+                setGroupName(value);
+            },
+        },
+        {
+            label: 'Descrição',
+            value: groupDescription,
+            editable: true,
+            onChange: (value) => {
+                setGroupDescription(value);
+            },
+        },
         { label: 'Id do portfólio', value: group?.portfolioId ?? 'Nenhum portfólio' },
         {
             label: 'Criado em',
@@ -148,7 +206,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                             size='lg'
                             fontWeight='semibold'
                         >
-                            Grupo {group?.name}
+                            Detalhes do grupo
                         </Heading>
                     </ModalHeader>
 
@@ -156,7 +214,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                         <Tabs>
                             <TabList>
                                 <Tab>Info</Tab>
-                                <Tab isDisabled={role !== 'ADMIN'}>Usuários</Tab>
+                                <Tab isDisabled={!isAdmin}>Usuários</Tab>
                             </TabList>
                             <TabPanels>
                                 <TabPanel>
@@ -173,15 +231,46 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                                 >
                                                     {data.label}
                                                 </Text>
-                                                <Text
-                                                    fontSize='lg'
-                                                    fontWeight='semibold'
-                                                >
-                                                    {data.value}
-                                                </Text>
+
+                                                {data.editable && isAdmin ? (
+                                                    <Input
+                                                        value={data.value}
+                                                        onChange={(e) => {
+                                                            data.onChange?.(e.target.value);
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <Text
+                                                        fontSize='lg'
+                                                        fontWeight='semibold'
+                                                    >
+                                                        {data.value}
+                                                    </Text>
+                                                )}
                                             </React.Fragment>
                                         ))}
                                     </Stack>
+
+                                    <ModalFooter>
+                                        <Button
+                                            colorScheme='blue'
+                                            hidden={!isAdmin}
+                                            isLoading={updateGroupMutation.isLoading}
+                                            isDisabled={
+                                                groupName === group.name &&
+                                                groupDescription === group.description
+                                            }
+                                            onClick={() => {
+                                                updateGroupMutation.mutate({
+                                                    groupId: group.id,
+                                                    name: groupName,
+                                                    description: groupDescription,
+                                                });
+                                            }}
+                                        >
+                                            Salvar
+                                        </Button>
+                                    </ModalFooter>
                                 </TabPanel>
                                 <TabPanel>
                                     <Stack
@@ -274,8 +363,6 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                             </TabPanels>
                         </Tabs>
                     </ModalBody>
-
-                    <ModalFooter />
                 </ModalContent>
             </ModalOverlay>
         </Modal>
