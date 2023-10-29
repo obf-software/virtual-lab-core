@@ -34,7 +34,7 @@ import { useAuthenticator } from '@aws-amplify/ui-react';
 import { getErrorMessage, parseSessionData } from '../../services/helpers';
 import { useMutation } from '@tanstack/react-query';
 import { queryClient } from '../../services/query/service';
-import { AsyncSelect, Select } from 'chakra-react-select';
+import { Select } from 'chakra-react-select';
 import { useSearchUsers } from '../../hooks/search-users';
 
 dayjs.extend(relativeTime);
@@ -53,6 +53,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
     const { role } = parseSessionData(user);
     const [textQuery, setTextQuery] = React.useState('');
     const [textQueryDebounced, setTextQueryDebounced] = React.useState(textQuery);
+    const [usersToLink, setUsersToLink] = React.useState<number[]>([]);
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -98,6 +99,7 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries([`groupUsers_${data.groupId}`]).catch(console.error);
+            setUsersToLink([]);
         },
         onError: (error) => {
             toast({
@@ -188,21 +190,32 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                     >
                                         <HStack alignItems={'center'}>
                                             <Box w={'100%'}>
-                                                <AsyncSelect
+                                                <Select
                                                     isMulti
-                                                    name='Portfólio'
-                                                    placeholder='Selecione os usuários'
+                                                    name='Usuários'
+                                                    placeholder='Buscar por usuários'
                                                     isLoading={searchUsersQuery?.isFetching}
-                                                    loadOptions={(_inputValue, callback) => {
-                                                        callback(
-                                                            searchUsersQuery?.data?.map((user) => ({
-                                                                label: user.username,
+                                                    options={
+                                                        searchUsersQuery?.data
+                                                            ?.map((user) => ({
+                                                                label: `${user.username} (${user.role})`,
                                                                 value: user.id,
-                                                            })) ?? [],
-                                                        );
-                                                    }}
+                                                            }))
+                                                            .filter(
+                                                                (o) =>
+                                                                    !groupUsersQuery?.data?.data?.some(
+                                                                        (u) => u.id === o.value,
+                                                                    ),
+                                                            ) ?? []
+                                                    }
                                                     onInputChange={(value) => {
                                                         setTextQuery(value);
+                                                    }}
+                                                    onChange={(selected) => {
+                                                        setUsersToLink(
+                                                            selected?.map((item) => item.value) ??
+                                                                [],
+                                                        );
                                                     }}
                                                 />
                                             </Box>
@@ -210,6 +223,15 @@ export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isO
                                             <Button
                                                 colorScheme={'blue'}
                                                 px={10}
+                                                isLoading={linkUsersToGroupMutation.isLoading}
+                                                onClick={() => {
+                                                    if (usersToLink.length === 0) return;
+
+                                                    linkUsersToGroupMutation.mutate({
+                                                        groupId: group.id,
+                                                        userIds: usersToLink,
+                                                    });
+                                                }}
                                             >
                                                 Adicionar Usuários
                                             </Button>
