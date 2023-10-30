@@ -81,8 +81,12 @@ export class BaseWindowsProduct extends ProductStack {
             ...[
                 `$password = "${props.password}"`,
                 `$securePass = ConvertTo-SecureString $password -AsPlainText -Force`,
-                `New-LocalUser "developer" -Password $securePass -FullName "Developer" -Description "Developer Account"`,
-                `Add-LocalGroupMember -Group "Administrators" -Member "developer"`,
+                `$username = "developer"`,
+                `$name = "Developer"`,
+                `$description = "Developer Account"`,
+                `New-LocalUser $username -Password $securePass -FullName $name -Description $description`,
+                `Add-LocalGroupMember -Group "Administrators" -Member $username`,
+                `Set-LocalUser -Name $username -PasswordNeverExpires 1 -AccountNeverExpires -UserMayChangePassword 0 -Password $securePass`,
                 ...(props.userDataCommands ?? []),
             ],
         );

@@ -26,7 +26,7 @@ const statusMap: Record<Guacamole.Status.Code, string> = {
     0x020a: 'The session within the upstream server has ended because it appeared to be inactive',
     0x020b: 'The session within the upstream server has been forcibly terminated',
     0x0300: 'The operation could not be performed because bad parameters were given',
-    0x0301: 'Permission was denied to perform the operation, as the user is not yet authorized (not yet logged in, for example)',
+    0x0301: 'A instância está sendo configurada para receber conexões, tente novamente em alguns instantes', //'Permission was denied to perform the operation, as the user is not yet authorized (not yet logged in, for example)',
     0x0303: 'Permission was denied to perform the operation, and this permission will not be granted even if the user is authorized',
     0x0308: 'The client took too long to respond',
     0x030d: 'The client sent too much data',
