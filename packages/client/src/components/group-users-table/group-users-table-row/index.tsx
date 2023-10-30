@@ -26,7 +26,7 @@ export const GroupUsersTableRow: React.FC<GroupUsersTableRowProps> = ({
             <Td>{user.role}</Td>
 
             <Td>{dayjs(user.createdAt).format('DD/MM/YYYY')}</Td>
-            <Td>{dayjs(user.lastLoginAt).fromNow()}</Td>
+            <Td>{user.lastLoginAt !== null ? dayjs(user.lastLoginAt).fromNow() : 'Nunca'}</Td>
             <Td isNumeric>
                 <ButtonGroup>
                     <Tooltip label='Remover do grupo'>

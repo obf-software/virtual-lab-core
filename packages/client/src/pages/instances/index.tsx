@@ -9,6 +9,7 @@ import {
     ButtonGroup,
     IconButton,
     Spinner,
+    Tooltip,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -68,18 +69,21 @@ export const InstancesPage: React.FC = () => {
                     </VStack>
 
                     <ButtonGroup>
-                        <IconButton
-                            aria-label='Recarregar'
-                            variant={'outline'}
-                            colorScheme='blue'
-                            hidden={instancesQuery.isLoading}
-                            isLoading={instancesQuery.isFetching}
-                            onClick={() => {
-                                instancesQuery.refetch().catch(console.error);
-                            }}
-                        >
-                            <FiRefreshCw />
-                        </IconButton>
+                        <Tooltip label='Recarregar'>
+                            <IconButton
+                                aria-label='Recarregar'
+                                variant={'outline'}
+                                colorScheme='blue'
+                                hidden={instancesQuery.isLoading}
+                                isLoading={instancesQuery.isFetching}
+                                onClick={() => {
+                                    instancesQuery.refetch().catch(console.error);
+                                }}
+                            >
+                                <FiRefreshCw />
+                            </IconButton>
+                        </Tooltip>
+
                         <Button
                             variant={'solid'}
                             colorScheme='blue'

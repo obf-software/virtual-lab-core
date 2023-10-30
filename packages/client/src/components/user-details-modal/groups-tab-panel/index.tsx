@@ -1,4 +1,13 @@
-import { Box, Button, HStack, IconButton, Stack, TabPanel, useToast } from '@chakra-ui/react';
+import {
+    Box,
+    Button,
+    HStack,
+    IconButton,
+    Stack,
+    TabPanel,
+    Tooltip,
+    useToast,
+} from '@chakra-ui/react';
 import React from 'react';
 import * as api from '../../../services/api/service';
 import { Group, User } from '../../../services/api/protocols';
@@ -133,22 +142,24 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
                     >
                         Adicionar aos grupos
                     </Button>
-                    <IconButton
-                        aria-label='Recarregar'
-                        variant={'outline'}
-                        colorScheme='blue'
-                        isLoading={userGroupsQuery.isFetching}
-                        onClick={() => {
-                            userGroupsQuery?.refetch().catch(console.error);
-                        }}
-                    >
-                        <FiRefreshCw />
-                    </IconButton>
+                    <Tooltip label='Recarregar'>
+                        <IconButton
+                            aria-label='Recarregar'
+                            variant={'outline'}
+                            colorScheme='blue'
+                            isLoading={userGroupsQuery.isFetching}
+                            onClick={() => {
+                                userGroupsQuery?.refetch().catch(console.error);
+                            }}
+                        >
+                            <FiRefreshCw />
+                        </IconButton>
+                    </Tooltip>
                 </HStack>
 
                 <UserGroupsTable
                     groups={userGroups}
-                    isLoading={false}
+                    isLoading={userGroupsQuery.isLoading}
                     isRemovingFromGroup={unlinkUserFromGroupMutation.isLoading}
                     onRemoveFromGroup={(group) => {
                         unlinkUserFromGroupMutation.mutate({ groupId: group.id, userId: user.id });

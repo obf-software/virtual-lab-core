@@ -11,6 +11,7 @@ import {
     InputRightElement,
     IconButton,
     useDisclosure,
+    Tooltip,
 } from '@chakra-ui/react';
 import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
@@ -76,18 +77,20 @@ export const UsersPage: React.FC = () => {
                         </Text>
                     </VStack>
 
-                    <IconButton
-                        aria-label='Recarregar'
-                        variant={'outline'}
-                        colorScheme='blue'
-                        hidden={usersQuery.isLoading}
-                        isLoading={usersQuery.isFetching}
-                        onClick={() => {
-                            usersQuery.refetch().catch(console.error);
-                        }}
-                    >
-                        <FiRefreshCw />
-                    </IconButton>
+                    <Tooltip label='Recarregar'>
+                        <IconButton
+                            aria-label='Recarregar'
+                            variant={'outline'}
+                            colorScheme='blue'
+                            hidden={usersQuery.isLoading}
+                            isLoading={usersQuery.isFetching}
+                            onClick={() => {
+                                usersQuery.refetch().catch(console.error);
+                            }}
+                        >
+                            <FiRefreshCw />
+                        </IconButton>
+                    </Tooltip>
                 </Stack>
 
                 <Stack spacing={6}>

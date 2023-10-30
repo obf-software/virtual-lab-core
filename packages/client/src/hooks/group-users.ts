@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SeekPaginationInput } from '../services/api/protocols';
 import { listGroupUsers } from '../services/api/service';
 
-export const useGroupsUsers = (groupId: number, pagination: SeekPaginationInput) => {
+export const useGroupUsers = (groupId: number, pagination: SeekPaginationInput) => {
     const groupUsersQuery = useQuery({
         queryKey: [`groupUsers_${groupId}`, pagination.page],
         queryFn: async () => {

@@ -43,7 +43,7 @@ export const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, isOpen
                             size='lg'
                             fontWeight='semibold'
                         >
-                            Detalhes do usuário {user.username}
+                            Detalhes do usuário
                         </Heading>
                     </ModalHeader>
 

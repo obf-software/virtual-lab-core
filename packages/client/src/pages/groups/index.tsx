@@ -14,6 +14,7 @@ import {
     ButtonGroup,
     useDisclosure,
     useToast,
+    Tooltip,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
@@ -136,18 +137,20 @@ export const GroupsPage: React.FC = () => {
                     </VStack>
 
                     <ButtonGroup>
-                        <IconButton
-                            aria-label='Recarregar'
-                            variant={'outline'}
-                            colorScheme='blue'
-                            hidden={groupsQuery.isLoading}
-                            isLoading={groupsQuery.isFetching}
-                            onClick={() => {
-                                groupsQuery.refetch().catch(console.error);
-                            }}
-                        >
-                            <FiRefreshCw />
-                        </IconButton>
+                        <Tooltip label='Recarregar'>
+                            <IconButton
+                                aria-label='Recarregar'
+                                variant={'outline'}
+                                colorScheme='blue'
+                                hidden={groupsQuery.isLoading}
+                                isLoading={groupsQuery.isFetching}
+                                onClick={() => {
+                                    groupsQuery.refetch().catch(console.error);
+                                }}
+                            >
+                                <FiRefreshCw />
+                            </IconButton>
+                        </Tooltip>
 
                         <Button
                             variant={'solid'}
