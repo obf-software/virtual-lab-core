@@ -20,7 +20,7 @@ const statusMap: Record<Guacamole.Status.Code, string> = {
     0x0204: 'The operation could not be performed as the requested resource does not exist',
     0x0205: 'The operation could not be performed as the requested resource is already in use',
     0x0206: 'The operation could not be performed as the requested resource is now closed',
-    0x0207: 'The operation could not be performed because the upstream server does not appear to exist',
+    0x0207: 'A instância está sendo configurada para receber conexões, tente novamente em alguns instantes', // The operation could not be performed because the upstream server does not appear to exist
     0x0208: 'The operation could not be performed because the upstream server is not available to service the request',
     0x0209: 'The session within the upstream server has ended because it conflicted with another session',
     0x020a: 'The session within the upstream server has ended because it appeared to be inactive',
