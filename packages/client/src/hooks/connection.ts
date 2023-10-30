@@ -10,13 +10,38 @@ enum ConnectionState {
     DISCONNECTED = 'DISCONNECTED',
 }
 
+const statusMap: Record<Guacamole.Status.Code, string> = {
+    0x0000: 'SUCCESS: 0x0000',
+    0x0100: 'The requested operation is unsupported',
+    0x0200: 'The operation could not be performed due to an internal failure',
+    0x0201: 'The operation could not be performed as the server is busy',
+    0x0202: 'The operation could not be performed because the upstream server is not responding',
+    0x0203: 'The operation was unsuccessful due to an error or otherwise unexpected condition of the upstream server',
+    0x0204: 'The operation could not be performed as the requested resource does not exist',
+    0x0205: 'The operation could not be performed as the requested resource is already in use',
+    0x0206: 'The operation could not be performed as the requested resource is now closed',
+    0x0207: 'The operation could not be performed because the upstream server does not appear to exist',
+    0x0208: 'The operation could not be performed because the upstream server is not available to service the request',
+    0x0209: 'The session within the upstream server has ended because it conflicted with another session',
+    0x020a: 'The session within the upstream server has ended because it appeared to be inactive',
+    0x020b: 'The session within the upstream server has been forcibly terminated',
+    0x0300: 'The operation could not be performed because bad parameters were given',
+    0x0301: 'Permission was denied to perform the operation, as the user is not yet authorized (not yet logged in, for example)',
+    0x0303: 'Permission was denied to perform the operation, and this permission will not be granted even if the user is authorized',
+    0x0308: 'The client took too long to respond',
+    0x030d: 'The client sent too much data',
+    0x030f: 'The client sent data of an unsupported or unexpected type',
+    0x031d: 'The operation failed because the current client is already using too many resources',
+};
+
 export const useConnection = (props: { connectionString: string }) => {
     const [state, setState] = React.useState<keyof typeof ConnectionState>('IDDLE');
+    const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
 
     const tunnel = React.useMemo(() => {
         const newTunnel = new Guacamole.WebSocketTunnel('ws://localhost:8080/'); // TODO: Get this from the environment
         newTunnel.onerror = (error) => {
-            console.log(error);
+            setErrorMessage(statusMap[error.code] ?? 'Erro desconhecido');
         };
         return newTunnel;
     }, []);
@@ -25,7 +50,7 @@ export const useConnection = (props: { connectionString: string }) => {
         const newClient = new Guacamole.Client(tunnel);
 
         newClient.onerror = (error) => {
-            console.log(error);
+            setErrorMessage(statusMap[error.code] ?? 'Erro desconhecido');
         };
 
         newClient.onstatechange = (state) => {
@@ -98,81 +123,6 @@ export const useConnection = (props: { connectionString: string }) => {
         client,
         display,
         bindControls,
+        errorMessage,
     };
 };
-
-// import { UseToastOptions } from '@chakra-ui/react';
-
-// export enum ConnectionState {
-//     IDDLE = 'IDDLE',
-//     CONNECTING = 'CONNECTING',
-//     WAITING = 'WAITING',
-//     CONNECTED = 'CONNECTED',
-//     DISCONNECTING = 'DISCONNECTING',
-//     DISCONNECTED = 'DISCONNECTED',
-// }
-
-// export const stateMap: Record<
-//     number,
-//     { toast?: Omit<UseToastOptions, 'id'>; state: keyof typeof ConnectionState } | undefined
-// > = {
-//     0: { state: 'IDDLE' },
-//     1: {
-//         state: 'CONNECTING',
-//         toast: {
-//             title: 'Conectando com o servidor',
-//             description: 'Aguarde...',
-//             status: 'loading',
-//             variant: 'left-accent',
-//             position: 'bottom-left',
-//         },
-//     },
-//     2: {
-//         state: 'WAITING',
-//         toast: {
-//             title: 'Aguardando resposta do servidor',
-//             description: 'Aguarde...',
-//             status: 'loading',
-//             variant: 'left-accent',
-//             position: 'bottom-left',
-//         },
-//     },
-//     3: {
-//         state: 'CONNECTED',
-//         toast: {
-//             title: 'Conexão com o servidor estabelecida',
-//             description: 'Instância iniciada com sucesso!',
-//             status: 'success',
-//             variant: 'left-accent',
-//             position: 'bottom-left',
-//         },
-//     },
-//     4: {
-//         state: 'DISCONNECTING',
-//         toast: {
-//             title: 'Desconectando do servidor',
-//             description: 'Aguarde enquanto a conexão é encerrada',
-//             status: 'loading',
-//             variant: 'left-accent',
-//             position: 'bottom-left',
-//         },
-//     },
-//     5: {
-//         state: 'DISCONNECTED',
-//         toast: {
-//             title: 'Conexão com o servidor encerrada',
-//             status: 'info',
-//             variant: 'left-accent',
-//             position: 'bottom-left',
-//         },
-//     },
-// };
-
-// export interface ConnectionContextData {
-//     connect: (connectionString: string) => void;
-//     disconnect: () => void;
-//     reset: () => void;
-//     element?: JSX.Element;
-//     connectionState: keyof typeof ConnectionState;
-//     lastSync?: number;
-// }
