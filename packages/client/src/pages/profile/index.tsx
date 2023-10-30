@@ -1,3 +1,4 @@
+import 'dayjs/locale/pt-br';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Box, Button, Container, Heading, Stack, Text, VStack, useToast } from '@chakra-ui/react';
@@ -6,6 +7,12 @@ import { ProfileQuotaCard } from './quota-card';
 import { ProfileInfoCard } from './info-card';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { parseSessionData } from '../../services/helpers';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { useUser } from '../../hooks/user';
+
+dayjs.extend(relativeTime);
+dayjs.locale('pt-br');
 
 export const ProfilePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -13,6 +20,7 @@ export const ProfilePage: React.FC = () => {
     const { name } = parseSessionData(user);
     const [currentName, setCurrentName] = React.useState<string>(name ?? '');
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
+    const useUserQuery = useUser('me');
     const toast = useToast();
 
     useEffect(() => {
@@ -39,7 +47,11 @@ export const ProfilePage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {`Membro desde ${new Date().toLocaleDateString()}`}
+                            {`Membro desde ${
+                                useUserQuery.data?.createdAt !== undefined
+                                    ? dayjs(useUserQuery.data?.createdAt).format('DD/MM/YYYY')
+                                    : 'muito tempo'
+                            }`}
                         </Text>
                     </VStack>
 
@@ -51,7 +63,6 @@ export const ProfilePage: React.FC = () => {
                         isDisabled={name === currentName}
                         onClick={() => {
                             if (name === currentName) {
-                                alert('Nada a atualizar');
                                 return;
                             }
 
