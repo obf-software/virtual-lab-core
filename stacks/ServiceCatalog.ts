@@ -98,7 +98,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                                 InstanceSize.MICRO,
                             ),
                             machineImage: new WindowsImage(
-                                WindowsVersion.WINDOWS_SERVER_2019_PORTUGUESE_BRAZIL_FULL_BASE,
+                                WindowsVersion.WINDOWS_SERVER_2019_ENGLISH_FULL_BASE,
                             ),
                         }),
                     ),

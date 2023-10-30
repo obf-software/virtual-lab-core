@@ -63,8 +63,12 @@ export class BaseWindowsProduct extends ProductStack {
             allowAllOutbound: true,
         });
 
+        securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(22), 'SSH Connection IPV4');
         securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(3389), 'RDP Connection IPV4');
+        securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(5901), 'VNC Connection IPV4');
+        securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(22), 'SSH Connection IPV6');
         securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(3389), 'RDP Connection IPV6');
+        securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(5901), 'VNC Connection IPV6');
 
         const role = new Role(scope, `${id}-Role`, {
             assumedBy: new ServicePrincipal('ec2.amazonaws.com'),

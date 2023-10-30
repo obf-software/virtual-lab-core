@@ -394,7 +394,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         }
                         isLoading={isLoading}
                         onClick={() => {
-                            setIsWaitingForInstanceStateChange(true);
                             rebootInstanceMutation.mutate();
                         }}
                     >
