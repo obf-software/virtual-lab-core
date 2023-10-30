@@ -91,13 +91,6 @@ export const ConnectionPage: React.FC = () => {
     };
 
     React.useEffect(() => {
-        if (state === 'DISCONNECTED') {
-            navigate('/instances');
-        }
-        setStatusText(connectionStateText[state]);
-    }, [state]);
-
-    React.useEffect(() => {
         const { unbindControls } = bindControls();
 
         return () => {
@@ -123,6 +116,15 @@ export const ConnectionPage: React.FC = () => {
             }
         };
     }, [errorMessage]);
+
+    React.useEffect(() => {
+        if (state === 'DISCONNECTED') {
+            setTimeout(() => {
+                navigate('/instances');
+            }, 3000);
+        }
+        setStatusText(connectionStateText[state]);
+    }, [state]);
 
     // const displayHeight = display.getHeight();
 
