@@ -91,6 +91,9 @@ export const ConnectionPage: React.FC = () => {
     };
 
     React.useEffect(() => {
+        if (state === 'DISCONNECTED') {
+            navigate('/instances');
+        }
         setStatusText(connectionStateText[state]);
     }, [state]);
 
