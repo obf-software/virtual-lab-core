@@ -12,11 +12,14 @@ import {
     InstanceSize,
     InstanceType,
     Vpc,
+    WindowsImage,
+    WindowsVersion,
 } from 'aws-cdk-lib/aws-ec2';
 import { Config } from './Config';
 import { Api } from './Api';
 import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { AppSyncApi } from './AppSyncApi';
+import { BaseWindowsProduct } from './products/BaseWindows';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { INSTANCE_PASSWORD, DATABASE_URL } = sst.use(Config);
@@ -52,6 +55,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                             password: INSTANCE_PASSWORD,
                             allowedInstanceTypes: [
                                 InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
+                                InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
                             ],
                             defaultInstanceType: InstanceType.of(
                                 InstanceClass.T2,
@@ -72,6 +76,38 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         },
     );
 
+    const defaultWindowsProduct = new serviceCatalog.CloudFormationProduct(
+        stack,
+        'DefaultWindowsProduct',
+        {
+            owner: 'SST',
+            productName: 'Default Windows Product',
+            description: 'Default Windows Product',
+            productVersions: [
+                {
+                    productVersionName: 'latest',
+                    cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
+                        new BaseWindowsProduct(stack, 'DefaultWindowsProductVersion', {
+                            vpc,
+                            password: INSTANCE_PASSWORD,
+                            allowedInstanceTypes: [
+                                InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
+                            ],
+                            defaultInstanceType: InstanceType.of(
+                                InstanceClass.T3,
+                                InstanceSize.MICRO,
+                            ),
+                            machineImage: new WindowsImage(
+                                WindowsVersion.WINDOWS_SERVER_2019_PORTUGUESE_BRAZIL_FULL_BASE,
+                            ),
+                        }),
+                    ),
+                    validateTemplate: true,
+                },
+            ],
+        },
+    );
+
     const defaultPortfolio = new serviceCatalog.Portfolio(stack, 'DefaultPortfolio', {
         displayName: 'Default Portfolio',
         providerName: stack.account,
@@ -82,4 +118,5 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     });
 
     defaultPortfolio.addProduct(defaultLinuxProduct);
+    defaultPortfolio.addProduct(defaultWindowsProduct);
 };

@@ -76,6 +76,11 @@ export class GetInstanceConnection {
                 : this.connectionEncoder.encodeRdpConnection({
                       hostname: virtualInstance.hostname,
                       port: 3389,
+                      'enable-sftp': false,
+                      security: 'any',
+                      'ignore-cert': true,
+                      width: 1024,
+                      height: 768,
                       password: this.INSTANCE_PASSWORD,
                       username: 'developer',
                   });
