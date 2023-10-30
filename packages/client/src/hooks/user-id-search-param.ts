@@ -1,7 +1,10 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export const useUserIdSearchParam = () => {
+export const useUserIdSearchParam = (): {
+    userId: number | 'me';
+    setUserId: (userId: number | 'me') => void;
+} => {
     const [searchParams, setSearchParams] = useSearchParams();
     const userId = searchParams.get('userId') ?? 'me';
 
@@ -26,7 +29,7 @@ export const useUserIdSearchParam = () => {
     }, [userId, setUserId]);
 
     return {
-        userId,
+        userId: userId === 'me' ? 'me' : Number(userId),
         setUserId,
     };
 };

@@ -5,9 +5,7 @@ import { HomePage } from './pages/home';
 import { InstancesPage } from './pages/instances';
 import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
-import { SettingsPage } from './pages/settings';
 import { ProfilePage } from './pages/profile';
-
 import { ConnectionPage } from './pages/connection';
 import { NewInstancePage } from './pages/new-instance';
 import { UserGroupsPage } from './pages/user-groups';
@@ -34,12 +32,8 @@ export const Router: React.FC = () => {
                     element: <NewInstancePage />,
                 },
                 {
-                    path: 'my-groups',
+                    path: 'user-groups',
                     element: <UserGroupsPage />,
-                },
-                {
-                    path: 'settings',
-                    element: <SettingsPage />,
                 },
                 {
                     path: 'profile',

@@ -25,7 +25,7 @@ import {
     useColorModeValue,
 } from '@chakra-ui/react';
 import React from 'react';
-import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiSettings, FiUser } from 'react-icons/fi';
+import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiUser } from 'react-icons/fi';
 import { BiSolidBellRing } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import { parseSessionData } from '../../../services/helpers';
@@ -205,9 +205,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                         >
                             <Link to='/profile'>
                                 <MenuItem icon={<FiUser />}>Perfil</MenuItem>
-                            </Link>
-                            <Link to='/settings'>
-                                <MenuItem icon={<FiSettings />}>Configurações</MenuItem>
                             </Link>
                             <MenuDivider />
                             <MenuItem

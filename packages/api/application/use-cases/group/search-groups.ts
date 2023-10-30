@@ -1,26 +1,26 @@
 import { Principal } from '../../../domain/dtos/principal';
-import { User } from '../../../domain/entities/user';
+import { Group } from '../../../domain/entities/group';
 import { AuthError } from '../../../domain/errors/auth-error';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { UserRepository } from '../../repositories/user-repository';
+import { GroupRepository } from '../../repositories/group-repository';
 
-export interface SearchUsersInput {
+export interface SearchGroupsInput {
     principal: Principal;
     textQuery: string;
 }
 
-export type SearchUsersOutput = User[];
+export type SearchGroupsOutput = Group[];
 
-export class SearchUsers {
+export class SearchGroups {
     constructor(
         private readonly logger: Logger,
         private readonly auth: Auth,
-        private readonly userRepository: UserRepository,
+        private readonly groupRepository: GroupRepository,
     ) {}
 
-    execute = async (input: SearchUsersInput): Promise<SearchUsersOutput> => {
-        this.logger.debug('SearchUsers.execute', { input });
+    execute = async (input: SearchGroupsInput): Promise<SearchGroupsOutput> => {
+        this.logger.debug('SearchGroups.execute', { input });
 
         this.auth.assertThatHasRoleOrAbove(
             input.principal,
@@ -28,6 +28,6 @@ export class SearchUsers {
             AuthError.insufficientRole('ADMIN'),
         );
 
-        return await this.userRepository.search(input.textQuery);
+        return await this.groupRepository.search(input.textQuery);
     };
 }

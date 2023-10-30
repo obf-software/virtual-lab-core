@@ -7,6 +7,7 @@ export interface GroupRepository {
     getById: (id: number) => Promise<Group | undefined>;
     list: (pagination: SeekPaginationInput) => Promise<SeekPaginated<Group>>;
     listByUser: (userId: number, pagination: SeekPaginationInput) => Promise<SeekPaginated<Group>>;
+    search: (textQuery: string) => Promise<Group[]>;
     listGroupPortfolioIdsByUser: (userId: number) => Promise<string[]>;
     update: (group: Group) => Promise<void>;
     delete: (group: Group) => Promise<void>;

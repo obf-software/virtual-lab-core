@@ -140,6 +140,29 @@ export class GroupDatabaseRepository implements GroupRepository {
         return groups.map((group) => group.portfolioId);
     };
 
+    search = async (textQuery: string): Promise<Group[]> => {
+        const groups = await this.dbClient.query.group.findMany({
+            where: (group, builder) =>
+                builder.or(
+                    builder.ilike(group.name, `%${textQuery}%`),
+                    builder.ilike(group.description, `%${textQuery}%`),
+                    builder.ilike(group.portfolioId, `%${textQuery}%`),
+                ),
+            limit: 50,
+        });
+
+        return groups.map((group) =>
+            Group.restore({
+                id: group.id,
+                portfolioId: group.portfolioId,
+                name: group.name,
+                description: group.description,
+                createdAt: group.createdAt,
+                updatedAt: group.updatedAt,
+            }),
+        );
+    };
+
     update = async (group: Group): Promise<void> => {
         const groupData = group.getData();
         await this.dbClient

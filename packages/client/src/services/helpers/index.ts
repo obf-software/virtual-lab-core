@@ -1,4 +1,16 @@
 import type { UseAuthenticator } from '@aws-amplify/ui-react';
+import { Role } from '../api/protocols';
+
+export const roleToDisplayString = (role: string): string => {
+    const roleToDisplayMap: Record<keyof typeof Role, string | undefined> = {
+        PENDING: 'Pendente',
+        ADMIN: 'Administrador',
+        USER: 'Usuário',
+        NONE: 'Nenhum cargo',
+    };
+
+    return roleToDisplayMap[role as keyof typeof Role] ?? 'Desconhecido';
+};
 
 type SessionData = Partial<{
     idToken: string;
@@ -26,15 +38,6 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
         'custom:userId': string;
     }>;
 
-    const roleToDisplayMap: Record<string, string | undefined> = {
-        PENDING: 'Pendente',
-        ADMIN: 'Administrador',
-        USER: 'Usuário',
-        NONE: 'Nenhum cargo',
-    };
-
-    const displayRole = roleToDisplayMap[claims?.['custom:role'] ?? ''] ?? 'Desconhecido';
-
     const userId = !Number.isNaN(Number(claims?.['custom:userId']))
         ? Number(claims?.['custom:userId'])
         : undefined;
@@ -53,7 +56,7 @@ export const parseSessionData = (user: UseAuthenticator['user']): SessionData =>
             claims?.['cognito:username'] ??
             attributes?.email ??
             'Usuário',
-        displayRole,
+        displayRole: roleToDisplayString(claims?.['custom:role'] ?? ''),
     };
 };
 

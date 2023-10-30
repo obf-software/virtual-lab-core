@@ -34,7 +34,7 @@ export const menuItemsMap: {
     MY_GROUPS: {
         icon: FiUsers as IconType,
         label: 'Meus Grupos',
-        href: '/my-groups',
+        href: '/user-groups',
         adminOnly: false,
     },
 

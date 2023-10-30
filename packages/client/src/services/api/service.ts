@@ -108,6 +108,13 @@ export const listUserGroups = async (userId: number | 'me', pagination: SeekPagi
         queryParams: { ...pagination },
     });
 
+export const searchGroups = async (textQuery: string) =>
+    executeRequest<Group[]>({
+        path: `/api/v1/search-groups`,
+        method: 'GET',
+        queryParams: { textQuery },
+    });
+
 export const unlinkUsersFromGroup = async (groupId: number, userIds: number[]) =>
     executeRequest<void>({
         path: `/api/v1/groups/${groupId}/unlink-users`,

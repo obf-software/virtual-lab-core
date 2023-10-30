@@ -4,6 +4,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { User } from '../../../services/api/protocols';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
+import { roleToDisplayString } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -22,7 +23,7 @@ export const UsersTableRow: React.FC<UsersTableRowProps> = ({ user, onClick }) =
             }}
         >
             <Td onClick={onClick}>{user.username}</Td>
-            <Td onClick={onClick}>{user.role}</Td>
+            <Td onClick={onClick}>{roleToDisplayString(user.role)}</Td>
             <Td onClick={onClick}>{dayjs(user.createdAt).format('DD/MM/YYYY')}</Td>
             <Td onClick={onClick}>
                 {user.lastLoginAt !== null ? dayjs(user.lastLoginAt).fromNow() : 'Nunca'}

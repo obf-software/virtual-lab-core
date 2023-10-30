@@ -130,6 +130,14 @@ export const Api = ({ stack, app }: sst.StackContext) => {
                     },
                 },
             },
+            'GET /api/v1/search-groups': {
+                function: {
+                    handler: 'packages/api/interfaces/api/group/search-groups.handler',
+                    environment: {
+                        DATABASE_URL,
+                    },
+                },
+            },
             'POST /api/v1/groups/{groupId}/unlink-users': {
                 function: {
                     handler: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
