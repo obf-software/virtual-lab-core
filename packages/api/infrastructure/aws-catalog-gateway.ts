@@ -2,6 +2,7 @@ import {
     DescribePortfolioCommand,
     DescribeProductAsAdminCommand,
     DescribeProvisioningParametersCommand,
+    DescribeRecordCommand,
     ListLaunchPathsCommand,
     ProvisionProductCommand,
     ServiceCatalogClient,
@@ -16,7 +17,11 @@ import {
     ProductProvisioningParameter,
     ProvisionedProduct,
 } from '../application/catalog-gateway';
-import { CloudFormationClient, DescribeStacksCommand } from '@aws-sdk/client-cloudformation';
+import {
+    CloudFormationClient,
+    DeleteStackCommand,
+    DescribeStacksCommand,
+} from '@aws-sdk/client-cloudformation';
 import { randomUUID } from 'node:crypto';
 import createHttpError from 'http-errors';
 import { InstanceConnectionType } from '../domain/dtos/instance-connection-type';
@@ -148,11 +153,33 @@ export class AwsCatalogGateway implements CatalogGateway {
     };
 
     terminateProvisionedProductByProvisionToken = async (provisionToken: string): Promise<void> => {
-        await this.scClient.send(
+        const { RecordDetail } = await this.scClient.send(
             new TerminateProvisionedProductCommand({
                 ProvisionedProductName: provisionToken,
-                TerminateToken: provisionToken,
+                TerminateToken: randomUUID(),
                 IgnoreErrors: true,
+                RetainPhysicalResources: false,
+            }),
+        );
+
+        const { RecordOutputs } = await this.scClient.send(
+            new DescribeRecordCommand({
+                Id: RecordDetail?.RecordId,
+            }),
+        );
+
+        const cloudformationStackArn = RecordOutputs?.find(
+            (output) => output.OutputKey === 'CloudformationStackARN',
+        )?.OutputValue;
+
+        if (!cloudformationStackArn) {
+            throw new createHttpError.InternalServerError('Cloudformation stack not found');
+        }
+
+        await this.cfClient.send(
+            new DeleteStackCommand({
+                StackName: cloudformationStackArn,
+                ClientRequestToken: randomUUID(),
             }),
         );
     };

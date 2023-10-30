@@ -159,7 +159,7 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
                 function: {
                     handler: 'packages/api/interfaces/api/instance/delete-instance.handler',
-                    permissions: ['ec2:*', 'servicecatalog:*'],
+                    permissions: ['ec2:*', 'servicecatalog:*', 'cloudformation:*'],
                     environment: {
                         DATABASE_URL,
                         SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
