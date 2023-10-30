@@ -3,6 +3,7 @@ import { InstanceConnectionType } from '../domain/dtos/instance-connection-type'
 export interface ProductProvisioningParameter {
     key: string;
     label: string;
+    hidden: boolean;
     allowedValues?: string[];
     defaultValue?: string;
 }

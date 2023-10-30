@@ -107,10 +107,15 @@ export class AwsCatalogGateway implements CatalogGateway {
             }),
         );
 
+        const allowedParameterTypes: string[] = ['String', 'StringList'];
+
         return (
             ProvisioningArtifactParameters?.map((p) => ({
                 key: p.ParameterKey ?? '',
                 label: p.Description ?? p.ParameterKey ?? 'Unknown',
+                hidden:
+                    !allowedParameterTypes.includes(p.ParameterType ?? '') &&
+                    p.ParameterType !== undefined,
                 allowedValues: p.ParameterConstraints?.AllowedValues,
                 defaultValue: p.DefaultValue,
             })) ?? []

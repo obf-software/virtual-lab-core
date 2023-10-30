@@ -128,44 +128,39 @@ export const ProvisioningModal: React.FC<ProvisioningModalProps> = ({
                                 Parâmetros
                             </Heading>
 
-                            {parameters
-                                // .filter((parameter) => parameter.ParameterType === 'String')
-                                .map((parameter, i) => (
-                                    <FormControl
-                                        mb={'2%'}
-                                        key={`provisioning-parameter-${i}`}
-                                        isRequired={parameter.defaultValue === undefined}
-                                    >
-                                        <FormLabel>{parameter.label}</FormLabel>
-                                        {parameter.allowedValues === undefined ||
-                                        parameter.allowedValues.length === 0 ? (
-                                            <Input
-                                                defaultValue={parameter.defaultValue}
-                                                {...formMethods.register(
-                                                    `parameters.${parameter.key}`,
-                                                )}
-                                            ></Input>
-                                        ) : (
-                                            <Select
-                                                {...formMethods.register(
-                                                    `parameters.${parameter.key}`,
-                                                )}
-                                            >
-                                                {parameter.allowedValues.map((allowedValue, i) => (
-                                                    <option
-                                                        key={`allowed-value-${i}`}
-                                                        value={allowedValue}
-                                                        selected={
-                                                            allowedValue === parameter.defaultValue
-                                                        }
-                                                    >
-                                                        {allowedValue}
-                                                    </option>
-                                                ))}
-                                            </Select>
-                                        )}
-                                    </FormControl>
-                                ))}
+                            {parameters.map((parameter, i) => (
+                                <FormControl
+                                    mb={'2%'}
+                                    key={`provisioning-parameter-${i}`}
+                                    isRequired={parameter.defaultValue === undefined}
+                                    hidden={parameter.hidden}
+                                >
+                                    <FormLabel>{parameter.label}</FormLabel>
+                                    {parameter.allowedValues === undefined ||
+                                    parameter.allowedValues.length === 0 ? (
+                                        <Input
+                                            defaultValue={parameter.defaultValue}
+                                            {...formMethods.register(`parameters.${parameter.key}`)}
+                                        ></Input>
+                                    ) : (
+                                        <Select
+                                            {...formMethods.register(`parameters.${parameter.key}`)}
+                                        >
+                                            {parameter.allowedValues.map((allowedValue, i) => (
+                                                <option
+                                                    key={`allowed-value-${i}`}
+                                                    value={allowedValue}
+                                                    selected={
+                                                        allowedValue === parameter.defaultValue
+                                                    }
+                                                >
+                                                    {allowedValue}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    )}
+                                </FormControl>
+                            ))}
                         </ModalBody>
 
                         <ModalFooter>

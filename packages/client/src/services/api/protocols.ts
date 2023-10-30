@@ -89,6 +89,7 @@ export interface Instance {
 export interface ProductProvisioningParameter {
     key: string;
     label: string;
+    hidden: boolean;
     allowedValues?: string[];
     defaultValue?: string;
 }
