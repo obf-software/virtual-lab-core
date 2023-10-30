@@ -18,6 +18,7 @@ export const Client = ({ stack, app }: sst.StackContext) => {
             VITE_APP_AWS_USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
             VITE_APP_API_URL: api.url,
             VITE_APP_APP_SYNC_API_URL: appSyncApi.url,
+            VITE_APP_WEBSOCKET_SERVER_URL: 'ws://localhost:8080/',
         },
     });
 

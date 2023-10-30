@@ -39,7 +39,9 @@ export const useConnection = (props: { connectionString: string }) => {
     const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
 
     const tunnel = React.useMemo(() => {
-        const newTunnel = new Guacamole.WebSocketTunnel('ws://localhost:8080/'); // TODO: Get this from the environment
+        const newTunnel = new Guacamole.WebSocketTunnel(
+            import.meta.env.VITE_APP_WEBSOCKET_SERVER_URL,
+        );
         newTunnel.onerror = (error) => {
             setErrorMessage(statusMap[error.code] ?? 'Erro desconhecido');
         };
