@@ -84,7 +84,7 @@ export const UserDetailsModalQuotasTabPanel: React.FC<UserDetailsModalQuotasTabP
                             }
                         }}
                     />
-                    <InputRightElement pointerEvents='none'>
+                    <InputRightElement>
                         {updateUserQuotasMutation.isLoading ? <Spinner size='sm' /> : null}
                     </InputRightElement>
                 </InputGroup>
