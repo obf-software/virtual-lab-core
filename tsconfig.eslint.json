@@ -1,8 +1,7 @@
 {
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
-        "noEmit": true,
-        "strictNullChecks": true
+        "noEmit": true
     },
     "include": ["packages", "stacks", "*.config.ts", "*.d.ts"]
 }

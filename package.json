@@ -19,21 +19,23 @@
         "format": "prettier --write .",
         "lint": "eslint . --report-unused-disable-directives"
     },
+    "dependencies": {
+        "aws-cdk-lib": "2.110.1",
+        "constructs": "10.3.0",
+        "sst": "2.39.9"
+    },
     "devDependencies": {
         "@aws-sdk/client-ssm": "^3.409.0",
-        "@tsconfig/node18": "1.0.3",
-        "@types/aws-lambda": "^8.10.119",
-        "@types/node": "^18.17.13",
-        "@typescript-eslint/eslint-plugin": "^6.6.0",
-        "@typescript-eslint/parser": "^6.6.0",
-        "aws-cdk-lib": "2.91.0",
-        "constructs": "10.2.69",
-        "eslint": "^8.48.0",
+        "@tsconfig/node18": "^18.2.2",
+        "@types/aws-lambda": "^8.10.131",
+        "@types/node": "^18.19.9",
+        "@typescript-eslint/eslint-plugin": "^6.19.1",
+        "@typescript-eslint/parser": "^6.19.1",
+        "eslint": "^8.56.0",
         "eslint-plugin-react": "^7.33.2",
         "eslint-plugin-react-hooks": "^4.6.0",
-        "eslint-plugin-react-refresh": "^0.4.3",
-        "prettier": "^3.0.3",
-        "sst": "2.24.25",
+        "eslint-plugin-react-refresh": "^0.4.5",
+        "prettier": "^3.2.4",
         "typescript": "^5.2.2"
     },
     "workspaces": [
