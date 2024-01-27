@@ -1,10 +1,10 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { SNSHandler } from 'aws-lambda';
 import { LinkProvisionedProduct } from '../../application/use-cases/product/link-provisioned-product';
-import { UserDatabaseRepository } from '../../infrastructure/repositories/user-database-repository';
-import { InstanceDatabaseRepository } from '../../infrastructure/repositories/instance-database-repository';
+import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
+import { InstanceDatabaseRepository } from '../../infrastructure/instance-database-repository';
 import { AwsVirtualizationGateway } from '../../infrastructure/aws-virtualization-gateway';
-import { AwsCatalogGateway } from '../../infrastructure/aws-catalog-gateway';
+import { AwsCatalogGateway } from '../../infrastructure/catalog-gateway/aws-catalog-gateway';
 import { AppsyncNotificationPublisher } from '../../infrastructure/appsync-notification-publisher';
 import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
 

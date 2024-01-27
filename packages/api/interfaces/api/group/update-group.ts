@@ -1,7 +1,7 @@
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { Logger } from '@aws-lambda-powertools/logger';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
-import { GroupDatabaseRepository } from '../../../infrastructure/repositories/group-database-repository';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
+import { GroupDatabaseRepository } from '../../../infrastructure/group-database-repository';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import createHttpError from 'http-errors';
 import { UpdateGroup } from '../../../application/use-cases/group/update-group';

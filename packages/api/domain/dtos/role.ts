@@ -1,6 +1,5 @@
-export enum Role {
-    NONE = 'NONE',
-    PENDING = 'PENDING',
-    USER = 'USER',
-    ADMIN = 'ADMIN',
-}
+import { z } from 'zod';
+
+export const roleSchema = z.enum(['NONE', 'PENDING', 'USER', 'ADMIN']);
+
+export type Role = z.infer<typeof roleSchema>;

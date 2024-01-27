@@ -1,57 +1,55 @@
-import createHttpError from 'http-errors';
 import { Principal } from '../domain/dtos/principal';
-import { Role } from '../domain/dtos/role';
+import { Role, roleSchema } from '../domain/dtos/role';
+import { z } from 'zod';
+import { Errors } from '../domain/dtos/errors';
 
-export enum AuthClaimsKeys {
-    USERNAME = 'USERNAME',
-    ROLE = 'ROLE',
-    ID = 'ID',
-}
+export const authClaimsKeysSchema = z.enum(['username', 'role', 'id']);
+
+export type AuthClaimsKeys = z.infer<typeof authClaimsKeysSchema>;
 
 export abstract class Auth {
-    private readonly roleOrder: Record<keyof typeof Role, number> = {
-        NONE: 0,
-        PENDING: 1,
-        USER: 2,
-        ADMIN: 3,
+    private readonly roleOrder: Record<Role, number> = {
+        NONE: 2 << 0,
+        PENDING: 2 << 1,
+        USER: 2 << 2,
+        ADMIN: 2 << 3,
     };
 
-    constructor(private readonly claimsKeys: Record<keyof typeof AuthClaimsKeys, string>) {}
+    constructor(private readonly claimsKeys: Record<AuthClaimsKeys, string>) {}
+
+    getClaims = (principal: Principal) => ({
+        username: this.getUsername(principal),
+        id: this.getId(principal),
+        role: this.getRole(principal),
+    });
 
     getUsername(principal: Principal): string {
-        const username = principal.claims[this.claimsKeys.USERNAME];
-        if (typeof username !== 'string') {
-            throw new createHttpError.InternalServerError(`Invalid username`);
-        }
+        const username = principal.claims[this.claimsKeys.username];
+        if (typeof username !== 'string') throw Errors.unauthorizedPrincipal('Invalid username');
         return username;
     }
 
-    getId(principal: Principal): number {
-        const id = principal.claims[this.claimsKeys.ID];
-        const idAsNumber = Number(id);
-
-        if (isNaN(idAsNumber)) {
-            throw new createHttpError.InternalServerError(`Invalid id`);
-        }
-
-        return idAsNumber;
+    getRole(principal: Principal): Role {
+        const roleString = principal.claims[this.claimsKeys.role];
+        const validation = roleSchema.default('NONE').safeParse(roleString);
+        if (!validation.success) throw Errors.unauthorizedPrincipal('Invalid role');
+        return validation.data;
     }
 
-    hasRoleOrAbove(principal: Principal, role: keyof typeof Role): boolean {
-        const principalRoleString = principal.claims[this.claimsKeys.ROLE];
+    getId(principal: Principal): string {
+        const id = principal.claims[this.claimsKeys.id];
+        if (typeof id !== 'string') throw Errors.unauthorizedPrincipal('Invalid id');
+        return id;
+    }
 
-        const principalRole: keyof typeof Role = Object.keys(Role).includes(
-            `${String(principalRoleString)}`,
-        )
-            ? (principalRoleString as keyof typeof Role)
-            : 'NONE';
-
+    hasRoleOrAbove(principal: Principal, role: Role): boolean {
+        const principalRole = this.getRole(principal);
         return this.roleOrder[principalRole] >= this.roleOrder[role];
     }
 
-    assertThatHasRoleOrAbove(principal: Principal, role: keyof typeof Role, error: Error): void {
+    assertThatHasRoleOrAbove(principal: Principal, role: Role): void {
         if (!this.hasRoleOrAbove(principal, role)) {
-            throw error;
+            throw Errors.insufficientRole(role);
         }
     }
 }

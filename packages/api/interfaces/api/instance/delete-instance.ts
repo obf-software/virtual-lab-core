@@ -2,9 +2,9 @@ import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { DeleteInstance } from '../../../application/use-cases/instance/delete-instance';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
-import { InstanceDatabaseRepository } from '../../../infrastructure/repositories/instance-database-repository';
-import { AwsCatalogGateway } from '../../../infrastructure/aws-catalog-gateway';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
+import { InstanceDatabaseRepository } from '../../../infrastructure/instance-database-repository';
+import { AwsCatalogGateway } from '../../../infrastructure/catalog-gateway/aws-catalog-gateway';
 import createHttpError from 'http-errors';
 
 const { AWS_REGION, DATABASE_URL, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;

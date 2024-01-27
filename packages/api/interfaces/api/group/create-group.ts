@@ -1,42 +1,46 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { z } from 'zod';
-import { Logger } from '@aws-lambda-powertools/logger';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { CreateGroup } from '../../../application/use-cases/group/create-group';
-import { GroupDatabaseRepository } from '../../../infrastructure/repositories/group-database-repository';
-import { AwsCatalogGateway } from '../../../infrastructure/aws-catalog-gateway';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import createHttpError from 'http-errors';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { DatabaseGroupRepository } from '../../../infrastructure/group-repository/database-group-repository';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { Errors } from '../../../domain/dtos/errors';
 
-const { AWS_REGION, DATABASE_URL, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;
-const logger = new Logger();
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
+    process.env;
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const groupRepository = new GroupDatabaseRepository(DATABASE_URL);
-const catalogGateway = new AwsCatalogGateway(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN);
-const createGroupUseCase = new CreateGroup(logger, auth, groupRepository, catalogGateway);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const groupRepository = new DatabaseGroupRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const createGroup = new CreateGroup(logger, auth, groupRepository);
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const body = z
-        .object({
-            name: z.string().max(128).nonempty(),
-            description: z.string().nonempty(),
-            portfolioId: z.string().max(50).nonempty(),
-        })
-        .safeParse(JSON.parse(event.body ?? '{}'));
-    if (!body.success) throw new createHttpError.BadRequest('Invalid body');
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        const body = z
+            .object({
+                name: z.string().max(128).nonempty(),
+                description: z.string().nonempty(),
+                portfolioId: z.string().max(50).nonempty(),
+            })
+            .safeParse(JSON.parse(event.body ?? '{}'));
+        if (!body.success) throw Errors.validationError(body.error);
 
-    const output = await createGroupUseCase.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        name: body.data.name,
-        description: body.data.description,
-        portfolioId: body.data.portfolioId,
-    });
+        const output = await createGroup.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            name: body.data.name,
+            description: body.data.description,
+        });
 
-    return {
-        statusCode: 201,
-        body: JSON.stringify(output),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 201,
+            body: JSON.stringify(output),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);

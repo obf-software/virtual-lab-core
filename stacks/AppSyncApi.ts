@@ -1,20 +1,26 @@
 import * as sst from 'sst/constructs';
+import * as appsync from 'aws-cdk-lib/aws-appsync';
 import { Auth } from './Auth';
-import { AuthorizationType } from 'aws-cdk-lib/aws-appsync';
 
 export const AppSyncApi = ({ stack }: sst.StackContext) => {
     const { userPool } = sst.use(Auth);
 
     const appSyncApi = new sst.AppSyncApi(stack, 'AppSyncApi', {
-        schema: 'packages/app-sync/schema.graphql',
+        schema: 'packages/app-sync-api/schema.graphql',
         cdk: {
             graphqlApi: {
                 authorizationConfig: {
                     defaultAuthorization: {
-                        authorizationType: AuthorizationType.USER_POOL,
-                        userPoolConfig: { userPool },
+                        authorizationType: appsync.AuthorizationType.USER_POOL,
+                        userPoolConfig: {
+                            userPool,
+                        },
                     },
-                    additionalAuthorizationModes: [{ authorizationType: AuthorizationType.IAM }],
+                    additionalAuthorizationModes: [
+                        {
+                            authorizationType: appsync.AuthorizationType.IAM,
+                        },
+                    ],
                 },
             },
         },
@@ -22,13 +28,13 @@ export const AppSyncApi = ({ stack }: sst.StackContext) => {
         resolvers: {
             'Mutation publish': {
                 dataSource: 'noneDS',
-                requestMapping: { file: 'packages/app-sync/resolvers/publish/request.vtl' },
-                responseMapping: { file: 'packages/app-sync/resolvers/publish/response.vtl' },
+                requestMapping: { file: 'packages/app-sync-api/resolvers/publish/request.vtl' },
+                responseMapping: { file: 'packages/app-sync-api/resolvers/publish/response.vtl' },
             },
             'Subscription subscribe': {
                 dataSource: 'noneDS',
-                requestMapping: { file: 'packages/app-sync/resolvers/subscribe/request.vtl' },
-                responseMapping: { file: 'packages/app-sync/resolvers/subscribe/response.vtl' },
+                requestMapping: { file: 'packages/app-sync-api/resolvers/subscribe/request.vtl' },
+                responseMapping: { file: 'packages/app-sync-api/resolvers/subscribe/response.vtl' },
             },
         },
     });

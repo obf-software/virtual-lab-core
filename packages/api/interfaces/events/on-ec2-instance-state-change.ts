@@ -2,9 +2,9 @@ import { EventBridgeHandler } from 'aws-lambda';
 import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { NotifyInstanceStateChange } from '../../application/use-cases/instance/notify-instance-state-change';
-import { InstanceDatabaseRepository } from '../../infrastructure/repositories/instance-database-repository';
+import { InstanceDatabaseRepository } from '../../infrastructure/instance-database-repository';
 import { AppsyncNotificationPublisher } from '../../infrastructure/appsync-notification-publisher';
-import { UserDatabaseRepository } from '../../infrastructure/repositories/user-database-repository';
+import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
 import { VirtualInstanceState } from '../../application/virtualization-gateway';
 import createHttpError from 'http-errors';
 

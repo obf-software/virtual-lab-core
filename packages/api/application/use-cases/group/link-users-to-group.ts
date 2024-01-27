@@ -1,14 +1,16 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { GroupRepository } from '../../repositories/group-repository';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { GroupRepository } from '../../group-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface LinkUsersToGroupInput {
-    principal: Principal;
-    groupId: number;
-    userIds: number[];
-}
+export const linkUsersToGroupInputSchema = z.object({
+    principal: principalSchema,
+    groupId: z.string(),
+    userIds: z.array(z.string()),
+});
+export type LinkUsersToGroupInput = z.infer<typeof linkUsersToGroupInputSchema>;
 
 export type LinkUsersToGroupOutput = void;
 
@@ -22,12 +24,12 @@ export class LinkUsersToGroup {
     execute = async (input: LinkUsersToGroupInput): Promise<LinkUsersToGroupOutput> => {
         this.logger.debug('LinkUsersToGroup.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = linkUsersToGroupInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        await this.groupRepository.linkUsers(input.groupId, input.userIds);
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
+
+        await this.groupRepository.linkUsers(validInput.groupId, validInput.userIds);
     };
 }

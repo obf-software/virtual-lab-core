@@ -1,7 +1,7 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
-import { UserDatabaseRepository } from '../../../infrastructure/repositories/user-database-repository';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
+import { UserDatabaseRepository } from '../../../infrastructure/user-database-repository';
 import { ListUsers } from '../../../application/use-cases/user/list-users';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import createHttpError from 'http-errors';

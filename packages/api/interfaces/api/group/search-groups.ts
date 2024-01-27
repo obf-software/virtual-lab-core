@@ -1,11 +1,11 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import createHttpError from 'http-errors';
 import { z } from 'zod';
 import { SearchGroups } from '../../../application/use-cases/group/search-groups';
-import { GroupDatabaseRepository } from '../../../infrastructure/repositories/group-database-repository';
+import { GroupDatabaseRepository } from '../../../infrastructure/group-database-repository';
 
 const { DATABASE_URL } = process.env;
 

@@ -1,0 +1,5 @@
+_dev
+.sst
+coverage
+node_modules
+dist

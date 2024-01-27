@@ -1,16 +1,19 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { SeekPaginated } from '../../../domain/dtos/seek-paginated';
-import { SeekPaginationInput } from '../../../domain/dtos/seek-pagination-input';
-import { Group } from '../../../domain/entities/group';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
+import { SeekPaginated, seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { GroupRepository } from '../../repositories/group-repository';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { Group } from '../../../domain/entities/group';
+import { GroupRepository } from '../../group-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface ListGroupsInput {
-    principal: Principal;
-    pagination: SeekPaginationInput;
-}
+export const listGroupsInputSchema = z.object({
+    principal: principalSchema,
+    textQuery: z.string().optional(),
+    createdBy: z.string().optional(),
+    pagination: seekPaginationInputSchema,
+});
+export type ListGroupsInput = z.infer<typeof listGroupsInputSchema>;
 
 export type ListGroupsOutput = SeekPaginated<Group>;
 
@@ -24,12 +27,26 @@ export class ListGroups {
     execute = async (input: ListGroupsInput): Promise<ListGroupsOutput> => {
         this.logger.debug('ListGroups.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = listGroupsInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        return await this.groupRepository.list(input.pagination);
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'NONE');
+        const username = this.auth.getUsername(validInput.principal);
+
+        if (
+            !this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') &&
+            username !== validInput.createdBy
+        ) {
+            throw Errors.insufficientRole('ADMIN');
+        }
+
+        return await this.groupRepository.list(
+            {
+                textQuery: validInput.textQuery,
+                createdBy: validInput.createdBy,
+            },
+            validInput.pagination,
+        );
     };
 }

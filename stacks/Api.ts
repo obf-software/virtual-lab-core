@@ -1,70 +1,38 @@
 import * as sst from 'sst/constructs';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import { Auth } from './Auth';
 import { Config } from './Config';
 import { AppSyncApi } from './AppSyncApi';
-import { EventBus } from 'aws-cdk-lib/aws-events';
-import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Topic } from 'aws-cdk-lib/aws-sns';
+import { LambdaLayers } from './LambdaLayers';
 
-export const Api = ({ stack, app }: sst.StackContext) => {
+export const Api = ({ stack }: sst.StackContext) => {
+    const { paramsAndSecretsExtension } = sst.use(LambdaLayers);
     const { userPool, userPoolClient } = sst.use(Auth);
-    const { DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = sst.use(Config);
+    const { ssmParameters } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
 
-    const snsTopic = new Topic(stack, 'ServiceCatalogTopic', {
+    const apiSnsTopic = new sns.Topic(stack, 'ServiceCatalogTopic', {
         displayName: 'API Service Catalog Topic',
     });
 
-    const listUserProductsFunctionRole = new Role(stack, 'ListUserProductsFunctionRole', {
-        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-        managedPolicies: [
-            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
-            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
-            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
-        ],
+    const apiEventBus = new sst.EventBus(stack, 'ApiEventBus', {
+        cdk: {
+            eventBus: events.EventBus.fromEventBusName(stack, 'DefaultEventBus', 'default'),
+        },
     });
 
-    const getProductProvisioningParametersFunctionRole = new Role(
-        stack,
-        'GetProductProvisioningParametersFunctionRole',
-        {
-            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-            managedPolicies: [
-                ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-                ManagedPolicy.fromAwsManagedPolicyName(
-                    'service-role/AWSLambdaVPCAccessExecutionRole',
-                ),
-                ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
-                ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
-            ],
-        },
-    );
-
-    const provisionProductFunctionRole = new Role(stack, 'ProvisionProductFunctionRole', {
-        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+    const apiLambdaDefaultRole = new iam.Role(stack, 'ApiLambdaDefaultRole', {
+        assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [
-            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-            ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
-            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
-            ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
+            iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+            iam.ManagedPolicy.fromAwsManagedPolicyName(
+                'service-role/AWSLambdaVPCAccessExecutionRole',
+            ),
+            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
+            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
         ],
-    });
-
-    const migrateDbScript = new sst.Script(stack, 'MigrateDbScript', {
-        onCreate: 'packages/api/interfaces/jobs/migrate-database.handler',
-        onUpdate: 'packages/api/interfaces/jobs/migrate-database.handler',
-        defaults: {
-            function: {
-                environment: {
-                    DATABASE_URL,
-                },
-                copyFiles: [{ from: 'packages/api/infrastructure/database', to: 'drizzle' }],
-            },
-        },
-        params: {
-            appMode: app.mode,
-        },
     });
 
     const api = new sst.Api(stack, 'Api', {
@@ -73,9 +41,9 @@ export const Api = ({ stack, app }: sst.StackContext) => {
             userPool: {
                 type: 'user_pool',
                 userPool: {
-                    region: userPool.stack.region,
                     id: userPool.userPoolId,
                     clientIds: [userPoolClient.userPoolClientId],
+                    region: userPool.stack.region,
                 },
             },
         },
@@ -85,251 +53,150 @@ export const Api = ({ stack, app }: sst.StackContext) => {
         defaults: {
             authorizer: 'userPool',
             payloadFormatVersion: '2.0',
+            function: {
+                permissions: [
+                    appSyncApi,
+                    'ssm:GetParameter',
+                    'ssm:GetParameters',
+                    'secretsmanager:GetSecretValue',
+                    'cloudformation:*',
+                    'servicecatalog:*',
+                    'ec2:*',
+                    's3:*',
+                    'iam:*',
+                    'sns:*',
+                ],
+                environment: {
+                    GUACAMOLE_CYPHER_KEY_SSM_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
+                    INSTANCE_PASSWORD_SSM_PARAMETER_NAME: ssmParameters.instancePassword.name,
+                    DATABASE_URL_SSM_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                    API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+                    APP_SYNC_API_URL: appSyncApi.url,
+                },
+                layers: [paramsAndSecretsExtension],
+                role: apiLambdaDefaultRole,
+            },
         },
         routes: {
             // Group module
             'POST /api/v1/groups': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/create-group.handler',
-                    permissions: ['servicecatalog:*'],
-                    environment: {
-                        DATABASE_URL,
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/create-group.handler',
             },
             'DELETE /api/v1/groups/{groupId}': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/delete-group.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/delete-group.handler',
             },
             'POST /api/v1/groups/{groupId}/link-users': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/link-users-to-group.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/link-users-to-group.handler',
             },
             'GET /api/v1/groups': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/list-groups.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/list-groups.handler',
             },
             'GET /api/v1/users/{userId}/groups': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/list-user-groups.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/list-user-groups.handler',
             },
             'GET /api/v1/search-groups': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/search-groups.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/search-groups.handler',
             },
             'POST /api/v1/groups/{groupId}/unlink-users': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
             },
             'PATCH /api/v1/groups/{groupId}': {
-                function: {
-                    handler: 'packages/api/interfaces/api/group/update-group.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/group/update-group.handler',
             },
 
             // Instance module
             'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/delete-instance.handler',
-                    permissions: ['ec2:*', 'servicecatalog:*', 'cloudformation:*'],
-                    environment: {
-                        DATABASE_URL,
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/delete-instance.handler',
             },
             'GET /api/v1/users/{userId}/instances/{instanceId}/connection': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                        GUACAMOLE_CYPHER_KEY,
-                        INSTANCE_PASSWORD,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
             },
             'GET /api/v1/users/{userId}/instances': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/list-user-instances.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/list-user-instances.handler',
             },
             'POST /api/v1/users/{userId}/instances/{instanceId}/reboot': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/reboot-instance.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/reboot-instance.handler',
             },
             'POST /api/v1/users/{userId}/instances/{instanceId}/turn-off': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
             },
             'POST /api/v1/users/{userId}/instances/{instanceId}/turn-on': {
-                function: {
-                    handler: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
-                    permissions: ['ec2:*'],
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
             },
 
             // Product module
             'GET /api/v1/products/{productId}/provisioning-parameters': {
-                function: {
-                    handler:
-                        'packages/api/interfaces/api/product/get-product-provisioning-parameters.handler',
-                    role: getProductProvisioningParametersFunctionRole,
-                    permissions: ['s3:*'],
-                    environment: {
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function:
+                    'packages/api/interfaces/api/product/get-product-provisioning-parameters.handler',
             },
             'GET /api/v1/portfolios': {
-                function: {
-                    handler: 'packages/api/interfaces/api/product/list-portfolios.handler',
-                    permissions: ['servicecatalog:*'],
-                    environment: {
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function: 'packages/api/interfaces/api/product/list-portfolios.handler',
             },
             'GET /api/v1/users/{userId}/products': {
-                function: {
-                    handler: 'packages/api/interfaces/api/product/list-user-products.handler',
-                    role: listUserProductsFunctionRole,
-                    environment: {
-                        DATABASE_URL,
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function: 'packages/api/interfaces/api/product/list-user-products.handler',
             },
             'POST /api/v1/products/{productId}/provision': {
-                function: {
-                    handler: 'packages/api/interfaces/api/product/provision-product.handler',
-                    role: provisionProductFunctionRole,
-                    permissions: ['s3:*', 'ssm:*', 'sns:*', 'ec2:*', 'iam:*'],
-                    environment: {
-                        DATABASE_URL,
-                        SERVICE_CATALOG_NOTIFICATION_ARN: snsTopic.topicArn,
-                    },
-                },
+                function: 'packages/api/interfaces/api/product/provision-product.handler',
             },
 
             // User module
             'GET /api/v1/users/{userId}': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/get-user.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/get-user.handler',
             },
             'GET /api/v1/groups/{groupId}/users': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/list-group-users.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/list-group-users.handler',
             },
             'GET /api/v1/users': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/list-users.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/list-users.handler',
             },
             'GET /api/v1/search-users': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/search-users.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/search-users.handler',
             },
             'PATCH /api/v1/users/{userId}/quotas': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/update-user-quotas.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/update-user-quotas.handler',
             },
             'PATCH /api/v1/users/{userId}/role': {
-                function: {
-                    handler: 'packages/api/interfaces/api/user/update-user-role.handler',
-                    environment: {
-                        DATABASE_URL,
-                    },
-                },
+                function: 'packages/api/interfaces/api/user/update-user-role.handler',
             },
         },
     });
 
-    const apiEventBus = new sst.EventBus(stack, 'ApiEventBus', {
-        cdk: {
-            eventBus: EventBus.fromEventBusName(stack, 'DefaultEventBus', 'default'),
-        },
-        rules: {
-            onEc2InstanceStateChange: {
-                pattern: {
-                    detailType: ['EC2 Instance State-change Notification'],
-                    source: ['aws.ec2'],
-                },
-                targets: {
-                    lambda: {
-                        type: 'function',
-                        function: {
-                            handler:
-                                'packages/api/interfaces/events/on-ec2-instance-state-change.handler',
-                            permissions: ['ec2:*', 'appsync:GraphQL'],
-                            environment: {
-                                DATABASE_URL,
-                                APP_SYNC_API_URL: appSyncApi.url,
-                            },
+    /**
+     * Group module
+     */
+    api.addRoutes(stack, {});
+
+    /**
+     * Instance module
+     */
+    api.addRoutes(stack, {});
+
+    /**
+     * Product module
+     */
+    api.addRoutes(stack, {});
+
+    /**
+     * User module
+     */
+    api.addRoutes(stack, {});
+
+    apiEventBus.addRules(stack, {
+        onEc2InstanceStateChange: {
+            pattern: {
+                detailType: ['EC2 Instance State-change Notification'],
+                source: ['aws.ec2'],
+            },
+            targets: {
+                lambda: {
+                    type: 'function',
+                    function: {
+                        handler:
+                            'packages/api/interfaces/events/on-ec2-instance-state-change.handler',
+                        permissions: ['ec2:*', 'appsync:GraphQL'],
+                        environment: {
+                            DATABASE_URL_SSM_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                            APP_SYNC_API_URL: appSyncApi.url,
                         },
                     },
                 },
@@ -339,18 +206,12 @@ export const Api = ({ stack, app }: sst.StackContext) => {
 
     stack.addOutputs({
         apiUrl: api.url,
-        apiEventBusName: apiEventBus.eventBusName,
     });
 
     return {
         api,
+        apiLambdaDefaultRole,
         apiEventBus,
-        migrateDbScript,
-        snsTopic,
-        lambdaRoles: [
-            listUserProductsFunctionRole,
-            getProductProvisioningParametersFunctionRole,
-            provisionProductFunctionRole,
-        ],
+        apiSnsTopic,
     };
 };

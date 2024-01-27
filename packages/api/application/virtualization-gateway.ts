@@ -1,35 +1,24 @@
-export interface VirtualInstanceSummary {
-    id: string;
-    state: VirtualInstanceState;
-    hostname: string;
-}
-
-export interface VirtualInstanceDetailedInfo {
-    id: string;
-    state: VirtualInstanceState;
-    instanceType: string;
-    memoryInGb: string;
-    cpuCores: string;
-    distribution: string;
-    platform: string;
-    storageInGb: string;
-}
-
-export enum VirtualInstanceState {
-    PENDING = 'PENDING',
-    RUNNING = 'RUNNING',
-    STOPPING = 'STOPPING',
-    STOPPED = 'STOPPED',
-    SHUTTING_DOWN = 'SHUTTING_DOWN',
-    TERMINATED = 'TERMINATED',
-}
+import { InstanceState } from '../domain/dtos/instance-state';
+import { VirtualInstanceDetailedInfo } from '../domain/dtos/virtual-instance-detailed-info';
+import { VirtualInstanceLaunchParameters } from '../domain/dtos/virtual-instance-launch-parameters';
+import { VirtualInstanceStack } from '../domain/dtos/virtual-instance-stack';
+import { VirtualInstanceSummary } from '../domain/dtos/virtual-instance-summary';
+import { VirtualInstanceTemplate } from '../domain/dtos/virtual-instance-template';
 
 export interface VirtualizationGateway {
-    getInstanceSummaryById(instanceId: string): Promise<VirtualInstanceSummary>;
-    getInstanceDetailedInfoById(instanceId: string): Promise<VirtualInstanceDetailedInfo>;
-    listInstanceStates(instanceIds: string[]): Promise<Record<string, VirtualInstanceState>>;
-    getInstanceState(instanceId: string): Promise<VirtualInstanceState>;
+    getInstanceSummary(instanceId: string): Promise<VirtualInstanceSummary>;
+    getInstanceDetailedInfo(instanceId: string): Promise<VirtualInstanceDetailedInfo>;
+    listInstancesStates(instanceIds: string[]): Promise<Record<string, InstanceState>>;
+    getInstanceState(instanceId: string): Promise<InstanceState>;
     startInstance(instanceId: string): Promise<void>;
     stopInstance(instanceId: string, hibernate: boolean, force: boolean): Promise<void>;
     rebootInstance(instanceId: string): Promise<void>;
+    listInstanceTemplates(): Promise<VirtualInstanceTemplate[]>;
+    getInstanceTemplate(instanceTemplateId: string): Promise<VirtualInstanceTemplate>;
+    launchInstance(
+        instanceTemplateId: string,
+        parameters: VirtualInstanceLaunchParameters,
+    ): Promise<string>;
+    terminateInstance(launchToken: string): Promise<void>;
+    getInstanceStack(stackName: string): Promise<VirtualInstanceStack>;
 }

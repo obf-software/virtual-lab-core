@@ -1,14 +1,15 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
+import { principalSchema } from '../../../domain/dtos/principal';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { GroupRepository } from '../../repositories/group-repository';
+import { GroupRepository } from '../../group-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface DeleteGroupInput {
-    principal: Principal;
-    groupId: number;
-}
+export const deleteGroupInputSchema = z.object({
+    principal: principalSchema,
+    groupId: z.string(),
+});
+export type DeleteGroupInput = z.infer<typeof deleteGroupInputSchema>;
 
 export type DeleteGroupOutput = void;
 
@@ -22,14 +23,14 @@ export class DeleteGroup {
     execute = async (input: DeleteGroupInput): Promise<DeleteGroupOutput> => {
         this.logger.debug('DeleteGroup.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = deleteGroupInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const group = await this.groupRepository.getById(input.groupId);
-        if (!group) throw ApplicationError.resourceNotFound();
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
+
+        const group = await this.groupRepository.getById(validInput.groupId);
+        if (!group) throw Errors.resourceNotFound('Group', validInput.groupId);
         await this.groupRepository.delete(group);
     };
 }

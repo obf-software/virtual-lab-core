@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+export type LoggerExtraInput = [Error | string] | Record<string, unknown>[];
+
 export interface Logger {
-    debug: (message: string, ...args: any[]) => void;
-    info: (message: string, ...args: any[]) => void;
-    warn: (message: string, ...args: any[]) => void;
-    error: (message: string, ...args: any[]) => void;
+    debug: (message: string, ...args: LoggerExtraInput) => void;
+    info: (message: string, ...args: LoggerExtraInput) => void;
+    warn: (message: string, ...args: LoggerExtraInput) => void;
+    error: (message: string, ...args: LoggerExtraInput) => void;
 }

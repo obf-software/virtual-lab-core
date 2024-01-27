@@ -1,14 +1,16 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { GroupRepository } from '../../repositories/group-repository';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { GroupRepository } from '../../group-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface UnlinkUsersFromGroupInput {
-    principal: Principal;
-    groupId: number;
-    userIds: number[];
-}
+export const unlinkUsersFromGroupInputSchema = z.object({
+    principal: principalSchema,
+    groupId: z.string().nonempty(),
+    userIds: z.array(z.string()).nonempty(),
+});
+export type UnlinkUsersFromGroupInput = z.infer<typeof unlinkUsersFromGroupInputSchema>;
 
 export type UnlinkUsersFromGroupOutput = void;
 
@@ -22,12 +24,12 @@ export class UnlinkUsersFromGroup {
     execute = async (input: UnlinkUsersFromGroupInput): Promise<UnlinkUsersFromGroupOutput> => {
         this.logger.debug('UnlinkUsersFromGroup.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = unlinkUsersFromGroupInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        await this.groupRepository.unlinkUsers(input.groupId, input.userIds);
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
+
+        await this.groupRepository.unlinkUsers(validInput.groupId, validInput.userIds);
     };
 }

@@ -1,17 +1,23 @@
-import { Principal } from '../../../domain/dtos/principal';
+import { z } from 'zod';
+import { principalSchema } from '../../../domain/dtos/principal';
 import { Group } from '../../../domain/entities/group';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { GroupRepository } from '../../repositories/group-repository';
+import { GroupRepository } from '../../group-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface UpdateGroupInput {
-    principal: Principal;
-    groupId: number;
-    name?: string;
-    description?: string;
-}
+export const updateGroupInputSchema = z
+    .object({
+        principal: principalSchema,
+        groupId: z.string().nonempty(),
+        name: z.string().nonempty().optional(),
+        description: z.string().nonempty().optional(),
+    })
+    .refine((data) => !!(data.name !== undefined || data.description !== undefined), {
+        message: 'At least one of name or description must be provided',
+        path: ['name', 'description'],
+    });
+export type UpdateGroupInput = z.infer<typeof updateGroupInputSchema>;
 
 export type UpdateGroupOutput = Group;
 
@@ -25,14 +31,14 @@ export class UpdateGroup {
     execute = async (input: UpdateGroupInput): Promise<UpdateGroupOutput> => {
         this.logger.debug('UpdateGroup.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = updateGroupInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
+
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
 
         const group = await this.groupRepository.getById(input.groupId);
-        if (!group) throw ApplicationError.resourceNotFound();
+        if (!group) throw Errors.resourceNotFound('Group', input.groupId);
         group.update({ name: input.name, description: input.description });
         await this.groupRepository.update(group);
         return group;

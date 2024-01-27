@@ -1,8 +1,8 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
 import { ListPortfolios } from '../../../application/use-cases/product/list-portfolios';
-import { CognitoAuth } from '../../../infrastructure/cognito-auth';
-import { AwsCatalogGateway } from '../../../infrastructure/aws-catalog-gateway';
+import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
+import { AwsCatalogGateway } from '../../../infrastructure/catalog-gateway/aws-catalog-gateway';
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 
 const { AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;

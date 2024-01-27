@@ -1,43 +1,51 @@
 import * as sst from 'sst/constructs';
 import * as serviceCatalog from 'aws-cdk-lib/aws-servicecatalog';
-import { BaseLinuxProduct } from './products/BaseLinux';
-import {
-    AmazonLinuxCpuType,
-    AmazonLinuxEdition,
-    AmazonLinuxGeneration,
-    AmazonLinuxImage,
-    AmazonLinuxKernel,
-    AmazonLinuxVirt,
-    InstanceClass,
-    InstanceSize,
-    InstanceType,
-    Vpc,
-    WindowsImage,
-    WindowsVersion,
-} from 'aws-cdk-lib/aws-ec2';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as snssubscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
+import * as s3deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { Config } from './Config';
 import { Api } from './Api';
-import { LambdaSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { AppSyncApi } from './AppSyncApi';
 import { BaseWindowsProduct } from './products/BaseWindows';
+import { BaseLinuxProduct } from './products/BaseLinux';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
-    const { INSTANCE_PASSWORD, DATABASE_URL } = sst.use(Config);
+    const { ssmParameters } = sst.use(Config);
     const { lambdaRoles, snsTopic } = sst.use(Api);
     const { appSyncApi } = sst.use(AppSyncApi);
+
+    const scriptsBucket = new sst.Bucket(stack, 'ScriptsBucket');
+
+    const baseLinuxUserDataDeployment = new s3deployment.BucketDeployment(
+        stack,
+        'BaseLinuxUserDataDeployment',
+        {
+            destinationBucket: scriptsBucket.cdk.bucket,
+            sources: [s3deployment.Source.asset('stacks/scripts/base-linux-user-data.sh')],
+        },
+    );
+
+    const baseWindowsUserDataDeployment = new s3deployment.BucketDeployment(
+        stack,
+        'BaseWindowsUserDataDeployment',
+        {
+            destinationBucket: scriptsBucket.cdk.bucket,
+            sources: [s3deployment.Source.asset('stacks/scripts/base-windows-user-data.ps1')],
+        },
+    );
 
     const onProductLaunchComplete = new sst.Function(stack, 'onProductLaunchComplete', {
         handler: 'packages/api/interfaces/events/on-product-status-change.handler',
         permissions: ['cloudformation:*', 'ec2:*', 'appsync:GraphQL'],
         environment: {
-            DATABASE_URL,
+            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
             APP_SYNC_API_URL: appSyncApi.url,
         },
     });
 
-    snsTopic.addSubscription(new LambdaSubscription(onProductLaunchComplete));
+    snsTopic.addSubscription(new snssubscriptions.LambdaSubscription(onProductLaunchComplete));
 
-    const vpc = Vpc.fromLookup(stack, `DefaultVpc`, { isDefault: true });
+    const vpc = ec2.Vpc.fromLookup(stack, `DefaultVpc`, { isDefault: true });
 
     const defaultLinuxProduct = new serviceCatalog.CloudFormationProduct(
         stack,
@@ -52,22 +60,22 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                     cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
                         new BaseLinuxProduct(stack, 'DefaultLinuxProductVersion', {
                             vpc,
-                            password: INSTANCE_PASSWORD,
                             allowedInstanceTypes: [
-                                InstanceType.of(InstanceClass.T2, InstanceSize.MICRO),
-                                InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
+                                ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
+                                ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
                             ],
-                            defaultInstanceType: InstanceType.of(
-                                InstanceClass.T2,
-                                InstanceSize.MICRO,
+                            defaultInstanceType: ec2.InstanceType.of(
+                                ec2.InstanceClass.T2,
+                                ec2.InstanceSize.MICRO,
                             ),
-                            machineImage: new AmazonLinuxImage({
-                                edition: AmazonLinuxEdition.STANDARD,
-                                generation: AmazonLinuxGeneration.AMAZON_LINUX_2,
-                                cpuType: AmazonLinuxCpuType.X86_64,
-                                virtualization: AmazonLinuxVirt.HVM,
-                                kernel: AmazonLinuxKernel.KERNEL5_X,
+                            machineImage: new ec2.AmazonLinuxImage({
+                                edition: ec2.AmazonLinuxEdition.STANDARD,
+                                generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+                                cpuType: ec2.AmazonLinuxCpuType.X86_64,
+                                virtualization: ec2.AmazonLinuxVirt.HVM,
+                                kernel: ec2.AmazonLinuxKernel.KERNEL5_X,
                             }),
+                            passwordSsmParameterName: ssmParameters.instancePassword.name,
                         }),
                     ),
                     validateTemplate: true,
@@ -89,17 +97,17 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                     cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
                         new BaseWindowsProduct(stack, 'DefaultWindowsProductVersion', {
                             vpc,
-                            password: INSTANCE_PASSWORD,
                             allowedInstanceTypes: [
-                                InstanceType.of(InstanceClass.T3, InstanceSize.MICRO),
+                                ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
                             ],
-                            defaultInstanceType: InstanceType.of(
-                                InstanceClass.T3,
-                                InstanceSize.MICRO,
+                            defaultInstanceType: ec2.InstanceType.of(
+                                ec2.InstanceClass.T3,
+                                ec2.InstanceSize.MICRO,
                             ),
-                            machineImage: new WindowsImage(
-                                WindowsVersion.WINDOWS_SERVER_2019_ENGLISH_FULL_BASE,
+                            machineImage: new ec2.WindowsImage(
+                                ec2.WindowsVersion.WINDOWS_SERVER_2019_ENGLISH_FULL_BASE,
                             ),
+                            passwordSsmParameterName: ssmParameters.instancePassword.name,
                         }),
                     ),
                     validateTemplate: true,

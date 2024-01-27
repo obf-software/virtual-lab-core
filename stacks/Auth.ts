@@ -1,22 +1,12 @@
-import {
-    AccountRecovery,
-    AdvancedSecurityMode,
-    ClientAttributes,
-    Mfa,
-    OAuthScope,
-    UserPool,
-    UserPoolClient,
-    UserPoolDomain,
-    VerificationEmailStyle,
-} from 'aws-cdk-lib/aws-cognito';
-import { Duration, RemovalPolicy } from 'aws-cdk-lib/core';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as cdk from 'aws-cdk-lib';
 import * as sst from 'sst/constructs';
 import { Config } from './Config';
 
 const stagesWhereUserPoolIsRetained = ['production'];
 
 export const Auth = ({ stack, app }: sst.StackContext) => {
-    const { DATABASE_URL } = sst.use(Config);
+    const { ssmParameters } = sst.use(Config);
 
     const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
         handler: 'packages/api/interfaces/events/on-pre-token-generation-trigger.handler',
@@ -34,13 +24,13 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         },
     });
 
-    const userPool = new UserPool(stack, 'UserPool', {
-        accountRecovery: AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
-        advancedSecurityMode: AdvancedSecurityMode.OFF,
+    const userPool = new cognito.UserPool(stack, 'UserPool', {
+        accountRecovery: cognito.AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
+        advancedSecurityMode: cognito.AdvancedSecurityMode.OFF,
         removalPolicy: stagesWhereUserPoolIsRetained.includes(app.stage)
-            ? RemovalPolicy.RETAIN
-            : RemovalPolicy.DESTROY,
-        mfa: Mfa.OPTIONAL,
+            ? cdk.RemovalPolicy.RETAIN
+            : cdk.RemovalPolicy.DESTROY,
+        mfa: cognito.Mfa.OPTIONAL,
         mfaSecondFactor: {
             otp: true,
             sms: true,
@@ -56,7 +46,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             requireLowercase: true,
             requireSymbols: true,
             requireUppercase: true,
-            tempPasswordValidity: Duration.days(30),
+            tempPasswordValidity: cdk.Duration.days(30),
         },
         signInAliases: {
             email: true,
@@ -69,20 +59,20 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 'Your username is <strong>{username}</strong> and temporary password is <strong>{####}</strong>',
         },
         userVerification: {
-            emailStyle: VerificationEmailStyle.CODE,
+            emailStyle: cognito.VerificationEmailStyle.CODE,
             emailSubject: 'Your Virtual Lab verification code',
             emailBody: 'Your verification code is <strong>{####}</strong>',
         },
     });
 
-    const userPoolDomain = new UserPoolDomain(stack, 'UserPoolDomain', {
+    const userPoolDomain = new cognito.UserPoolDomain(stack, 'UserPoolDomain', {
         userPool,
         cognitoDomain: {
             domainPrefix: `${app.name}-${app.stage}`.toLowerCase(),
         },
     });
 
-    const userPoolClient = new UserPoolClient(stack, 'UserPoolClient', {
+    const userPoolClient = new cognito.UserPoolClient(stack, 'UserPoolClient', {
         userPool,
         authFlows: {
             adminUserPassword: true,
@@ -91,7 +81,11 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             userSrp: true,
         },
         oAuth: {
-            scopes: [OAuthScope.OPENID, OAuthScope.EMAIL, OAuthScope.PROFILE],
+            scopes: [
+                cognito.OAuthScope.OPENID,
+                cognito.OAuthScope.EMAIL,
+                cognito.OAuthScope.PROFILE,
+            ],
             flows: {
                 authorizationCodeGrant: true,
                 implicitCodeGrant: true,
@@ -103,21 +97,21 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             callbackUrls: ['http://localhost:3000'],
             logoutUrls: ['http://localhost:3000'],
         },
-        writeAttributes: new ClientAttributes().withStandardAttributes({
+        writeAttributes: new cognito.ClientAttributes().withStandardAttributes({
             preferredUsername: true,
             fullname: true,
             email: true,
         }),
     });
 
-    const cognito = new sst.Cognito(stack, 'cognito', {
+    const cognitoAuth = new sst.Cognito(stack, 'cognito', {
         login: ['email', 'preferredUsername', 'username'],
         cdk: { userPool, userPoolClient },
     });
 
     stack.addOutputs({
-        userPoolId: cognito.userPoolId,
-        userPoolClientId: cognito.userPoolClientId,
+        userPoolId: cognitoAuth.userPoolId,
+        userPoolClientId: cognitoAuth.userPoolClientId,
         userPoolDomainBaseUrl: userPoolDomain.baseUrl(),
     });
 
@@ -125,6 +119,6 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         userPool,
         userPoolClient,
         userPoolDomain,
-        cognito,
+        cognito: cognitoAuth,
     };
 };

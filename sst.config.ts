@@ -13,8 +13,8 @@ export default {
             region: 'us-east-1',
         };
     },
-    async stacks(app) {
-        await app.stack(Config);
+    stacks(app) {
+        app.stack(Config);
         app.stack(Auth);
         app.stack(AppSyncApi);
         app.stack(Api);

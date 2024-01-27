@@ -1,7 +1,7 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { PostConfirmationTriggerHandler } from 'aws-lambda';
 import { SignUpUser } from '../../application/use-cases/user/sign-up-user';
-import { UserDatabaseRepository } from '../../infrastructure/repositories/user-database-repository';
+import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
 import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
 
 const { DATABASE_URL } = process.env;

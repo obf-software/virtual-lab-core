@@ -1,14 +1,13 @@
 import { z } from 'zod';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { ApplicationError } from '../errors/application-error';
-import { CodingError } from '../errors/coding-error';
+import { Errors } from '../dtos/errors';
 
 dayjs.extend(utc);
 
 const groupDataSchema = z.object({
-    id: z.number().nullable(),
-    portfolioId: z.string(),
+    id: z.string().nullable(),
+    createdBy: z.string(),
     name: z.string(),
     description: z.string(),
     createdAt: z.date(),
@@ -19,43 +18,40 @@ export type GroupData = z.infer<typeof groupDataSchema>;
 
 export class Group {
     private constructor(private data: GroupData) {}
+
     toJSON = () => this.data;
 
-    static create(name: string, description: string, portfolioId: string): Group {
+    static create(props: { name: string; description: string; portfolioId: string }): Group {
         const dateNow = dayjs.utc().toDate();
         const data: GroupData = {
             id: null,
-            name,
-            description,
-            portfolioId,
+            createdBy: props.portfolioId,
+            name: props.name,
+            description: props.description,
             createdAt: dateNow,
             updatedAt: dateNow,
         };
 
         const validation = groupDataSchema.safeParse(data);
-        if (!validation.success) throw ApplicationError.invalidEntityData('group');
+        if (!validation.success) throw Errors.validationError(validation.error);
         return new Group(validation.data);
     }
 
-    static restore(data: GroupData & { id: number }): Group {
+    static restore(data: GroupData & { id: string }): Group {
         const validation = groupDataSchema.safeParse(data);
         if (!validation.success || data.id === null)
-            throw ApplicationError.invalidEntityData('group');
+            throw Errors.internalError('Failed to restore group');
         return new Group(validation.data);
     }
 
     get id() {
         if (this.data.id === null)
-            throw CodingError.unexpectedPrecondition('Cannot get id of new group');
+            throw Errors.internalError('Cannot get id of group that has not been created');
         return this.data.id;
     }
 
-    /**
-     * Assigns an id to the group that is being created
-     */
-    setId(id: number) {
-        if (this.data.id !== null)
-            throw CodingError.unexpectedPrecondition('Cannot set id of existing group');
+    set id(id: string) {
+        if (this.data.id !== null) throw Errors.internalError('Cannot set id of existing group');
         this.data.id = id;
     }
 
@@ -63,17 +59,16 @@ export class Group {
         return this.data;
     }
 
-    update(data: Partial<Pick<GroupData, 'name' | 'description' | 'portfolioId'>>) {
+    update(data: { name?: string; description?: string }) {
         const updatedData: GroupData = {
             ...this.data,
             name: data.name ?? this.data.name,
             description: data.description ?? this.data.description,
-            portfolioId: data.portfolioId ?? this.data.portfolioId,
             updatedAt: dayjs.utc().toDate(),
         };
 
         const validation = groupDataSchema.safeParse(updatedData);
-        if (!validation.success) throw ApplicationError.invalidEntityData('group');
+        if (!validation.success) throw Errors.validationError(validation.error);
         this.data = validation.data;
     }
 }

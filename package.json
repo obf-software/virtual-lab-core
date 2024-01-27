@@ -22,7 +22,7 @@
     "dependencies": {
         "aws-cdk-lib": "2.110.1",
         "constructs": "10.3.0",
-        "sst": "2.39.9"
+        "sst": "2.39.12"
     },
     "devDependencies": {
         "@aws-sdk/client-ssm": "^3.409.0",

@@ -1,6 +1,6 @@
 import { Logger } from '@aws-lambda-powertools/logger';
 import { PreTokenGenerationTriggerEvent, PreTokenGenerationTriggerHandler } from 'aws-lambda';
-import { UserDatabaseRepository } from '../../infrastructure/repositories/user-database-repository';
+import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
 import { SignInUser } from '../../application/use-cases/user/sign-in-user';
 import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
 

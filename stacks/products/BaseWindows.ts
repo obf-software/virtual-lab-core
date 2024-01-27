@@ -1,116 +1,129 @@
-import { CfnOutput, CfnParameter } from 'aws-cdk-lib';
-import {
-    BlockDevice,
-    IVpc,
-    Instance,
-    InstanceType,
-    Peer,
-    Port,
-    SecurityGroup,
-    SubnetType,
-    UserData,
-    Vpc,
-    WindowsImage,
-} from 'aws-cdk-lib/aws-ec2';
-import { IManagedPolicy, PolicyDocument, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { ProductStack, ProductStackProps } from 'aws-cdk-lib/aws-servicecatalog';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as servicecatalog from 'aws-cdk-lib/aws-servicecatalog';
+import * as cdk from 'aws-cdk-lib';
+import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
 interface BaseWindowsProductProps {
-    // Parameters
-    defaultInstanceType: InstanceType;
-    allowedInstanceTypes: InstanceType[];
-
-    // AMI
-    machineImage: WindowsImage;
-
-    // User Data
-    userDataCommands?: string[];
-
-    // Volumes
-    blockDevices?: BlockDevice[];
-
-    // Role
-    inlinePolicies?: Record<string, PolicyDocument>;
-    managedPolicies?: IManagedPolicy[];
-
-    // Other
-    password: string;
-    vpc: IVpc;
+    /**
+     * VPC to launch the instance in
+     */
+    vpc: ec2.IVpc;
+    /**
+     * Region to launch the instance in
+     */
+    region: string;
+    /**
+     * Machine Image to use for the instance
+     */
+    machineImage: ec2.WindowsImage;
+    /**
+     * File Key for the User Data script in S3 used to prepare the instance
+     */
+    userDataS3FileKey: string;
+    /**
+     * File Bucket for the User Data script in S3 used to prepare the instance
+     */
+    userDataS3FileBucket: s3.IBucket;
+    /**
+     * User Data to run once on instance launch
+     */
+    extraUserDataCommands?: string[];
+    /**
+     * Block Devices to attach to the instance
+     */
+    blockDevices?: ec2.BlockDevice[];
+    /**
+     * Inline Policies to attach to the role
+     */
+    inlinePolicies?: Record<string, iam.PolicyDocument>;
+    /**
+     * Managed Policies to attach to the role
+     */
+    managedPolicies?: iam.IManagedPolicy[];
+    /**
+     * SSM Parameter Name for the password
+     */
+    passwordSsmParameterName: string;
+    /**
+     * SSH Key Name to use for the instance
+     */
+    sshKeyName?: string;
 }
 
-export class BaseWindowsProduct extends ProductStack {
-    constructor(scope: Construct, id: string, props: ProductStackProps & BaseWindowsProductProps) {
-        super(scope, id);
-
-        const vpc = Vpc.fromLookup(scope, `${id}-Vpc`, { isDefault: true });
-        const allowedInstanceTypes = new Set(
-            [...props.allowedInstanceTypes, props.defaultInstanceType].map((type) =>
-                type.toString(),
-            ),
-        );
-
-        const instanceTypeParam = new CfnParameter(this, `${id}-InstanceTypeParam`, {
-            type: 'String',
-            default: props.defaultInstanceType.toString(),
-            allowedValues: [...allowedInstanceTypes],
-            description: 'Instance Type',
+export class BaseWindowsProduct extends servicecatalog.ProductStack {
+    constructor(
+        scope: Construct,
+        id: string,
+        props: servicecatalog.ProductStackProps & BaseWindowsProductProps,
+    ) {
+        super(scope, id, {
+            assetBucket: props.assetBucket,
+            serverSideEncryption: props.serverSideEncryption,
+            serverSideEncryptionAwsKmsKeyId: props.serverSideEncryptionAwsKmsKeyId,
         });
 
-        const securityGroup = new SecurityGroup(this, `${id}-SecurityGroup`, {
+        const vpc = ec2.Vpc.fromLookup(scope, `${id}-Vpc`, { isDefault: true });
+
+        const instanceTypeParam = new cdk.CfnParameter(this, `${id}-InstanceTypeParam`, {
+            type: 'String',
+            description: 'Instance Type',
+            constraintDescription: 'Must be a valid EC2 instance type.',
+        });
+
+        const securityGroup = new ec2.SecurityGroup(this, `${id}-SecurityGroup`, {
             vpc,
             allowAllIpv6Outbound: true,
             allowAllOutbound: true,
         });
 
-        securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(22), 'SSH Connection IPV4');
-        securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(3389), 'RDP Connection IPV4');
-        securityGroup.addIngressRule(Peer.anyIpv4(), Port.tcp(5901), 'VNC Connection IPV4');
-        securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(22), 'SSH Connection IPV6');
-        securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(3389), 'RDP Connection IPV6');
-        securityGroup.addIngressRule(Peer.anyIpv6(), Port.tcp(5901), 'VNC Connection IPV6');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH Connection IPV4');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv6(), ec2.Port.tcp(22), 'SSH Connection IPV6');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3389), 'RDP Connection IPV4');
+        securityGroup.addIngressRule(ec2.Peer.anyIpv6(), ec2.Port.tcp(3389), 'RDP Connection IPV6');
 
-        const role = new Role(scope, `${id}-Role`, {
-            assumedBy: new ServicePrincipal('ec2.amazonaws.com'),
+        const role = new iam.Role(scope, `${id}-Role`, {
+            assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
             inlinePolicies: props.inlinePolicies,
             managedPolicies: props.managedPolicies,
         });
 
-        const userData = UserData.forWindows();
-        userData.addCommands(
-            ...[
-                `$password = "${props.password}"`,
-                `$securePass = ConvertTo-SecureString $password -AsPlainText -Force`,
-                `$username = "developer"`,
-                `$name = "Developer"`,
-                `$description = "Developer Account"`,
-                `New-LocalUser $username -Password $securePass -FullName $name -Description $description`,
-                `Add-LocalGroupMember -Group "Administrators" -Member $username`,
-                `Set-LocalUser -Name $username -PasswordNeverExpires 1 -AccountNeverExpires -UserMayChangePassword 0 -Password $securePass`,
-                ...(props.userDataCommands ?? []),
-            ],
-        );
+        const userData = ec2.UserData.forWindows();
+        const baseWindowsUserDataFilePath = userData.addS3DownloadCommand({
+            bucket: props.userDataS3FileBucket,
+            bucketKey: props.userDataS3FileKey,
+            localFile: 'C:\\Users\\Administrator\\base-windows-user-data.ps1',
+            region: props.region,
+        });
+        userData.addExecuteFileCommand({
+            filePath: baseWindowsUserDataFilePath,
+            arguments: [props.passwordSsmParameterName, props.region].join(' '),
+        });
+        if (props.extraUserDataCommands !== undefined && props.extraUserDataCommands.length > 0) {
+            userData.addCommands(...props.extraUserDataCommands);
+        }
 
-        const instance = new Instance(this, `${id}-Instance`, {
+        const instance = new ec2.Instance(this, `${id}-Instance`, {
             vpc: props.vpc,
-            instanceType: new InstanceType(instanceTypeParam.valueAsString),
+            instanceType: new ec2.InstanceType(instanceTypeParam.valueAsString),
             machineImage: props.machineImage,
             securityGroup,
             role,
             userData,
-            keyName: 'debug-key',
+            keyName: props.sshKeyName,
             blockDevices: props.blockDevices,
             vpcSubnets: {
-                subnetType: SubnetType.PUBLIC,
+                subnetType: ec2.SubnetType.PUBLIC,
             },
         });
 
-        new CfnOutput(this, `${id}-OutputInstanceId`, {
+        new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {
             value: instance.instanceId,
             description: 'instanceId',
         });
 
-        new CfnOutput(this, `${id}-OutputConnectionType`, {
+        new cdk.CfnOutput(this, `${id}-OutputConnectionType`, {
             value: 'RDP',
             description: 'connectionType',
         });
