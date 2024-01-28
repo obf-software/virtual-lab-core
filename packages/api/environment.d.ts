@@ -7,12 +7,11 @@ namespace NodeJS {
         AWS_SESSION_TOKEN: string;
 
         SHARED_SECRET_NAME: string;
+        APP_SYNC_API_URL: string;
+        API_EVENT_BUS_NAME: string;
+        API_SNS_TOPIC_ARN: string;
         DATABASE_URL_PARAMETER_NAME: string;
-
-        // DATABASE_URL: string;
-        // APP_SYNC_API_URL: string;
-        // INSTANCE_PASSWORD: string;
-        // GUACAMOLE_CYPHER_KEY: string;
-        // SERVICE_CATALOG_NOTIFICATION_ARN: string;
+        INSTANCE_PASSWORD_PARAMETER_NAME: string;
+        GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: string;
     }
 }
