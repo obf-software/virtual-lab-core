@@ -11,6 +11,9 @@ export const listGroupsInputSchema = z.object({
     principal: principalSchema,
     textQuery: z.string().optional(),
     createdBy: z.string().optional(),
+    userId: z.string().optional(),
+    orderBy: z.enum(['creationDate', 'lastUpdate', 'name']),
+    order: z.enum(['asc', 'desc']),
     pagination: seekPaginationInputSchema,
 });
 export type ListGroupsInput = z.infer<typeof listGroupsInputSchema>;
@@ -32,11 +35,12 @@ export class ListGroups {
         const { data: validInput } = inputValidation;
 
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'NONE');
-        const username = this.auth.getUsername(validInput.principal);
+        const { id } = this.auth.getClaims(validInput.principal);
 
         if (
             !this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') &&
-            username !== validInput.createdBy
+            validInput.userId !== undefined &&
+            validInput.userId !== id
         ) {
             throw Errors.insufficientRole('ADMIN');
         }
@@ -45,7 +49,10 @@ export class ListGroups {
             {
                 textQuery: validInput.textQuery,
                 createdBy: validInput.createdBy,
+                userId: validInput.userId,
             },
+            validInput.orderBy,
+            validInput.order,
             validInput.pagination,
         );
     };

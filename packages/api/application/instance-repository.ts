@@ -8,11 +8,13 @@ export interface InstanceRepository {
     getByLaunchToken: (launchToken: string) => Promise<Instance | undefined>;
     list: (
         match: {
-            createdBy?: string;
+            ownerId?: string;
         },
+        orderBy: 'creationDate' | 'lastConnectionDate' | 'name',
+        order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ) => Promise<SeekPaginated<Instance>>;
-    count: (match: { createdBy?: string }) => Promise<number>;
+    count: (match: { ownerId?: string }) => Promise<number>;
     update: (instance: Instance) => Promise<void>;
     delete: (instance: Instance) => Promise<void>;
 }

@@ -18,14 +18,14 @@ export type GroupData = z.infer<typeof groupDataSchema>;
 
 export class Group {
     private constructor(private data: GroupData) {}
-
     toJSON = () => this.data;
+    getData = () => this.data;
 
-    static create(props: { name: string; description: string; portfolioId: string }): Group {
+    static create(props: { name: string; description: string; createdBy: string }): Group {
         const dateNow = dayjs.utc().toDate();
         const data: GroupData = {
             id: null,
-            createdBy: props.portfolioId,
+            createdBy: props.createdBy,
             name: props.name,
             description: props.description,
             createdAt: dateNow,
@@ -37,9 +37,9 @@ export class Group {
         return new Group(validation.data);
     }
 
-    static restore(data: GroupData & { id: string }): Group {
-        const validation = groupDataSchema.safeParse(data);
-        if (!validation.success || data.id === null)
+    static restore(props: GroupData & { id: string }): Group {
+        const validation = groupDataSchema.safeParse(props);
+        if (!validation.success || props.id === null)
             throw Errors.internalError('Failed to restore group');
         return new Group(validation.data);
     }
@@ -55,15 +55,11 @@ export class Group {
         this.data.id = id;
     }
 
-    getData() {
-        return this.data;
-    }
-
-    update(data: { name?: string; description?: string }) {
+    update(props: { name?: string; description?: string }) {
         const updatedData: GroupData = {
             ...this.data,
-            name: data.name ?? this.data.name,
-            description: data.description ?? this.data.description,
+            name: props.name ?? this.data.name,
+            description: props.description ?? this.data.description,
             updatedAt: dayjs.utc().toDate(),
         };
 

@@ -6,13 +6,13 @@ import { VirtualInstanceSummary } from '../domain/dtos/virtual-instance-summary'
 import { VirtualInstanceTemplate } from '../domain/dtos/virtual-instance-template';
 
 export interface VirtualizationGateway {
-    getInstanceSummary(instanceId: string): Promise<VirtualInstanceSummary>;
-    getInstanceDetailedInfo(instanceId: string): Promise<VirtualInstanceDetailedInfo>;
-    listInstancesStates(instanceIds: string[]): Promise<Record<string, InstanceState>>;
-    getInstanceState(instanceId: string): Promise<InstanceState>;
-    startInstance(instanceId: string): Promise<void>;
-    stopInstance(instanceId: string, hibernate: boolean, force: boolean): Promise<void>;
-    rebootInstance(instanceId: string): Promise<void>;
+    getInstanceSummary(virtualId: string): Promise<VirtualInstanceSummary>;
+    getInstanceDetailedInfo(virtualId: string): Promise<VirtualInstanceDetailedInfo>;
+    listInstancesStates(virtualIds: string[]): Promise<Record<string, InstanceState>>;
+    getInstanceState(virtualId: string): Promise<InstanceState>;
+    startInstance(virtualId: string): Promise<void>;
+    stopInstance(virtualId: string, hibernate: boolean, force: boolean): Promise<void>;
+    rebootInstance(virtualId: string): Promise<void>;
     listInstanceTemplates(): Promise<VirtualInstanceTemplate[]>;
     getInstanceTemplate(instanceTemplateId: string): Promise<VirtualInstanceTemplate>;
     launchInstance(

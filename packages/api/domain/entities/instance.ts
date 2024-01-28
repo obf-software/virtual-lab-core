@@ -1,31 +1,33 @@
 import { z } from 'zod';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { ApplicationError } from '../errors/application-error';
-import { InstanceConnectionType } from '../dtos/instance-connection-type';
-import { CodingError } from '../errors/coding-error';
-import { VirtualInstanceState } from '../../application/virtualization-gateway';
+import {
+    InstanceConnectionType,
+    instanceConnectionTypeSchema,
+} from '../dtos/instance-connection-type';
+import { InstanceState, instanceStateSchema } from '../dtos/instance-state';
+import { Errors } from '../dtos/errors';
 
 dayjs.extend(utc);
 
-const instanceDataSchema = z.object({
-    id: z.number().nullable(),
-    userId: z.number(),
-    logicalId: z.string().nullable(),
-    provisionToken: z.string(),
+export const instanceDataSchema = z.object({
+    id: z.string().nullable(),
+    virtualId: z.string().optional(),
+    ownerId: z.string(),
+    launchToken: z.string(),
     name: z.string(),
     description: z.string(),
-    connectionType: z.nativeEnum(InstanceConnectionType).nullable(),
-    platform: z.string().nullable(),
-    distribution: z.string().nullable(),
-    instanceType: z.string().nullable(),
-    cpuCores: z.string().nullable(),
-    memoryInGb: z.string().nullable(),
-    storageInGb: z.string().nullable(),
+    connectionType: instanceConnectionTypeSchema.optional(),
+    platform: z.string().optional(),
+    distribution: z.string().optional(),
+    instanceType: z.string().optional(),
+    cpuCores: z.string().optional(),
+    memoryInGb: z.string().optional(),
+    storageInGb: z.string().optional(),
     createdAt: z.date(),
     updatedAt: z.date(),
-    lastConnectionAt: z.date().nullable(),
-    state: z.nativeEnum(VirtualInstanceState).nullable(),
+    lastConnectionAt: z.date().optional(),
+    state: instanceStateSchema.optional(),
 });
 
 export type InstanceData = z.infer<typeof instanceDataSchema>;
@@ -33,127 +35,108 @@ export type InstanceData = z.infer<typeof instanceDataSchema>;
 export class Instance {
     private constructor(private data: InstanceData) {}
     toJSON = () => this.data;
+    getData = () => this.data;
 
-    static create(
-        name: string,
-        description: string,
-        userId: number,
-        provisionToken: string,
-    ): Instance {
+    static create = (props: {
+        ownerId: string;
+        launchToken: string;
+        name: string;
+        description: string;
+    }): Instance => {
         const dateNow = dayjs.utc().toDate();
         const data: InstanceData = {
             id: null,
-            userId,
-            logicalId: null,
-            provisionToken,
-            name,
-            description,
-            connectionType: null,
-            platform: null,
-            distribution: null,
-            instanceType: null,
-            cpuCores: null,
-            memoryInGb: null,
-            storageInGb: null,
+            virtualId: undefined,
+            ownerId: props.ownerId,
+            launchToken: props.launchToken,
+            name: props.name,
+            description: props.description,
+            connectionType: undefined,
+            platform: undefined,
+            distribution: undefined,
+            instanceType: undefined,
+            cpuCores: undefined,
+            memoryInGb: undefined,
+            storageInGb: undefined,
             createdAt: dateNow,
             updatedAt: dateNow,
-            lastConnectionAt: null,
-            state: null,
+            lastConnectionAt: undefined,
+            state: undefined,
         };
 
         const validation = instanceDataSchema.safeParse(data);
-        if (!validation.success) throw ApplicationError.invalidEntityData('instance');
-
+        if (!validation.success) throw Errors.validationError(validation.error);
         return new Instance(validation.data);
-    }
+    };
 
-    static restore(data: InstanceData & { id: number }): Instance {
-        const validation = instanceDataSchema.safeParse(data);
-        if (!validation.success || data.id === null)
-            throw ApplicationError.invalidEntityData('instance');
+    static restore = (props: InstanceData & { id: number }): Instance => {
+        const validation = instanceDataSchema.safeParse(props);
+        if (!validation.success || props.id === null)
+            throw Errors.internalError('Failed to restore instance');
         return new Instance(validation.data);
-    }
+    };
 
     get id() {
         if (this.data.id === null)
-            throw CodingError.unexpectedPrecondition('Cannot get id of new instance');
+            throw Errors.internalError('Cannot get id of instance that has not been created');
         return this.data.id;
     }
 
-    /**
-     * Assigns an id to the instance that is being created
-     */
-    setId(id: number) {
-        if (this.data.id !== null)
-            throw CodingError.unexpectedPrecondition('Cannot set id of existing instance');
+    set id(id: string) {
+        if (this.data.id !== null) throw Errors.internalError('Cannot set id of existing instance');
         this.data.id = id;
     }
 
-    setState(state?: VirtualInstanceState) {
-        this.data.state = state ?? null;
-    }
-
-    isReadyToConnect() {
-        if (this.data.state === null)
-            throw CodingError.unexpectedPrecondition(
-                'Cannot check state of instance without state',
-            );
-        return this.data.state === VirtualInstanceState.RUNNING;
-    }
-
-    isReadyToTurnOn() {
-        if (this.data.state === null)
-            throw CodingError.unexpectedPrecondition(
-                'Cannot check state of instance without state',
-            );
-        return this.data.state === VirtualInstanceState.STOPPED;
-    }
-
-    isReadyToTurnOff() {
-        if (this.data.state === null)
-            throw CodingError.unexpectedPrecondition(
-                'Cannot check state of instance without state',
-            );
-        return this.data.state === VirtualInstanceState.RUNNING;
-    }
-
-    isReadyToReboot() {
-        if (this.data.state === null)
-            throw CodingError.unexpectedPrecondition(
-                'Cannot check state of instance without state',
-            );
-        return this.data.state === VirtualInstanceState.RUNNING;
-    }
-
-    getData() {
-        return this.data;
-    }
-
-    onUserConnection() {
-        this.data.lastConnectionAt = dayjs.utc().toDate();
-    }
-
-    onProvisioned(
-        data: Pick<
-            InstanceData,
-            | 'logicalId'
-            | 'connectionType'
-            | 'platform'
-            | 'distribution'
-            | 'instanceType'
-            | 'cpuCores'
-            | 'memoryInGb'
-            | 'storageInGb'
-        >,
-    ) {
+    update = (props: {
+        virtualId?: string;
+        name?: string;
+        description?: string;
+        connectionType?: InstanceConnectionType;
+        platform?: string;
+        distribution?: string;
+        instanceType?: string;
+        cpuCores?: string;
+        memoryInGb?: string;
+        storageInGb?: string;
+        lastConnectionAt?: Date;
+    }) => {
         const updatedData: InstanceData = {
             ...this.data,
-            ...data,
+            virtualId: props.virtualId ?? this.data.virtualId,
+            name: props.name ?? this.data.name,
+            description: props.description ?? this.data.description,
+            connectionType: props.connectionType ?? this.data.connectionType,
+            platform: props.platform ?? this.data.platform,
+            distribution: props.distribution ?? this.data.distribution,
+            instanceType: props.instanceType ?? this.data.instanceType,
+            cpuCores: props.cpuCores ?? this.data.cpuCores,
+            memoryInGb: props.memoryInGb ?? this.data.memoryInGb,
+            storageInGb: props.storageInGb ?? this.data.storageInGb,
+            lastConnectionAt: props.lastConnectionAt ?? this.data.lastConnectionAt,
             updatedAt: dayjs.utc().toDate(),
         };
 
         const validation = instanceDataSchema.safeParse(updatedData);
-        if (!validation.success) throw ApplicationError.invalidEntityData('instance');
+        if (!validation.success) throw Errors.validationError(validation.error);
         this.data = validation.data;
-    }
+    };
+
+    onStateRetrieved = (state?: InstanceState) => {
+        this.data.state = state;
+    };
+
+    onUserConnected = () => {
+        this.update({ lastConnectionAt: dayjs.utc().toDate() });
+    };
+
+    /**
+     * typeguard to check if instance has been launched
+     */
+    hasBeenLaunched = () => this.data.virtualId !== undefined;
+    isReadyToConnect = () => this.data.state === 'RUNNING';
+    isReadyToTurnOn = () => this.data.state === 'STOPPED';
+    isReadyToTurnOff = () => this.data.state === 'RUNNING';
+    isReadyToReboot = () => this.data.state === 'RUNNING';
+
+    isOwnedBy = (userId: string) => this.data.ownerId === userId;
 }

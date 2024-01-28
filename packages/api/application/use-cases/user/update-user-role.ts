@@ -1,17 +1,20 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { Role } from '../../../domain/dtos/role';
+import { z } from 'zod';
+import { principalSchema } from '../../../domain/dtos/principal';
 import { User } from '../../../domain/entities/user';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { UserRepository } from '../../repositories/user-repository';
+import { roleSchema } from '../../../domain/dtos/role';
+import { UserRepository } from '../../user-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface UpdateUserRoleInput {
-    principal: Principal;
-    userId?: number;
-    role: keyof typeof Role;
-}
+export const updateUserRoleInputSchema = z
+    .object({
+        principal: principalSchema,
+        userId: z.string().optional(),
+        role: roleSchema.extract(['ADMIN', 'USER']),
+    })
+    .strict();
+export type UpdateUserRoleInput = z.infer<typeof updateUserRoleInputSchema>;
 
 export type UpdateUserRoleOutput = User;
 
@@ -25,22 +28,18 @@ export class UpdateUserRole {
     execute = async (input: UpdateUserRoleInput): Promise<UpdateUserRoleOutput> => {
         this.logger.debug('UpdateUserRole.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'ADMIN',
-            AuthError.insufficientRole('ADMIN'),
-        );
+        const inputValidation = updateUserRoleInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const principalId = this.auth.getId(input.principal);
-        const userId = input.userId ?? principalId;
-
-        if (principalId === userId) {
-            throw ApplicationError.businessRuleViolation('Cannot change your own role');
-        }
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(validInput.principal);
+        const userId = validInput.userId ?? id;
 
         const user = await this.userRepository.getById(userId);
-        if (!user) throw ApplicationError.resourceNotFound();
-        user.setRole(Role[input.role]);
+        if (!user) throw Errors.resourceNotFound('User', userId);
+
+        user.update({ role: validInput.role });
         await this.userRepository.update(user);
         return user;
     };

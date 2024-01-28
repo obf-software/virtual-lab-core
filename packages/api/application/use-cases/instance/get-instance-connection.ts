@@ -1,17 +1,20 @@
-import { InstanceConnectionType } from '../../../domain/dtos/instance-connection-type';
-import { Principal } from '../../../domain/dtos/principal';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
 import { Auth } from '../../auth';
 import { ConnectionEncoder } from '../../connection-encoder';
 import { Logger } from '../../logger';
-import { InstanceRepository } from '../../repositories/instance-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { InstanceRepository } from '../../instance-repository';
+import { Errors } from '../../../domain/dtos/errors';
+import { ConfigVault } from '../../config-vault';
 
-export interface GetInstanceConnectionInput {
-    principal: Principal;
-    instanceId: number;
-}
+export const getInstanceConnectionInputSchema = z
+    .object({
+        principal: principalSchema,
+        instanceId: z.string().nonempty(),
+    })
+    .strict();
+export type GetInstanceConnectionInput = z.infer<typeof getInstanceConnectionInputSchema>;
 
 export interface GetInstanceConnectionOutput {
     connectionString: string;
@@ -24,64 +27,66 @@ export class GetInstanceConnection {
         private readonly instanceRepository: InstanceRepository,
         private readonly connectionEncoder: ConnectionEncoder,
         private readonly virtualizationGateway: VirtualizationGateway,
-        private readonly INSTANCE_PASSWORD: string,
+        private readonly configVault: ConfigVault,
+        private readonly INSTANCE_PASSWORD_PARAMETER_NAME: string,
     ) {}
 
     execute = async (input: GetInstanceConnectionInput): Promise<GetInstanceConnectionOutput> => {
         this.logger.debug('GetInstanceConnection.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'USER',
-            AuthError.insufficientRole('USER'),
-        );
+        const inputValidation = getInstanceConnectionInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const principalId = this.auth.getId(input.principal);
-        const instance = await this.instanceRepository.getById(input.instanceId);
-        if (!instance) throw ApplicationError.resourceNotFound();
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
+        const { id } = this.auth.getClaims(validInput.principal);
 
-        if (
-            !this.auth.hasRoleOrAbove(input.principal, 'ADMIN') &&
-            instance.getData().userId !== principalId
-        ) {
-            throw AuthError.insufficientRole('ADMIN');
+        const [instancePassword, instance] = await Promise.all([
+            this.configVault.getParameter(this.INSTANCE_PASSWORD_PARAMETER_NAME),
+            this.instanceRepository.getById(validInput.instanceId),
+        ]);
+        if (!instance) throw Errors.resourceNotFound('Instance', validInput.instanceId);
+        if (!instancePassword)
+            throw Errors.internalError(
+                `Failed to retrieve ${this.INSTANCE_PASSWORD_PARAMETER_NAME} from config vault`,
+            );
+        const { virtualId } = instance.getData();
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
         }
 
-        const { connectionType, logicalId } = instance.getData();
-
-        if (logicalId === null || connectionType === null) {
-            throw ApplicationError.businessRuleViolation('Instance was not provisioned yet');
+        if (!instance.hasBeenLaunched() || virtualId === undefined) {
+            throw Errors.businessRuleViolation('Instance has not been launched yet');
         }
 
-        const virtualInstance = await this.virtualizationGateway.getInstanceSummaryById(logicalId);
-
-        instance.setState(virtualInstance.state);
+        const instanceSummary = await this.virtualizationGateway.getInstanceSummary(virtualId);
+        instance.onStateRetrieved(instanceSummary.state);
 
         if (!instance.isReadyToConnect()) {
-            throw ApplicationError.businessRuleViolation('Instance is not ready yet');
+            throw Errors.businessRuleViolation('Instance is not ready yet');
         }
 
-        instance.onUserConnection();
-
+        instance.onUserConnected();
         await this.instanceRepository.update(instance);
 
         const connectionString =
-            connectionType === InstanceConnectionType.VNC
+            instance.getData().connectionType === 'VNC'
                 ? this.connectionEncoder.encodeVncConnection({
-                      hostname: virtualInstance.hostname,
+                      hostname: instanceSummary.hostname,
                       port: 5901,
                       cursor: 'local',
-                      password: this.INSTANCE_PASSWORD,
+                      password: instancePassword,
                   })
                 : this.connectionEncoder.encodeRdpConnection({
-                      hostname: virtualInstance.hostname,
+                      hostname: instanceSummary.hostname,
                       port: 3389,
                       'enable-sftp': false,
                       security: 'any',
                       'ignore-cert': true,
                       width: 1024,
                       height: 768,
-                      password: this.INSTANCE_PASSWORD,
+                      password: instancePassword,
                       username: 'developer',
                   });
 

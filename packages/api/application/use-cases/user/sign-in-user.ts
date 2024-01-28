@@ -1,11 +1,15 @@
+import { z } from 'zod';
 import { User } from '../../../domain/entities/user';
-import { ApplicationError } from '../../../domain/errors/application-error';
 import { Logger } from '../../logger';
-import { UserRepository } from '../../repositories/user-repository';
+import { UserRepository } from '../../user-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface SignInUserInput {
-    username: string;
-}
+export const signInUserInputSchema = z
+    .object({
+        username: z.string(),
+    })
+    .strict();
+export type SignInUserInput = z.infer<typeof signInUserInputSchema>;
 
 export type SignInUserOutput = User;
 
@@ -18,8 +22,12 @@ export class SignInUser {
     execute = async (input: SignInUserInput): Promise<SignInUserOutput> => {
         this.logger.debug('SignInUser.execute', { input });
 
-        const user = await this.userRepository.getByUsername(input.username);
-        if (!user) throw ApplicationError.resourceNotFound();
+        const inputValidation = signInUserInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
+
+        const user = await this.userRepository.getByUsername(validInput.username);
+        if (!user) throw Errors.resourceNotFound('User', validInput.username);
         user.onSignIn();
         await this.userRepository.update(user);
         return user;

@@ -1,15 +1,18 @@
-import { Principal } from '../../../domain/dtos/principal';
+import { principalSchema } from '../../../domain/dtos/principal';
 import { User } from '../../../domain/entities/user';
-import { UserRepository } from '../../repositories/user-repository';
 import { Logger } from '../../logger';
 import { Auth } from '../../auth';
-import { AuthError } from '../../../domain/errors/auth-error';
-import { ApplicationError } from '../../../domain/errors/application-error';
+import { z } from 'zod';
+import { UserRepository } from '../../user-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface GetUserInput {
-    principal: Principal;
-    userId?: number;
-}
+export const getUserInputSchema = z
+    .object({
+        principal: principalSchema,
+        userId: z.string().optional(),
+    })
+    .strict();
+export type GetUserInput = z.infer<typeof getUserInputSchema>;
 
 export type GetUserOutput = User;
 
@@ -23,21 +26,21 @@ export class GetUser {
     execute = async (input: GetUserInput): Promise<GetUserOutput> => {
         this.logger.debug('GetUser.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'PENDING',
-            AuthError.insufficientRole('PENDING'),
-        );
+        const inputValidation = getUserInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const principalId = this.auth.getId(input.principal);
-        const userId = input.userId ?? principalId;
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'PENDING');
+        const { id } = this.auth.getClaims(validInput.principal);
 
-        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && userId !== principalId) {
-            throw AuthError.insufficientRole('ADMIN');
+        const userId = validInput.userId ?? id;
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && userId !== id) {
+            throw Errors.insufficientRole('ADMIN');
         }
 
         const user = await this.userRepository.getById(userId);
-        if (!user) throw ApplicationError.resourceNotFound();
+        if (!user) throw Errors.resourceNotFound('User', userId);
         return user;
     };
 }

@@ -1,15 +1,18 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
 import { Auth } from '../../auth';
-import { CatalogGateway } from '../../catalog-gateway';
 import { Logger } from '../../logger';
-import { InstanceRepository } from '../../repositories/instance-repository';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { InstanceRepository } from '../../instance-repository';
+import { Errors } from '../../../domain/dtos/errors';
+import { VirtualizationGateway } from '../../virtualization-gateway';
 
-export interface DeleteInstanceInput {
-    principal: Principal;
-    instanceId: number;
-}
+export const deleteInstanceInputSchema = z
+    .object({
+        principal: principalSchema,
+        instanceId: z.string(),
+    })
+    .strict();
+export type DeleteInstanceInput = z.infer<typeof deleteInstanceInputSchema>;
 
 export type DeleteInstanceOutput = void;
 
@@ -18,34 +21,30 @@ export class DeleteInstance {
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
-        private readonly catalogGateway: CatalogGateway,
+        private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
     execute = async (input: DeleteInstanceInput): Promise<DeleteInstanceOutput> => {
         this.logger.debug('DeleteInstance.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'USER',
-            AuthError.insufficientRole('USER'),
-        );
+        const inputValidation = deleteInstanceInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const principalId = this.auth.getId(input.principal);
-        const instance = await this.instanceRepository.getById(input.instanceId);
-        if (instance === undefined) throw ApplicationError.resourceNotFound();
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
+        const { id } = this.auth.getClaims(validInput.principal);
 
-        if (
-            !this.auth.hasRoleOrAbove(input.principal, 'ADMIN') &&
-            instance.getData().userId !== principalId
-        ) {
-            throw AuthError.insufficientRole('ADMIN');
+        const instance = await this.instanceRepository.getById(validInput.instanceId);
+        if (instance === undefined)
+            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
         }
 
         await Promise.allSettled([
             this.instanceRepository.delete(instance),
-            this.catalogGateway.terminateProvisionedProductByProvisionToken(
-                instance.getData().provisionToken,
-            ),
+            this.virtualizationGateway.terminateInstance(instance.getData().launchToken),
         ]);
     };
 }

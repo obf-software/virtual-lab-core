@@ -1,10 +1,17 @@
+import { z } from 'zod';
 import { User } from '../../../domain/entities/user';
 import { Logger } from '../../logger';
-import { UserRepository } from '../../repositories/user-repository';
+import { UserRepository } from '../../user-repository';
+import { Errors } from '../../../domain/dtos/errors';
 
-export interface SignUpUserInput {
-    username: string;
-}
+export const signUpUserInputSchema = z
+    .object({
+        username: z.string(),
+        name: z.string().optional(),
+        selfRegister: z.boolean().optional(),
+    })
+    .strict();
+export type SignUpUserInput = z.infer<typeof signUpUserInputSchema>;
 
 export type SignUpUserOutput = User;
 
@@ -17,12 +24,19 @@ export class SignUpUser {
     execute = async (input: SignUpUserInput): Promise<SignUpUserOutput> => {
         this.logger.debug('SignUpUser.execute', { input });
 
-        const existingUser = await this.userRepository.getByUsername(input.username);
+        const inputValidation = signUpUserInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
+
+        const existingUser = await this.userRepository.getByUsername(validInput.username);
         if (existingUser) return existingUser;
 
-        const newUser = User.create(input.username);
-        const newUserId = await this.userRepository.save(newUser);
-        newUser.setId(newUserId);
+        const newUser = User.create({
+            username: validInput.username,
+            name: validInput.name ?? validInput.username,
+            role: validInput.selfRegister ? 'PENDING' : 'USER',
+        });
+        newUser.id = await this.userRepository.save(newUser);
         return newUser;
     };
 }

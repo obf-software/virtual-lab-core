@@ -4,11 +4,12 @@ import { Logger } from '../../logger';
 import { principalSchema } from '../../../domain/dtos/principal';
 import { GroupRepository } from '../../group-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { UserRepository } from '../../user-repository';
 
 export const linkUsersToGroupInputSchema = z.object({
     principal: principalSchema,
-    groupId: z.string(),
-    userIds: z.array(z.string()),
+    groupId: z.string().nonempty(),
+    userIds: z.array(z.string()).nonempty(),
 });
 export type LinkUsersToGroupInput = z.infer<typeof linkUsersToGroupInputSchema>;
 
@@ -19,6 +20,7 @@ export class LinkUsersToGroup {
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly groupRepository: GroupRepository,
+        private readonly userRepository: UserRepository,
     ) {}
 
     execute = async (input: LinkUsersToGroupInput): Promise<LinkUsersToGroupOutput> => {
@@ -30,6 +32,14 @@ export class LinkUsersToGroup {
 
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
 
-        await this.groupRepository.linkUsers(validInput.groupId, validInput.userIds);
+        const group = await this.groupRepository.getById(validInput.groupId);
+        if (!group) throw Errors.resourceNotFound('Group', validInput.groupId);
+
+        const users = await this.userRepository.listByIds(validInput.userIds);
+        users.forEach((user) => {
+            user.addToGroup(group.id);
+        });
+
+        await this.userRepository.bulkUpdate(users);
     };
 }

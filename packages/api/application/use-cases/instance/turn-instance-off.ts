@@ -1,15 +1,19 @@
-import { Principal } from '../../../domain/dtos/principal';
-import { ApplicationError } from '../../../domain/errors/application-error';
-import { AuthError } from '../../../domain/errors/auth-error';
+import { z } from 'zod';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
-import { InstanceRepository } from '../../repositories/instance-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { principalSchema } from '../../../domain/dtos/principal';
+import { InstanceRepository } from '../../instance-repository';
+import { Errors } from '../../../domain/dtos/errors';
+import { UserRepository } from '../../user-repository';
 
-export interface TurnInstanceOffInput {
-    principal: Principal;
-    instanceId: number;
-}
+export const turnInstanceOffInputSchema = z
+    .object({
+        principal: principalSchema,
+        instanceId: z.string().nonempty(),
+    })
+    .strict();
+export type TurnInstanceOffInput = z.infer<typeof turnInstanceOffInputSchema>;
 
 export type TurnInstanceOffOutput = void;
 
@@ -18,42 +22,45 @@ export class TurnInstanceOff {
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
+        private readonly userRepository: UserRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
     execute = async (input: TurnInstanceOffInput): Promise<TurnInstanceOffOutput> => {
         this.logger.debug('TurnInstanceOff.execute', { input });
 
-        this.auth.assertThatHasRoleOrAbove(
-            input.principal,
-            'USER',
-            AuthError.insufficientRole('USER'),
-        );
+        const inputValidation = turnInstanceOffInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
-        const principalId = this.auth.getId(input.principal);
-        const instance = await this.instanceRepository.getById(input.instanceId);
-        if (instance === undefined) throw ApplicationError.resourceNotFound();
+        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
+        const { id } = this.auth.getClaims(validInput.principal);
 
-        if (
-            !this.auth.hasRoleOrAbove(input.principal, 'ADMIN') &&
-            instance.getData().userId !== principalId
-        ) {
-            throw AuthError.insufficientRole('ADMIN');
+        const instance = await this.instanceRepository.getById(validInput.instanceId);
+        if (instance === undefined)
+            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
         }
 
-        const { logicalId } = instance.getData();
+        const { virtualId } = instance.getData();
 
-        if (logicalId === null) {
-            throw ApplicationError.businessRuleViolation('Instance was not provisioned yet');
+        if (!instance.hasBeenLaunched() || virtualId === undefined) {
+            throw Errors.businessRuleViolation('Instance was not launched yet');
         }
 
-        const virtualInstance = await this.virtualizationGateway.getInstanceSummaryById(logicalId);
-        instance.setState(virtualInstance.state);
+        const instanceSummary = await this.virtualizationGateway.getInstanceSummary(virtualId);
+        instance.onStateRetrieved(instanceSummary.state);
 
         if (!instance.isReadyToTurnOff()) {
-            throw ApplicationError.businessRuleViolation('Instance is not ready to turn off');
+            throw Errors.businessRuleViolation('Instance is not ready to turn off');
         }
 
-        await this.virtualizationGateway.stopInstance(logicalId, false, false);
+        await this.virtualizationGateway.stopInstance(
+            virtualId,
+            false, // @todo try getting from instance data if the instance has support to it
+            false,
+        );
     };
 }

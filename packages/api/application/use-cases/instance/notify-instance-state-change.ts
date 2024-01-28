@@ -1,14 +1,19 @@
-import { InstanceStateChangedNotification } from '../../../domain/notifications/instance-state-changed-notification';
+import { z } from 'zod';
 import { Logger } from '../../logger';
-import { NotificationPublisher } from '../../notification-publisher';
-import { InstanceRepository } from '../../repositories/instance-repository';
-import { UserRepository } from '../../repositories/user-repository';
-import { VirtualInstanceState } from '../../virtualization-gateway';
+import { instanceStateSchema } from '../../../domain/dtos/instance-state';
+import { InstanceRepository } from '../../instance-repository';
+import { UserRepository } from '../../user-repository';
+import { EventPublisher } from '../../event-publisher';
+import { Errors } from '../../../domain/dtos/errors';
+import { InstanceStateChanged } from '../../../domain/application-events/instance-state-changed';
 
-export interface NotifyInstanceStateChangeInput {
-    instanceLogicalId: string;
-    state: VirtualInstanceState;
-}
+export const notifyInstanceStateChangeInputSchema = z
+    .object({
+        virtualId: z.string().nonempty(),
+        state: instanceStateSchema,
+    })
+    .strict();
+export type NotifyInstanceStateChangeInput = z.infer<typeof notifyInstanceStateChangeInputSchema>;
 
 export type NotifyInstanceStateChangeOutput = void;
 
@@ -17,7 +22,7 @@ export class NotifyInstanceStateChange {
         private readonly logger: Logger,
         private readonly instanceRepository: InstanceRepository,
         private readonly userRepository: UserRepository,
-        private readonly notificationPublisher: NotificationPublisher,
+        private readonly eventPublisher: EventPublisher,
     ) {}
 
     execute = async (
@@ -25,32 +30,33 @@ export class NotifyInstanceStateChange {
     ): Promise<NotifyInstanceStateChangeOutput> => {
         this.logger.debug('NotifyInstanceStateChange.execute', { input });
 
-        const instance = await this.instanceRepository.getByLogicalId(input.instanceLogicalId);
+        const inputValidation = notifyInstanceStateChangeInputSchema.safeParse(input);
+        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
+        const { data: validInput } = inputValidation;
 
+        const instance = await this.instanceRepository.getByVirtualId(validInput.virtualId);
         if (!instance) {
-            this.logger.info(
-                `Instance ${input.instanceLogicalId} not found, skipping instance state change notification`,
-            );
+            this.logger.info(`Instance not found, skipping instance state change notification`, {
+                virtualId: validInput.virtualId,
+            });
             return;
         }
 
-        const user = await this.userRepository.getById(instance.getData().userId);
+        const user = await this.userRepository.getById(instance.getData().ownerId);
 
         if (!user) {
-            this.logger.error(
-                `User ${
-                    instance.getData().userId
-                } not found, skipping instance state change notification`,
-            );
+            this.logger.error(`User not found, skipping instance state change notification`, {
+                ownerId: instance.getData().ownerId,
+            });
             return;
         }
 
-        const notification = new InstanceStateChangedNotification(
-            user.getData().username,
-            instance,
-            input.state,
+        await this.eventPublisher.publish(
+            new InstanceStateChanged({
+                username: user.getData().username,
+                instance: instance.getData(),
+                state: validInput.state,
+            }),
         );
-
-        await this.notificationPublisher.publish(notification);
     };
 }

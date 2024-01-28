@@ -16,6 +16,4 @@ export interface GroupRepository {
     ) => Promise<SeekPaginated<Group>>;
     update: (group: Group) => Promise<void>;
     delete: (group: Group) => Promise<void>;
-    // linkUsers: (groupId: string, userIds: string[]) => Promise<void>;
-    // unlinkUsers: (groupId: string, userIds: string[]) => Promise<void>;
 }
