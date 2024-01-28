@@ -69,7 +69,7 @@ export class Instance {
         return new Instance(validation.data);
     };
 
-    static restore = (props: InstanceData & { id: number }): Instance => {
+    static restore = (props: InstanceData & { id: string }): Instance => {
         const validation = instanceDataSchema.safeParse(props);
         if (!validation.success || props.id === null)
             throw Errors.internalError('Failed to restore instance');

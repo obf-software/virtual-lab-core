@@ -9,7 +9,7 @@ export interface UserDbModel {
     lastLoginAt?: Date;
     groupIds: ObjectId[];
     quotas: {
-        maxIntances: number;
+        maxInstances: number;
         allowedInstanceTypes: string[];
         canLaunchInstanceWithHibernation: boolean;
     };

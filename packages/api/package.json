@@ -26,7 +26,6 @@
         "http-errors": "^2.0.0",
         "mongodb": "^6.3.0",
         "node-fetch": "^3.3.2",
-        "postgres": "^3.3.5",
         "zod": "^3.22.2"
     },
     "devDependencies": {

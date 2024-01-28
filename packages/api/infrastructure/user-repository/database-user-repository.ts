@@ -1,227 +1,190 @@
-import { SeekPaginationInput } from '../../domain/dtos/seek-pagination-input';
-import { UserRepository } from '../../application/repositories/user-repository';
-import { SeekPaginated } from '../domain/dtos/seek-paginated';
-import { User } from '../domain/entities/user';
-import { PostgresJsDatabase, drizzle } from 'drizzle-orm/postgres-js';
-import * as dbSchema from './database/schema';
-import createHttpError from 'http-errors';
-import { Role } from '../domain/dtos/role';
-import { eq, sql } from 'drizzle-orm';
-import postgres from 'postgres';
+import { Filter, MongoClient, ObjectId, Sort } from 'mongodb';
+import { ConfigVault } from '../../application/config-vault';
+import { UserRepository } from '../../application/user-repository';
+import { Errors } from '../../domain/dtos/errors';
+import { User } from '../../domain/entities/user';
+import { UserDbModel } from '../db/models/user';
+import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 
-export class UserDatabaseRepository implements UserRepository {
-    private dbClient: PostgresJsDatabase<typeof dbSchema>;
+export class DatabaseUserRepository implements UserRepository {
+    private databaseUrl?: string;
 
-    constructor(DATABASE_URL: string) {
-        this.dbClient = drizzle(postgres(DATABASE_URL), { schema: dbSchema });
-    }
+    constructor(
+        private readonly configVault: ConfigVault,
+        private readonly DATABASE_URL_PARAMETER_NAME: string,
+    ) {}
 
-    save = async (user: User): Promise<number> => {
-        const userData = user.getData();
-        const newUser = await this.dbClient
-            .insert(dbSchema.user)
-            .values({
-                username: userData.username,
-                role: userData.role,
-                createdAt: userData.createdAt,
-                updatedAt: userData.updatedAt,
-                lastLoginAt: userData.lastLoginAt,
-            })
-            .returning()
-            .execute();
-
-        const newUserId = newUser.length !== 0 ? newUser[0].id : undefined;
-
-        if (newUserId === undefined) {
-            throw new createHttpError.InternalServerError();
+    private async getMongoClient(): Promise<MongoClient> {
+        if (this.databaseUrl) {
+            return new MongoClient(this.databaseUrl);
         }
 
-        await this.dbClient.insert(dbSchema.quota).values({
-            userId: newUserId,
-            maxInstances: userData.maxInstances,
-        });
+        const retrievedDatabaseUrl = await this.configVault.getParameter(
+            this.DATABASE_URL_PARAMETER_NAME,
+        );
+        if (retrievedDatabaseUrl === undefined) {
+            throw Errors.internalError(
+                `Failed to retrieve ${this.DATABASE_URL_PARAMETER_NAME} from config vault`,
+            );
+        }
 
-        return newUserId;
+        this.databaseUrl = retrievedDatabaseUrl;
+        return new MongoClient(retrievedDatabaseUrl);
+    }
+
+    static mapUserDbModelToEntity = (model: UserDbModel): User => {
+        return User.restore({
+            ...model,
+            id: model._id.toJSON(),
+            groupIds: model.groupIds.map((id) => id.toJSON()),
+        });
     };
 
-    getById = async (id: number): Promise<User | undefined> => {
-        const user = await this.dbClient.query.user.findFirst({
-            where: (user, builder) => builder.eq(user.id, id),
-            with: {
-                quota: {
-                    columns: {
-                        maxInstances: true,
-                    },
-                },
-            },
-        });
+    static mapUserEntityToDbModel = (entity: User): UserDbModel => {
+        const { id, groupIds, ...rest } = entity.toJSON();
 
+        return {
+            ...rest,
+            _id: id ? new ObjectId(id) : new ObjectId(),
+            groupIds: groupIds.map((id) => new ObjectId(id)),
+        };
+    };
+
+    save = async (user: User): Promise<string> => {
+        const client = await this.getMongoClient();
+        const newUser = await client
+            .db()
+            .collection<UserDbModel>('users')
+            .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user));
+        await client.close();
+        return newUser.insertedId.toJSON();
+    };
+
+    getById = async (id: string): Promise<User | undefined> => {
+        if (!ObjectId.isValid(id)) return undefined;
+        const client = await this.getMongoClient();
+        const user = await client
+            .db()
+            .collection<UserDbModel>('users')
+            .findOne({ _id: new ObjectId(id) });
+        await client.close();
         if (!user) return undefined;
-
-        return User.restore({
-            id: user.id,
-            role: Role[user.role],
-            username: user.username,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-            lastLoginAt: user.lastLoginAt,
-            maxInstances: user.quota.maxInstances,
-        });
+        return DatabaseUserRepository.mapUserDbModelToEntity(user);
     };
 
     getByUsername = async (username: string): Promise<User | undefined> => {
-        const user = await this.dbClient.query.user.findFirst({
-            where: (user, builder) => builder.eq(user.username, username),
-            with: {
-                quota: {
-                    columns: {
-                        maxInstances: true,
-                    },
-                },
-            },
-        });
-
+        const client = await this.getMongoClient();
+        const user = await client.db().collection<UserDbModel>('users').findOne({ username });
+        await client.close();
         if (!user) return undefined;
-
-        return User.restore({
-            id: user.id,
-            role: Role[user.role],
-            username: user.username,
-            createdAt: user.createdAt,
-            updatedAt: user.updatedAt,
-            lastLoginAt: user.lastLoginAt,
-            maxInstances: user.quota.maxInstances,
-        });
+        return DatabaseUserRepository.mapUserDbModelToEntity(user);
     };
 
-    list = async (pagination: SeekPaginationInput): Promise<SeekPaginated<User>> => {
-        const [[countResult], users] = await Promise.all([
-            this.dbClient
-                .select({ count: sql`count(*)`.mapWith(Number).as('count') })
-                .from(dbSchema.user)
-                .execute(),
-            this.dbClient.query.user
-                .findMany({
-                    limit: pagination.resultsPerPage,
-                    offset: pagination.resultsPerPage * (pagination.page - 1),
-                    orderBy: (user, builder) => builder.desc(user.createdAt),
-                    with: {
-                        quota: {
-                            columns: {
-                                maxInstances: true,
-                            },
-                        },
-                    },
-                })
-                .execute(),
-        ]);
-
-        return {
-            data: users.map((user) =>
-                User.restore({
-                    id: user.id,
-                    role: Role[user.role],
-                    username: user.username,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt,
-                    lastLoginAt: user.lastLoginAt,
-                    maxInstances: user.quota.maxInstances,
-                }),
-            ),
-            numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
-            resultsPerPage: pagination.resultsPerPage,
-            numberOfResults: countResult.count,
-        };
-    };
-
-    search = async (textQuery: string): Promise<User[]> => {
-        const users = await this.dbClient.query.user.findMany({
-            where: (user, builder) => builder.ilike(user.username, `%${textQuery}%`),
-            with: {
-                quota: {
-                    columns: {
-                        maxInstances: true,
-                    },
-                },
-            },
-            limit: 50,
-        });
-
-        return users.map((user) =>
-            User.restore({
-                id: user.id,
-                username: user.username,
-                role: Role[user.role],
-                maxInstances: user.quota.maxInstances,
-                createdAt: user.createdAt,
-                updatedAt: user.updatedAt,
-                lastLoginAt: user.lastLoginAt,
-            }),
-        );
-    };
-
-    listByGroup = async (
-        groupId: number,
+    list = async (
+        match: {
+            textQuery?: string;
+            groupId?: string;
+        },
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'name',
+        order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<User>> => {
-        const [[countResult], users] = await Promise.all([
-            this.dbClient
-                .select({ count: sql`count(*)`.mapWith(Number).as('count') })
-                .from(dbSchema.userToGroup)
-                .where(eq(dbSchema.userToGroup.groupId, groupId))
-                .execute(),
-            this.dbClient
-                .select({
-                    user: dbSchema.user,
-                    quota: dbSchema.quota,
-                })
-                .from(dbSchema.user)
-                .innerJoin(dbSchema.userToGroup, eq(dbSchema.user.id, dbSchema.userToGroup.userId))
-                .innerJoin(dbSchema.quota, eq(dbSchema.user.id, dbSchema.quota.userId))
-                .where(eq(dbSchema.userToGroup.groupId, groupId))
+        if (match.groupId && !ObjectId.isValid(match.groupId)) {
+            return {
+                data: [],
+                numberOfPages: 0,
+                numberOfResults: 0,
+                resultsPerPage: pagination.resultsPerPage,
+            };
+        }
+
+        const client = await this.getMongoClient();
+
+        const filter: Filter<UserDbModel> = {
+            username: match.textQuery ? { $regex: match.textQuery, $options: 'i' } : undefined,
+            groupIds: match.groupId ? new ObjectId(match.groupId) : undefined,
+        };
+
+        const sortOrder = order === 'asc' ? 1 : -1;
+        const sortMap: Record<typeof orderBy, Sort> = {
+            creationDate: {
+                _id: sortOrder,
+            },
+            lastUpdateDate: {
+                updatedAt: sortOrder,
+                _id: sortOrder,
+            },
+            lastLoginDate: {
+                lastLoginAt: sortOrder,
+                _id: sortOrder,
+            },
+            name: {
+                name: sortOrder,
+                _id: sortOrder,
+            },
+        };
+
+        const collection = client.db().collection<UserDbModel>('users');
+        const [count, users] = await Promise.all([
+            collection.countDocuments(filter, { ignoreUndefined: true }),
+            collection
+                .find(filter, { ignoreUndefined: true })
+                .collation({ locale: 'en', strength: 2 })
+                .sort(sortMap[orderBy])
+                .skip(pagination.page * (pagination.resultsPerPage - 1))
                 .limit(pagination.resultsPerPage)
-                .offset(pagination.resultsPerPage * (pagination.page - 1))
-                .execute(),
+                .toArray(),
         ]);
 
         return {
-            data: users.map(({ user, quota }) =>
-                User.restore({
-                    id: user.id,
-                    role: Role[user.role],
-                    username: user.username,
-                    createdAt: user.createdAt,
-                    updatedAt: user.updatedAt,
-                    lastLoginAt: user.lastLoginAt,
-                    maxInstances: quota.maxInstances,
-                }),
-            ),
-            numberOfPages: Math.ceil(countResult.count / pagination.resultsPerPage),
+            data: users.map(DatabaseUserRepository.mapUserDbModelToEntity),
+            numberOfPages: Math.ceil(count / pagination.resultsPerPage),
+            numberOfResults: count,
             resultsPerPage: pagination.resultsPerPage,
-            numberOfResults: countResult.count,
         };
+    };
+
+    listByIds = async (ids: string[]): Promise<User[]> => {
+        const validIds = ids.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+        const client = await this.getMongoClient();
+        const users = await client
+            .db()
+            .collection<UserDbModel>('users')
+            .find({ _id: { $in: validIds } })
+            .toArray();
+        await client.close();
+        return users.map(DatabaseUserRepository.mapUserDbModelToEntity);
     };
 
     update = async (user: User): Promise<void> => {
-        const userData = user.getData();
-        await this.dbClient
-            .update(dbSchema.user)
-            .set({
-                role: userData.role,
-                username: userData.username,
-                createdAt: userData.createdAt,
-                updatedAt: userData.updatedAt,
-                lastLoginAt: userData.lastLoginAt,
-            })
-            .where(eq(dbSchema.user.id, user.id))
-            .execute();
+        const client = await this.getMongoClient();
+        await client
+            .db()
+            .collection<UserDbModel>('users')
+            .updateOne(
+                { _id: new ObjectId(user.id) },
+                { $set: DatabaseUserRepository.mapUserEntityToDbModel(user) },
+                { ignoreUndefined: true, upsert: false },
+            );
+        await client.close();
+    };
 
-        await this.dbClient
-            .update(dbSchema.quota)
-            .set({
-                maxInstances: userData.maxInstances,
-            })
-            .where(eq(dbSchema.quota.userId, user.id))
-            .execute();
+    bulkUpdate = async (users: User[]): Promise<void> => {
+        if (users.length === 0) return;
+        const client = await this.getMongoClient();
+        await client
+            .db()
+            .collection<UserDbModel>('users')
+            .bulkWrite(
+                users.map((user) => ({
+                    updateOne: {
+                        filter: { _id: new ObjectId(user.id) },
+                        update: { $set: DatabaseUserRepository.mapUserEntityToDbModel(user) },
+                        upsert: false,
+                    },
+                })),
+                { ignoreUndefined: true },
+            );
+        await client.close();
     };
 }

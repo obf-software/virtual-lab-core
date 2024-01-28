@@ -12,7 +12,7 @@ const userDataSchema = z.object({
     role: roleSchema,
     createdAt: z.date(),
     updatedAt: z.date(),
-    lastLoginAt: z.date().nullable(),
+    lastLoginAt: z.date().optional(),
     groupIds: z.array(z.string()),
     quotas: z.object({
         maxInstances: z.number(),
@@ -36,7 +36,7 @@ export class User {
             role: props.role,
             createdAt: dateNow,
             updatedAt: dateNow,
-            lastLoginAt: null,
+            lastLoginAt: undefined,
             groupIds: [],
             quotas: {
                 maxInstances: 2,
@@ -50,7 +50,7 @@ export class User {
         return new User(validation.data);
     }
 
-    static restore(props: UserData & { id: number }): User {
+    static restore(props: UserData & { id: string }): User {
         const validation = userDataSchema.safeParse(props);
         if (!validation.success || props.id === null)
             throw Errors.internalError('Failed to restore user');
