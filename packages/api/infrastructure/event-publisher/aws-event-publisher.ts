@@ -85,8 +85,8 @@ export class AWSEventPublisher implements EventPublisher {
                     variables: {
                         name: event.detail.username,
                         data: JSON.stringify({
-                            ...event.detail,
                             type: event.type,
+                            detail: event.detail,
                         }),
                     },
                 };

@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { instanceStateSchema } from './instance-state';
 
 export const virtualInstanceDetailedInfoSchema = z.object({
-    id: z.string(),
+    virtualId: z.string(),
     state: instanceStateSchema,
     instanceType: z.string(),
     memoryInGb: z.string(),

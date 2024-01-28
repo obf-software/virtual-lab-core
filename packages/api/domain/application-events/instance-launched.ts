@@ -3,17 +3,17 @@ import { ApplicationEvent, applicationEventDetailSchema } from '../dtos/applicat
 import { instanceDataSchema } from '../entities/instance';
 import { instanceStateSchema } from '../dtos/instance-state';
 
-export const instanceProvisionedSchema = z
+export const instanceLaunchedSchema = z
     .object({
         instance: instanceDataSchema,
         state: instanceStateSchema,
     })
     .extend(applicationEventDetailSchema.shape);
 
-export type InstanceProvisionedDetail = z.infer<typeof instanceProvisionedSchema>;
+export type InstanceLaunchedDetail = z.infer<typeof instanceLaunchedSchema>;
 
-export class InstanceProvisioned extends ApplicationEvent<InstanceProvisionedDetail> {
-    constructor(public detail: InstanceProvisionedDetail) {
-        super('CLIENT', 'INSTANCE_PROVISIONED', instanceProvisionedSchema);
+export class InstanceLaunched extends ApplicationEvent<InstanceLaunchedDetail> {
+    constructor(public detail: InstanceLaunchedDetail) {
+        super('CLIENT', 'INSTANCE_LAUNCHED', instanceLaunchedSchema);
     }
 }
