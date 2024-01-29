@@ -1,41 +1,57 @@
-import { Logger } from '@aws-lambda-powertools/logger';
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { UserDatabaseRepository } from '../../../infrastructure/user-database-repository';
-import { ListUsers } from '../../../application/use-cases/user/list-users';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import createHttpError from 'http-errors';
 import { z } from 'zod';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
+import { ListUsers } from '../../../application/use-cases/user/list-users';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { Errors } from '../../../domain/dtos/errors';
 
-const { DATABASE_URL } = process.env;
-
-const logger = new Logger();
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
+    process.env;
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const userRepository = new UserDatabaseRepository(DATABASE_URL);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const listUsers = new ListUsers(logger, auth, userRepository);
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const query = z
-        .object({
-            resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
-            page: z.number({ coerce: true }).min(1).default(1),
-        })
-        .safeParse({ ...event.queryStringParameters });
-    if (!query.success) throw new createHttpError.BadRequest(query.error.message);
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        const query = z
+            .object({
+                orderBy: z
+                    .enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'name'])
+                    .default('creationDate'),
+                order: z.enum(['asc', 'desc']).default('asc'),
+                resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
+                page: z.number({ coerce: true }).min(1).default(1),
+                groupId: z.string().optional(),
+                textQuery: z.string().optional(),
+            })
+            .safeParse({ ...event.queryStringParameters });
+        if (!query.success) throw Errors.validationError(query.error);
 
-    const output = await listUsers.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        pagination: {
-            page: query.data.page,
-            resultsPerPage: query.data.resultsPerPage,
-        },
-    });
+        const output = await listUsers.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            orderBy: query.data.orderBy,
+            order: query.data.order,
+            pagination: {
+                resultsPerPage: query.data.resultsPerPage,
+                page: query.data.page,
+            },
+            groupId: query.data.groupId,
+            textQuery: query.data.textQuery,
+        });
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify(output),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 200,
+            body: JSON.stringify(output),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);

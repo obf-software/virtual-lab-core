@@ -10,7 +10,7 @@ import { Errors } from '../../../domain/dtos/errors';
 export const listUsersInputSchema = z
     .object({
         principal: principalSchema,
-        groupId: z.string(),
+        groupId: z.string().optional(),
         textQuery: z.string().optional(),
         orderBy: z.enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'name']),
         order: z.enum(['asc', 'desc']),
