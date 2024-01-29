@@ -6,7 +6,7 @@ import { InstanceDbModel } from '../db/models/instance';
 import { Instance } from '../../domain/entities/instance';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 
-export class InstanceDatabaseRepository implements InstanceRepository {
+export class DatabaseInstanceRepository implements InstanceRepository {
     private databaseUrl?: string;
 
     constructor(
@@ -55,7 +55,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
         const newInstance = await client
             .db()
             .collection<InstanceDbModel>('instances')
-            .insertOne(InstanceDatabaseRepository.mapInstanceEntityToDbModel(instance));
+            .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance));
         await client.close();
         return newInstance.insertedId.toJSON();
     };
@@ -69,7 +69,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
             .findOne({ _id: new ObjectId(id) });
         await client.close();
         if (!instance) return undefined;
-        return InstanceDatabaseRepository.mapInstanceDbModelToEntity(instance);
+        return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
 
     getByVirtualId = async (virtualId: string): Promise<Instance | undefined> => {
@@ -80,7 +80,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
             .findOne({ virtualId: virtualId });
         await client.close();
         if (!instance) return undefined;
-        return InstanceDatabaseRepository.mapInstanceDbModelToEntity(instance);
+        return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
 
     getByLaunchToken = async (launchToken: string): Promise<Instance | undefined> => {
@@ -91,7 +91,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
             .findOne({ launchToken: launchToken });
         await client.close();
         if (!instance) return undefined;
-        return InstanceDatabaseRepository.mapInstanceDbModelToEntity(instance);
+        return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
 
     count = async (match: { ownerId?: string | undefined }): Promise<number> => {
@@ -160,7 +160,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
         await client.close();
 
         return {
-            data: instances.map(InstanceDatabaseRepository.mapInstanceDbModelToEntity),
+            data: instances.map(DatabaseInstanceRepository.mapInstanceDbModelToEntity),
             numberOfPages: Math.ceil(count / pagination.resultsPerPage),
             numberOfResults: count,
             resultsPerPage: pagination.resultsPerPage,
@@ -174,7 +174,7 @@ export class InstanceDatabaseRepository implements InstanceRepository {
             .collection<InstanceDbModel>('instances')
             .updateOne(
                 { _id: new ObjectId(instance.id) },
-                { $set: InstanceDatabaseRepository.mapInstanceEntityToDbModel(instance) },
+                { $set: DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance) },
                 { ignoreUndefined: true, upsert: false },
             );
         await client.close();

@@ -1,47 +1,63 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import { Logger } from '@aws-lambda-powertools/logger';
 import { GetInstanceConnection } from '../../../application/use-cases/instance/get-instance-connection';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { InstanceDatabaseRepository } from '../../../infrastructure/instance-database-repository';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
 import { GuacamoleConnectionEncoder } from '../../../infrastructure/connection-encoder/guacamole-connection-encoder';
-import { AwsVirtualizationGateway } from '../../../infrastructure/aws-virtualization-gateway';
-import createHttpError from 'http-errors';
+import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
-const { AWS_REGION, DATABASE_URL, GUACAMOLE_CYPHER_KEY, INSTANCE_PASSWORD } = process.env;
-
-const logger = new Logger();
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    GUACAMOLE_CYPHER_KEY_PARAMETER_NAME,
+    INSTANCE_PASSWORD_PARAMETER_NAME,
+} = process.env;
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
-const connectionEncoder = new GuacamoleConnectionEncoder(GUACAMOLE_CYPHER_KEY);
-const virtualizationGateway = new AwsVirtualizationGateway(AWS_REGION);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const connectionEncoder = new GuacamoleConnectionEncoder(
+    configVault,
+    GUACAMOLE_CYPHER_KEY_PARAMETER_NAME,
+);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
 const getInstanceConnection = new GetInstanceConnection(
     logger,
     auth,
     instanceRepository,
     connectionEncoder,
     virtualizationGateway,
-    INSTANCE_PASSWORD,
+    configVault,
+    INSTANCE_PASSWORD_PARAMETER_NAME,
 );
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const instanceIdString = event.pathParameters?.instanceId;
-    const instanceId = Number(instanceIdString);
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        const output = await getInstanceConnection.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            instanceId: event.pathParameters?.instanceId ?? '',
+        });
 
-    if (Number.isNaN(instanceId)) {
-        throw new createHttpError.BadRequest('Invalid instanceId');
-    }
-
-    const output = await getInstanceConnection.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        instanceId,
-    });
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify(output),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 200,
+            body: JSON.stringify(output),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);

@@ -5,7 +5,6 @@ import { VirtualizationGateway } from '../../virtualization-gateway';
 import { principalSchema } from '../../../domain/dtos/principal';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
-import { UserRepository } from '../../user-repository';
 import { InstanceState } from '../../../domain/dtos/instance-state';
 
 export const turnInstanceOffInputSchema = z
@@ -25,7 +24,6 @@ export class TurnInstanceOff {
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
-        private readonly userRepository: UserRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 

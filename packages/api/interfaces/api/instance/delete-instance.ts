@@ -1,37 +1,48 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import { Logger } from '@aws-lambda-powertools/logger';
 import { DeleteInstance } from '../../../application/use-cases/instance/delete-instance';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { InstanceDatabaseRepository } from '../../../infrastructure/instance-database-repository';
-import { AwsCatalogGateway } from '../../../infrastructure/catalog-gateway/aws-catalog-gateway';
-import createHttpError from 'http-errors';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
-const { AWS_REGION, DATABASE_URL, SERVICE_CATALOG_NOTIFICATION_ARN } = process.env;
-const logger = new Logger();
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+} = process.env;
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
-const catalogGateway = new AwsCatalogGateway(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN);
-const deleteInstance = new DeleteInstance(logger, auth, instanceRepository, catalogGateway);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
+const deleteInstance = new DeleteInstance(logger, auth, instanceRepository, virtualizationGateway);
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const instanceIdString = event.pathParameters?.instanceId;
-    const instanceId = Number(instanceIdString);
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        await deleteInstance.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            instanceId: event.pathParameters?.instanceId ?? '',
+        });
 
-    if (Number.isNaN(instanceId)) {
-        throw new createHttpError.BadRequest('Invalid instanceId');
-    }
-
-    await deleteInstance.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        instanceId,
-    });
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 200,
+            body: JSON.stringify({}),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);

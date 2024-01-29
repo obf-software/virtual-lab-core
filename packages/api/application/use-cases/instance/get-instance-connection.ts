@@ -90,6 +90,6 @@ export class GetInstanceConnection {
                       username: 'developer',
                   });
 
-        return { connectionString };
+        return { connectionString: await connectionString };
     };
 }

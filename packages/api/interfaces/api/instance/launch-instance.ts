@@ -1,11 +1,14 @@
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { TurnInstanceOn } from '../../../application/use-cases/instance/turn-instance-on';
+import { z } from 'zod';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
-import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { LaunchInstanceFromTemplate } from '../../../application/use-cases/instance/launch-instance-from-template';
+import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { Errors } from '../../../domain/dtos/errors';
 
 const {
     IS_LOCAL,
@@ -22,6 +25,7 @@ const configVault =
     IS_LOCAL === 'true'
         ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
         : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
@@ -29,13 +33,32 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     API_SNS_TOPIC_ARN,
     SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
 );
-const turnInstanceOn = new TurnInstanceOn(logger, auth, instanceRepository, virtualizationGateway);
+const launchInstance = new LaunchInstanceFromTemplate(
+    logger,
+    auth,
+    userRepository,
+    instanceRepository,
+    virtualizationGateway,
+);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const output = await turnInstanceOn.execute({
+        const body = z
+            .object({
+                templateId: z.string(),
+                enableHibernation: z.boolean(),
+                instaceType: z.string(),
+                ownerId: z.string().optional(),
+            })
+            .safeParse(JSON.parse(event.body ?? '{}'));
+        if (!body.success) throw Errors.validationError(body.error);
+
+        const output = await launchInstance.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceId: event.pathParameters?.instanceId ?? '',
+            templateId: body.data.templateId,
+            enableHibernation: body.data.enableHibernation,
+            instanceType: body.data.instaceType,
+            ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
         });
 
         return {

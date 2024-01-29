@@ -1,17 +1,34 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import { Logger } from '@aws-lambda-powertools/logger';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { InstanceDatabaseRepository } from '../../../infrastructure/instance-database-repository';
-import { AwsVirtualizationGateway } from '../../../infrastructure/aws-virtualization-gateway';
-import createHttpError from 'http-errors';
 import { TurnInstanceOff } from '../../../application/use-cases/instance/turn-instance-off';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 
-const { AWS_REGION, DATABASE_URL } = process.env;
-const logger = new Logger();
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+} = process.env;
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
-const virtualizationGateway = new AwsVirtualizationGateway(AWS_REGION);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
 const turnInstanceOff = new TurnInstanceOff(
     logger,
     auth,
@@ -19,21 +36,18 @@ const turnInstanceOff = new TurnInstanceOff(
     virtualizationGateway,
 );
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const instanceIdString = event.pathParameters?.instanceId;
-    const instanceId = Number(instanceIdString);
-    if (Number.isNaN(instanceId)) throw new createHttpError.BadRequest('Invalid instanceId');
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        const output = await turnInstanceOff.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            instanceId: event.pathParameters?.instanceId ?? '',
+        });
 
-    await turnInstanceOff.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        instanceId,
-    });
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 200,
+            body: JSON.stringify(output),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);

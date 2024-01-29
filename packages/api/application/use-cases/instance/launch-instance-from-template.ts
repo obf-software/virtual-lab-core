@@ -8,20 +8,20 @@ import { InstanceRepository } from '../../instance-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
 
-export const provisionProductInputSchema = z
+export const launchInstanceFromTemplateInputSchema = z
     .object({
         principal: principalSchema,
-        userId: z.string().optional(),
-        templateId: z.string().nonempty(),
-        instanceType: z.string().nonempty(),
+        ownerId: z.string().optional(),
+        templateId: z.string().min(1),
+        instanceType: z.string().min(1),
         enableHibernation: z.boolean(),
     })
     .strict();
-export type ProvisionProductInput = z.infer<typeof provisionProductInputSchema>;
+export type LaunchInstanceFromTemplateInput = z.infer<typeof launchInstanceFromTemplateInputSchema>;
 
-export type ProvisionProductOutput = Instance;
+export type LaunchInstanceFromTemplateOutput = Instance;
 
-export class ProvisionProduct {
+export class LaunchInstanceFromTemplate {
     constructor(
         private readonly logger: Logger,
         private readonly auth: Auth,
@@ -30,25 +30,27 @@ export class ProvisionProduct {
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: ProvisionProductInput): Promise<ProvisionProductOutput> => {
-        this.logger.debug('ProvisionProduct.execute', { input });
+    execute = async (
+        input: LaunchInstanceFromTemplateInput,
+    ): Promise<LaunchInstanceFromTemplateOutput> => {
+        this.logger.debug('LaunchInstanceFromTemplate.execute', { input });
 
-        const inputValidation = provisionProductInputSchema.safeParse(input);
+        const inputValidation = launchInstanceFromTemplateInputSchema.safeParse(input);
         if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
         const { data: validInput } = inputValidation;
 
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
         const { id } = this.auth.getClaims(validInput.principal);
-        const userId = validInput.userId ?? id;
+        const ownerId = validInput.ownerId ?? id;
 
         const [user, userInstanceCount] = await Promise.all([
-            this.userRepository.getById(userId),
-            this.instanceRepository.count({ ownerId: userId }),
+            this.userRepository.getById(ownerId),
+            this.instanceRepository.count({ ownerId: ownerId }),
         ]);
-        if (!user) throw Errors.resourceNotFound('User', userId);
+        if (!user) throw Errors.resourceNotFound('User', ownerId);
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN')) {
-            if (userId !== id) {
+            if (ownerId !== id) {
                 throw Errors.insufficientRole('ADMIN');
             }
 
@@ -81,7 +83,7 @@ export class ProvisionProduct {
         const instance = Instance.create({
             name: instanceTemplate.name,
             description: instanceTemplate.description,
-            ownerId: userId,
+            ownerId,
             launchToken,
         });
         instance.id = await this.instanceRepository.save(instance);
