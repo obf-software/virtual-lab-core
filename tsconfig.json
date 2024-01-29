@@ -5,5 +5,5 @@
         "moduleResolution": "Node",
         "strictNullChecks": true,
     },
-    "exclude": ["packages"],
+    "exclude": ["packages", "_dev"],
 }

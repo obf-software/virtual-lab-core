@@ -14,8 +14,7 @@
         "build": "sst build",
         "deploy": "sst deploy",
         "remove": "AWS_PROFILE=virtual-lab sst remove",
-        "console": "sst console",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc --noEmit || npm run typecheck --ws",
         "format": "prettier --write .",
         "lint": "eslint . --report-unused-disable-directives"
     },
@@ -25,7 +24,6 @@
         "sst": "2.39.12"
     },
     "devDependencies": {
-        "@aws-sdk/client-ssm": "^3.409.0",
         "@tsconfig/node18": "^18.2.2",
         "@types/aws-lambda": "^8.10.131",
         "@types/node": "^18.19.9",
