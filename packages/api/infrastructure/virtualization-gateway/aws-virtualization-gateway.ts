@@ -98,10 +98,15 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         const instances = Reservations?.map((r) => r.Instances ?? []).flat() ?? [];
         if (instances.length === 0) throw new createHttpError.NotFound('Instance not found');
         const instance = instances[0];
+        const instanceType = instance.InstanceType;
+
+        if (instanceType === undefined) {
+            throw Errors.internalError('AWS Instance does not have an instance type');
+        }
 
         const [{ InstanceTypes }, { Images }, { Volumes }] = await Promise.all([
             this.ec2Client.send(
-                new DescribeInstanceTypesCommand({ InstanceTypes: [instance.InstanceType ?? ''] }),
+                new DescribeInstanceTypesCommand({ InstanceTypes: [instanceType] }),
             ),
             this.ec2Client.send(new DescribeImagesCommand({ ImageIds: [instance.ImageId ?? ''] })),
             this.ec2Client.send(

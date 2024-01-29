@@ -23,9 +23,8 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
         const body = z
             .object({
-                name: z.string().max(128).nonempty(),
-                description: z.string().nonempty(),
-                portfolioId: z.string().max(50).nonempty(),
+                name: z.string(),
+                description: z.string(),
             })
             .safeParse(JSON.parse(event.body ?? '{}'));
         if (!body.success) throw Errors.validationError(body.error);

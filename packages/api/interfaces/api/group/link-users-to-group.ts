@@ -1,42 +1,47 @@
-import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { Logger } from '@aws-lambda-powertools/logger';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
-import { GroupDatabaseRepository } from '../../../infrastructure/group-database-repository';
-import { HandlerAdapter } from '../../../infrastructure/lambda/handler-adapter';
-import createHttpError from 'http-errors';
 import { z } from 'zod';
 import { LinkUsersToGroup } from '../../../application/use-cases/group/link-users-to-group';
+import { DatabaseGroupRepository } from '../../../infrastructure/group-repository/database-group-repository';
+import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
+import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { Errors } from '../../../domain/dtos/errors';
+import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 
-const { DATABASE_URL } = process.env;
-const logger = new Logger();
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
+    process.env;
+
+const logger = new AWSLogger();
 const auth = new CognitoAuth();
-const groupRepository = new GroupDatabaseRepository(DATABASE_URL);
-const linkUsersToGroup = new LinkUsersToGroup(logger, auth, groupRepository);
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const groupRepository = new DatabaseGroupRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const linkUsersToGroup = new LinkUsersToGroup(logger, auth, groupRepository, userRepository);
 
-export const handler = HandlerAdapter.create(
-    logger,
-).adaptHttp<APIGatewayProxyHandlerV2WithJWTAuthorizer>(async (event) => {
-    const body = z
-        .object({ userIds: z.array(z.number().int().positive().max(50)) })
-        .safeParse(JSON.parse(event.body ?? '{}'));
-    if (!body.success) throw new createHttpError.BadRequest('Invalid body');
+export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
+    async (event) => {
+        const body = z
+            .object({
+                userIds: z.array(z.string()).nonempty(),
+            })
+            .safeParse(JSON.parse(event.body ?? '{}'));
+        if (!body.success) throw Errors.validationError(body.error);
 
-    const groupIdString = event.pathParameters?.groupId;
-    const groupId = Number(groupIdString);
+        await linkUsersToGroup.execute({
+            principal: CognitoAuth.extractPrincipal(event),
+            groupId: event.pathParameters?.groupId ?? '',
+            userIds: body.data.userIds,
+        });
 
-    if (Number.isNaN(groupId)) {
-        throw new createHttpError.BadRequest('Invalid groupId');
-    }
-
-    await linkUsersToGroup.execute({
-        principal: CognitoAuth.extractPrincipal(event),
-        groupId,
-        userIds: body.data.userIds,
-    });
-
-    return {
-        statusCode: 200,
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-    };
-});
+        return {
+            statusCode: 200,
+            body: JSON.stringify({}),
+            headers: { 'Content-Type': 'application/json' },
+        };
+    },
+    { logger },
+);
