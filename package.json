@@ -14,7 +14,7 @@
         "build": "sst build",
         "deploy": "sst deploy",
         "remove": "AWS_PROFILE=virtual-lab sst remove",
-        "typecheck": "tsc --noEmit || npm run typecheck --ws",
+        "typecheck": "tsc --noEmit && npm run typecheck --ws",
         "format": "prettier --write .",
         "lint": "eslint . --report-unused-disable-directives"
     },

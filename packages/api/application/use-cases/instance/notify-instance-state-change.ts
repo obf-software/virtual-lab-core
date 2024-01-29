@@ -9,7 +9,7 @@ import { InstanceStateChanged } from '../../../domain/application-events/instanc
 
 export const notifyInstanceStateChangeInputSchema = z
     .object({
-        virtualId: z.string().nonempty(),
+        virtualId: z.string().min(1),
         state: instanceStateSchema,
     })
     .strict();

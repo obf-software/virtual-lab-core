@@ -1,28 +1,49 @@
-import { Logger } from '@aws-lambda-powertools/logger';
-import { SNSHandler } from 'aws-lambda';
-import { LinkProvisionedProduct } from '../../application/use-cases/product/link-provisioned-product';
-import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
-import { InstanceDatabaseRepository } from '../../infrastructure/instance-database-repository';
-import { AwsVirtualizationGateway } from '../../infrastructure/aws-virtualization-gateway';
-import { AwsCatalogGateway } from '../../infrastructure/catalog-gateway/aws-catalog-gateway';
-import { AppsyncNotificationPublisher } from '../../infrastructure/appsync-notification-publisher';
-import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
+import { LinkLaunchedInstance } from '../../application/use-cases/instance/link-launched-instance';
+import { AWSLogger } from '../../infrastructure/logger/aws-logger';
+import { AWSConfigVault } from '../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseInstanceRepository } from '../../infrastructure/instance-repository/database-instance-repository';
+import { AwsVirtualizationGateway } from '../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
+import { AWSEventPublisher } from '../../infrastructure/event-publisher/aws-event-publisher';
+import { LambdaHandlerAdapter } from '../../infrastructure/lambda-handler-adapter';
 
-const { AWS_REGION, DATABASE_URL, APP_SYNC_API_URL, SERVICE_CATALOG_NOTIFICATION_ARN } =
-    process.env;
-const logger = new Logger();
-const userRepository = new UserDatabaseRepository(DATABASE_URL);
-const instanceRepository = new InstanceDatabaseRepository(DATABASE_URL);
-const virtualizationGateway = new AwsVirtualizationGateway(AWS_REGION);
-const catalogGateway = new AwsCatalogGateway(AWS_REGION, SERVICE_CATALOG_NOTIFICATION_ARN);
-const notificationPublisher = new AppsyncNotificationPublisher(AWS_REGION, APP_SYNC_API_URL);
-const linkProvisionedProduct = new LinkProvisionedProduct(
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    API_EVENT_BUS_NAME,
+    APP_SYNC_API_URL,
+} = process.env;
+const logger = new AWSLogger();
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
+const eventPublisher = new AWSEventPublisher(
+    logger,
+    AWS_REGION,
+    API_EVENT_BUS_NAME,
+    APP_SYNC_API_URL,
+);
+const linkLaunchedInstance = new LinkLaunchedInstance(
     logger,
     userRepository,
     instanceRepository,
     virtualizationGateway,
-    catalogGateway,
-    notificationPublisher,
+    eventPublisher,
 );
 
 /**
@@ -41,31 +62,34 @@ const linkProvisionedProduct = new LinkProvisionedProduct(
  * StackName='SC-154317023037-pp-kka5k6yluzrdg'
  * ClientRequestToken='b6ef1b25-a648-44b6-b426-1b6100e7d903'
  */
-export const handler = HandlerAdapter.create(logger).adapt<SNSHandler>(async (event) => {
-    const messages = event.Records.map((record) => {
-        const parserTemplate = {
-            stackName: `StackName='(.*)'`,
-            resourceStatus: `ResourceStatus='(.*)'`,
-            resourceType: `ResourceType='(.*)'`,
-        };
+export const handler = LambdaHandlerAdapter.adaptSNS(
+    async (event) => {
+        const messages = event.Records.map((record) => {
+            const parserTemplate = {
+                stackName: `StackName='(.*)'`,
+                resourceStatus: `ResourceStatus='(.*)'`,
+                resourceType: `ResourceType='(.*)'`,
+            };
 
-        Object.entries(parserTemplate).forEach(([key, rawRegex]) => {
-            const regex = new RegExp(rawRegex);
-            const match = record.Sns.Message.match(regex);
-            parserTemplate[key as keyof typeof parserTemplate] = match ? match[1] : '';
+            Object.entries(parserTemplate).forEach(([key, rawRegex]) => {
+                const regex = new RegExp(rawRegex);
+                const match = record.Sns.Message.match(regex);
+                parserTemplate[key as keyof typeof parserTemplate] = match ? match[1] : '';
+            });
+
+            return parserTemplate;
         });
 
-        return parserTemplate;
-    });
-
-    await Promise.allSettled(
-        messages.map(async ({ resourceStatus, resourceType, stackName }) => {
-            if (
-                resourceType === 'AWS::CloudFormation::Stack' &&
-                resourceStatus === 'CREATE_COMPLETE'
-            ) {
-                await linkProvisionedProduct.execute({ provisionedProductStackName: stackName });
-            }
-        }),
-    );
-});
+        await Promise.allSettled(
+            messages.map(async ({ resourceStatus, resourceType, stackName }) => {
+                if (
+                    resourceType === 'AWS::CloudFormation::Stack' &&
+                    resourceStatus === 'CREATE_COMPLETE'
+                ) {
+                    await linkLaunchedInstance.execute({ stackName });
+                }
+            }),
+        );
+    },
+    { logger },
+);

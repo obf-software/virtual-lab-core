@@ -28,7 +28,7 @@ export class User {
     toJSON = () => this.data;
     getData = () => this.data;
 
-    static create(props: { username: string; name: string; role: 'PENDING' | 'USER' }): User {
+    static create(props: { username: string; role: 'PENDING' | 'USER' }): User {
         const dateNow = dayjs.utc().toDate();
         const data: UserData = {
             id: null,

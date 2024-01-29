@@ -1,30 +1,35 @@
-import { Logger } from '@aws-lambda-powertools/logger';
-import { PreTokenGenerationTriggerEvent, PreTokenGenerationTriggerHandler } from 'aws-lambda';
-import { UserDatabaseRepository } from '../../infrastructure/user-database-repository';
+import { PreTokenGenerationTriggerHandler } from 'aws-lambda';
 import { SignInUser } from '../../application/use-cases/user/sign-in-user';
-import { HandlerAdapter } from '../../infrastructure/lambda/handler-adapter';
+import { AWSLogger } from '../../infrastructure/logger/aws-logger';
+import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
+import { AWSConfigVault } from '../../infrastructure/config-vault/aws-config-vault';
+import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lambaLayerConfigVault';
+import { LambdaHandlerAdapter } from '../../infrastructure/lambda-handler-adapter';
 
-const { DATABASE_URL } = process.env;
-const logger = new Logger();
-const userRepository = new UserDatabaseRepository(DATABASE_URL);
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
+    process.env;
+const logger = new AWSLogger();
+const configVault =
+    IS_LOCAL === 'true'
+        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const signInUser = new SignInUser(logger, userRepository);
 
-export const handler = HandlerAdapter.create(logger).adapt<PreTokenGenerationTriggerHandler>(
+export const handler = LambdaHandlerAdapter.adaptCustom<PreTokenGenerationTriggerHandler>(
     async (event) => {
-        const output = await signInUser.execute({ username: event.userName });
+        const user = await signInUser.execute({ username: event.userName });
 
-        const responseEvent: PreTokenGenerationTriggerEvent = {
-            ...event,
-            response: {
-                claimsOverrideDetails: {
-                    claimsToAddOrOverride: {
-                        'custom:role': output.getData().role,
-                        'custom:userId': output.id.toString(),
-                    },
+        const outputEvent = event;
+        outputEvent.response = {
+            claimsOverrideDetails: {
+                claimsToAddOrOverride: {
+                    'custom:role': user.getData().role,
+                    'custom:userId': user.id,
                 },
             },
         };
-
-        return responseEvent;
+        return outputEvent;
     },
+    { logger },
 );

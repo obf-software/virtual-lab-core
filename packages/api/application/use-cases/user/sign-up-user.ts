@@ -7,7 +7,6 @@ import { Errors } from '../../../domain/dtos/errors';
 export const signUpUserInputSchema = z
     .object({
         username: z.string(),
-        name: z.string().optional(),
         selfRegister: z.boolean().optional(),
     })
     .strict();
@@ -33,7 +32,6 @@ export class SignUpUser {
 
         const newUser = User.create({
             username: validInput.username,
-            name: validInput.name ?? validInput.username,
             role: validInput.selfRegister ? 'PENDING' : 'USER',
         });
         newUser.id = await this.userRepository.save(newUser);
