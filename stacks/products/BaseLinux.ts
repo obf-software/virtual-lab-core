@@ -72,6 +72,14 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
             constraintDescription: 'Must be a valid EC2 instance type.',
         });
 
+        const enableHibernationParam = new cdk.CfnParameter(this, `${id}-EnableHibernationParam`, {
+            type: 'String',
+            description: 'Enable Hibernation',
+            constraintDescription: 'Must be a valid boolean.',
+            allowedValues: ['true', 'false'],
+            default: 'false',
+        });
+
         const securityGroup = new ec2.SecurityGroup(this, `${id}-SecurityGroup`, {
             vpc,
             allowAllIpv6Outbound: true,
@@ -119,6 +127,10 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
                 subnetType: ec2.SubnetType.PUBLIC,
             },
         });
+
+        // instance.instance.hibernationOptions = {
+        //     configured: true,
+        // }; @todo enable hibernation
 
         new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {
             value: instance.instanceId,

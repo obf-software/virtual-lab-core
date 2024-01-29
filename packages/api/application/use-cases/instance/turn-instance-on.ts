@@ -5,6 +5,7 @@ import { Logger } from '../../logger';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { InstanceState } from '../../../domain/dtos/instance-state';
 
 export const turnInstanceOnInput = z
     .object({
@@ -14,7 +15,9 @@ export const turnInstanceOnInput = z
     .strict();
 export type TurnInstanceOnInput = z.infer<typeof turnInstanceOnInput>;
 
-export type TurnInstanceOnOutput = void;
+export interface TurnInstanceOnOutput {
+    state: InstanceState;
+}
 
 export class TurnInstanceOn {
     constructor(
@@ -55,6 +58,7 @@ export class TurnInstanceOn {
             throw Errors.businessRuleViolation('Instance is not ready to turn on');
         }
 
-        await this.virtualizationGateway.startInstance(virtualId);
+        const state = await this.virtualizationGateway.startInstance(virtualId);
+        return { state };
     };
 }

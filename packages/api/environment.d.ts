@@ -10,8 +10,13 @@ namespace NodeJS {
         APP_SYNC_API_URL: string;
         API_EVENT_BUS_NAME: string;
         API_SNS_TOPIC_ARN: string;
+
+        /**
+         * SSM Parameter Store
+         */
         DATABASE_URL_PARAMETER_NAME: string;
         INSTANCE_PASSWORD_PARAMETER_NAME: string;
         GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: string;
+        SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME: string;
     }
 }

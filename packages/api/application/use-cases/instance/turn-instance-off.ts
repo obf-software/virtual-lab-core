@@ -6,6 +6,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { UserRepository } from '../../user-repository';
+import { InstanceState } from '../../../domain/dtos/instance-state';
 
 export const turnInstanceOffInputSchema = z
     .object({
@@ -15,7 +16,9 @@ export const turnInstanceOffInputSchema = z
     .strict();
 export type TurnInstanceOffInput = z.infer<typeof turnInstanceOffInputSchema>;
 
-export type TurnInstanceOffOutput = void;
+export interface TurnInstanceOffOutput {
+    state: InstanceState;
+}
 
 export class TurnInstanceOff {
     constructor(
@@ -57,10 +60,12 @@ export class TurnInstanceOff {
             throw Errors.businessRuleViolation('Instance is not ready to turn off');
         }
 
-        await this.virtualizationGateway.stopInstance(
+        const state = await this.virtualizationGateway.stopInstance(
             virtualId,
             false, // @todo try getting from instance data if the instance has support to it
             false,
         );
+
+        return { state };
     };
 }

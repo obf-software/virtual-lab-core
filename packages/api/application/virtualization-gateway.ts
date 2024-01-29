@@ -10,8 +10,8 @@ export interface VirtualizationGateway {
     getInstanceDetailedInfo(virtualId: string): Promise<VirtualInstanceDetailedInfo>;
     listInstancesStates(virtualIds: string[]): Promise<Record<string, InstanceState>>;
     getInstanceState(virtualId: string): Promise<InstanceState>;
-    startInstance(virtualId: string): Promise<void>;
-    stopInstance(virtualId: string, hibernate: boolean, force: boolean): Promise<void>;
+    startInstance(virtualId: string): Promise<InstanceState>;
+    stopInstance(virtualId: string, hibernate: boolean, force: boolean): Promise<InstanceState>;
     rebootInstance(virtualId: string): Promise<void>;
     listInstanceTemplates(): Promise<VirtualInstanceTemplate[]>;
     getInstanceTemplate(instanceTemplateId: string): Promise<VirtualInstanceTemplate>;
