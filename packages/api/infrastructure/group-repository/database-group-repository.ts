@@ -59,7 +59,9 @@ export class DatabaseGroupRepository implements GroupRepository {
         const newGroup = await client
             .db()
             .collection<GroupDbModel>('groups')
-            .insertOne(DatabaseGroupRepository.mapGroupEntityToDbModel(group));
+            .insertOne(DatabaseGroupRepository.mapGroupEntityToDbModel(group), {
+                ignoreUndefined: true,
+            });
         await client.close();
         return newGroup.insertedId.toJSON();
     };

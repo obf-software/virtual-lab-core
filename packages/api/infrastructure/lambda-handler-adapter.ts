@@ -30,7 +30,10 @@ export class LambdaHandlerAdapter {
         return LambdaHandlerAdapter.adapt(handler, [
             injectLambdaContext(config.logger, { logEvent: !isLocal }),
             errorLogger({
-                logger: (error: Error) => config.logger.error(error.message, { error }),
+                logger: (error: unknown) =>
+                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
+                        error,
+                    }),
             }),
         ]);
     };
@@ -44,7 +47,10 @@ export class LambdaHandlerAdapter {
         return LambdaHandlerAdapter.adapt(handler, [
             injectLambdaContext(config.logger, { logEvent: !isLocal }),
             errorLogger({
-                logger: (error: Error) => config.logger.error(error.message, { error }),
+                logger: (error: unknown) =>
+                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
+                        error,
+                    }),
             }),
         ]);
     };
@@ -59,7 +65,10 @@ export class LambdaHandlerAdapter {
             httpCors(),
             injectLambdaContext(config.logger, { logEvent: !isLocal }),
             httpErrorHandler({
-                logger: (error: Error) => config.logger.error(error.message, { error }),
+                logger: (error: unknown) =>
+                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
+                        error,
+                    }),
             }),
         ]);
     };
@@ -70,7 +79,10 @@ export class LambdaHandlerAdapter {
         return LambdaHandlerAdapter.adapt(handler, [
             injectLambdaContext(config.logger, { logEvent: !isLocal }),
             errorLogger({
-                logger: (error: Error) => config.logger.error(error.message, { error }),
+                logger: (error: unknown) =>
+                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
+                        error,
+                    }),
             }),
         ]);
     };

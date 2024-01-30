@@ -55,7 +55,9 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const newInstance = await client
             .db()
             .collection<InstanceDbModel>('instances')
-            .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance));
+            .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance), {
+                ignoreUndefined: true,
+            });
         await client.close();
         return newInstance.insertedId.toJSON();
     };

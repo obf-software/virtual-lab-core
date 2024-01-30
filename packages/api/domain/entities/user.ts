@@ -52,8 +52,9 @@ export class User {
 
     static restore(props: UserData & { id: string }): User {
         const validation = userDataSchema.safeParse(props);
-        if (!validation.success || props.id === null)
+        if (!validation.success || props.id === null) {
             throw Errors.internalError('Failed to restore user');
+        }
         return new User(validation.data);
     }
 

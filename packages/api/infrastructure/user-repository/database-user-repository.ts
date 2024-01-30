@@ -55,7 +55,9 @@ export class DatabaseUserRepository implements UserRepository {
         const newUser = await client
             .db()
             .collection<UserDbModel>('users')
-            .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user));
+            .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user), {
+                ignoreUndefined: true,
+            });
         await client.close();
         return newUser.insertedId.toJSON();
     };
