@@ -9,6 +9,8 @@ amazon-linux-extras install mate-desktop1.x
 echo 'PREFERRED=/usr/bin/mate-session' > /etc/sysconfig/desktop
 yum -y install tigervnc-server
 yum -y install expect
+yum -y install https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+systemctl start amazon-ssm-agent
 
 mkdir -p /home/ec2-user/.vnc
 echo $INSTANCE_PASSWORD | vncpasswd -f > /home/ec2-user/.vnc/passwd

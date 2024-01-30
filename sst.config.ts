@@ -5,6 +5,7 @@ import { Client } from './stacks/Client';
 import { Config } from './stacks/Config';
 import { AppSyncApi } from './stacks/AppSyncApi';
 import { ServiceCatalog } from './stacks/ServiceCatalog';
+import { LambdaLayers } from './stacks/LambdaLayers';
 
 export default {
     config() {
@@ -14,11 +15,12 @@ export default {
         };
     },
     stacks(app) {
+        app.stack(LambdaLayers);
         app.stack(Config);
         app.stack(Auth);
         app.stack(AppSyncApi);
         app.stack(Api);
-        app.stack(Client);
         app.stack(ServiceCatalog);
+        app.stack(Client);
     },
 } satisfies SSTConfig;

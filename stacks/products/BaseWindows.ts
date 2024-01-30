@@ -64,16 +64,22 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             serverSideEncryptionAwsKmsKeyId: props.serverSideEncryptionAwsKmsKeyId,
         });
 
-        const vpc = ec2.Vpc.fromLookup(scope, `${id}-Vpc`, { isDefault: true });
-
         const instanceTypeParam = new cdk.CfnParameter(this, `${id}-InstanceTypeParam`, {
             type: 'String',
             description: 'Instance Type',
             constraintDescription: 'Must be a valid EC2 instance type.',
         });
 
+        const enableHibernationParam = new cdk.CfnParameter(this, `${id}-EnableHibernationParam`, {
+            type: 'String',
+            description: 'Enable Hibernation',
+            constraintDescription: 'Must be a valid boolean.',
+            allowedValues: ['true', 'false'],
+            default: 'false',
+        });
+
         const securityGroup = new ec2.SecurityGroup(this, `${id}-SecurityGroup`, {
-            vpc,
+            vpc: props.vpc,
             allowAllIpv6Outbound: true,
             allowAllOutbound: true,
         });
@@ -116,6 +122,8 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             vpcSubnets: {
                 subnetType: ec2.SubnetType.PUBLIC,
             },
+            requireImdsv2: true,
+            ssmSessionPermissions: true,
         });
 
         new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {

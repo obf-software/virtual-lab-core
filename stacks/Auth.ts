@@ -10,18 +10,20 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
 
     const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
         handler: 'packages/api/interfaces/events/on-pre-token-generation-trigger.handler',
-        runtime: 'nodejs18.x',
         environment: {
-            DATABASE_URL,
+            SHARED_SECRET_NAME: 'not-used-yet',
+            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
         },
+        permissions: ['ssm:*', 'secretsmanager:*'],
     });
 
     const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
         handler: 'packages/api/interfaces/events/on-post-confirmation-trigger.handler',
-        runtime: 'nodejs18.x',
         environment: {
-            DATABASE_URL,
+            SHARED_SECRET_NAME: 'not-used-yet',
+            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
         },
+        permissions: ['ssm:*', 'secretsmanager:*'],
     });
 
     const userPool = new cognito.UserPool(stack, 'UserPool', {
@@ -119,6 +121,5 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         userPool,
         userPoolClient,
         userPoolDomain,
-        cognito: cognitoAuth,
     };
 };

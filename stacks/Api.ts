@@ -56,9 +56,8 @@ export const Api = ({ stack }: sst.StackContext) => {
             function: {
                 permissions: [
                     appSyncApi,
-                    'ssm:GetParameter',
-                    'ssm:GetParameters',
-                    'secretsmanager:GetSecretValue',
+                    'ssm:*',
+                    'secretsmanager:*',
                     'cloudformation:*',
                     'servicecatalog:*',
                     'ec2:*',
@@ -67,96 +66,19 @@ export const Api = ({ stack }: sst.StackContext) => {
                     'sns:*',
                 ],
                 environment: {
-                    GUACAMOLE_CYPHER_KEY_SSM_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
-                    INSTANCE_PASSWORD_SSM_PARAMETER_NAME: ssmParameters.instancePassword.name,
-                    DATABASE_URL_SSM_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-                    API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+                    SHARED_SECRET_NAME: 'not-used-yet',
                     APP_SYNC_API_URL: appSyncApi.url,
+                    API_EVENT_BUS_NAME: apiEventBus.eventBusName,
+                    API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+
+                    DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                    INSTANCE_PASSWORD_PARAMETER_NAME: ssmParameters.instancePassword.name,
+                    GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
+                    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME:
+                        ssmParameters.serviceCatalogPortfolioId.name,
                 },
                 layers: [paramsAndSecretsExtension],
                 role: apiLambdaDefaultRole,
-            },
-        },
-        routes: {
-            // Group module
-            'POST /api/v1/groups': {
-                function: 'packages/api/interfaces/api/group/create-group.handler',
-            },
-            'DELETE /api/v1/groups/{groupId}': {
-                function: 'packages/api/interfaces/api/group/delete-group.handler',
-            },
-            'POST /api/v1/groups/{groupId}/link-users': {
-                function: 'packages/api/interfaces/api/group/link-users-to-group.handler',
-            },
-            'GET /api/v1/groups': {
-                function: 'packages/api/interfaces/api/group/list-groups.handler',
-            },
-            'GET /api/v1/users/{userId}/groups': {
-                function: 'packages/api/interfaces/api/group/list-user-groups.handler',
-            },
-            'GET /api/v1/search-groups': {
-                function: 'packages/api/interfaces/api/group/search-groups.handler',
-            },
-            'POST /api/v1/groups/{groupId}/unlink-users': {
-                function: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
-            },
-            'PATCH /api/v1/groups/{groupId}': {
-                function: 'packages/api/interfaces/api/group/update-group.handler',
-            },
-
-            // Instance module
-            'DELETE /api/v1/users/{userId}/instances/{instanceId}': {
-                function: 'packages/api/interfaces/api/instance/delete-instance.handler',
-            },
-            'GET /api/v1/users/{userId}/instances/{instanceId}/connection': {
-                function: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
-            },
-            'GET /api/v1/users/{userId}/instances': {
-                function: 'packages/api/interfaces/api/instance/list-user-instances.handler',
-            },
-            'POST /api/v1/users/{userId}/instances/{instanceId}/reboot': {
-                function: 'packages/api/interfaces/api/instance/reboot-instance.handler',
-            },
-            'POST /api/v1/users/{userId}/instances/{instanceId}/turn-off': {
-                function: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
-            },
-            'POST /api/v1/users/{userId}/instances/{instanceId}/turn-on': {
-                function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
-            },
-
-            // Product module
-            'GET /api/v1/products/{productId}/provisioning-parameters': {
-                function:
-                    'packages/api/interfaces/api/product/get-product-provisioning-parameters.handler',
-            },
-            'GET /api/v1/portfolios': {
-                function: 'packages/api/interfaces/api/product/list-portfolios.handler',
-            },
-            'GET /api/v1/users/{userId}/products': {
-                function: 'packages/api/interfaces/api/product/list-user-products.handler',
-            },
-            'POST /api/v1/products/{productId}/provision': {
-                function: 'packages/api/interfaces/api/product/provision-product.handler',
-            },
-
-            // User module
-            'GET /api/v1/users/{userId}': {
-                function: 'packages/api/interfaces/api/user/get-user.handler',
-            },
-            'GET /api/v1/groups/{groupId}/users': {
-                function: 'packages/api/interfaces/api/user/list-group-users.handler',
-            },
-            'GET /api/v1/users': {
-                function: 'packages/api/interfaces/api/user/list-users.handler',
-            },
-            'GET /api/v1/search-users': {
-                function: 'packages/api/interfaces/api/user/search-users.handler',
-            },
-            'PATCH /api/v1/users/{userId}/quotas': {
-                function: 'packages/api/interfaces/api/user/update-user-quotas.handler',
-            },
-            'PATCH /api/v1/users/{userId}/role': {
-                function: 'packages/api/interfaces/api/user/update-user-role.handler',
             },
         },
     });
@@ -164,22 +86,74 @@ export const Api = ({ stack }: sst.StackContext) => {
     /**
      * Group module
      */
-    api.addRoutes(stack, {});
+    api.addRoutes(stack, {
+        'POST /api/v1/groups': {
+            function: 'packages/api/interfaces/api/group/create-group.handler',
+        },
+        'DELETE /api/v1/groups/{groupId}': {
+            function: 'packages/api/interfaces/api/group/delete-group.handler',
+        },
+        'POST /api/v1/groups/{groupId}/link-users': {
+            function: 'packages/api/interfaces/api/group/link-users-to-group.handler',
+        },
+        'GET /api/v1/groups': {
+            function: 'packages/api/interfaces/api/group/list-groups.handler',
+        },
+        'POST /api/v1/groups/{groupId}/unlink-users': {
+            function: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
+        },
+        'PATCH /api/v1/groups/{groupId}': {
+            function: 'packages/api/interfaces/api/group/update-group.handler',
+        },
+    });
 
     /**
      * Instance module
      */
-    api.addRoutes(stack, {});
-
-    /**
-     * Product module
-     */
-    api.addRoutes(stack, {});
+    api.addRoutes(stack, {
+        'DELETE /api/v1/instances/{instanceId}': {
+            function: 'packages/api/interfaces/api/instance/delete-instance.handler',
+        },
+        'GET /api/v1/instances/{instanceId}/connection': {
+            function: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
+        },
+        'POST /api/v1/instances': {
+            function: 'packages/api/interfaces/api/instance/launch-instance.handler',
+        },
+        'GET /api/v1/instance-templates': {
+            function: 'packages/api/interfaces/api/instance/list-instance-templates.handler',
+        },
+        'GET /api/v1/instances': {
+            function: 'packages/api/interfaces/api/instance/list-instances.handler',
+        },
+        'POST /api/v1/instances/{instanceId}/reboot': {
+            function: 'packages/api/interfaces/api/instance/reboot-instance.handler',
+        },
+        'POST /api/v1/instances/{instanceId}/turn-off': {
+            function: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
+        },
+        'POST /api/v1/instances/{instanceId}/turn-on': {
+            function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
+        },
+    });
 
     /**
      * User module
      */
-    api.addRoutes(stack, {});
+    api.addRoutes(stack, {
+        'GET /api/v1/users/{userId}': {
+            function: 'packages/api/interfaces/api/user/get-user.handler',
+        },
+        'GET /api/v1/users': {
+            function: 'packages/api/interfaces/api/user/list-users.handler',
+        },
+        'PATCH /api/v1/users/{userId}/quotas': {
+            function: 'packages/api/interfaces/api/user/update-user-quotas.handler',
+        },
+        'PATCH /api/v1/users/{userId}/role': {
+            function: 'packages/api/interfaces/api/user/update-user-role.handler',
+        },
+    });
 
     apiEventBus.addRules(stack, {
         onEc2InstanceStateChange: {
@@ -192,10 +166,12 @@ export const Api = ({ stack }: sst.StackContext) => {
                     type: 'function',
                     function: {
                         handler:
-                            'packages/api/interfaces/events/on-ec2-instance-state-change.handler',
-                        permissions: ['ec2:*', 'appsync:GraphQL'],
+                            'packages/api/interfaces/events/on-ec2-instance-state-change-notification.handler',
+                        permissions: [appSyncApi, 'ssm:*', 'secretsmanager:*', 'events:*'],
                         environment: {
-                            DATABASE_URL_SSM_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                            SHARED_SECRET_NAME: 'not-used-yet',
+                            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                            API_EVENT_BUS_NAME: apiEventBus.eventBusName,
                             APP_SYNC_API_URL: appSyncApi.url,
                         },
                     },

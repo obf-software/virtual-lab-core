@@ -64,8 +64,6 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
             serverSideEncryptionAwsKmsKeyId: props.serverSideEncryptionAwsKmsKeyId,
         });
 
-        const vpc = ec2.Vpc.fromLookup(scope, `${id}-Vpc`, { isDefault: true });
-
         const instanceTypeParam = new cdk.CfnParameter(this, `${id}-InstanceTypeParam`, {
             type: 'String',
             description: 'Instance Type',
@@ -81,7 +79,7 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
         });
 
         const securityGroup = new ec2.SecurityGroup(this, `${id}-SecurityGroup`, {
-            vpc,
+            vpc: props.vpc,
             allowAllIpv6Outbound: true,
             allowAllOutbound: true,
         });
@@ -126,11 +124,14 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
             vpcSubnets: {
                 subnetType: ec2.SubnetType.PUBLIC,
             },
+            requireImdsv2: true,
+            ssmSessionPermissions: true,
         });
 
+        //@todo enable hibernation
         // instance.instance.hibernationOptions = {
         //     configured: true,
-        // }; @todo enable hibernation
+        // };
 
         new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {
             value: instance.instanceId,
