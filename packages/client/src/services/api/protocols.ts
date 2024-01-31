@@ -1,6 +1,16 @@
 export type UrlPath = `/${string}`;
 
-// TRANSACTIONAL TYPES
+interface SuccessResponse<T> {
+    success: true;
+    data: T;
+}
+
+interface ErrorResponse {
+    success: false;
+    error: string;
+}
+
+export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
 
 export interface SeekPaginated<T> {
     data: T[];
@@ -9,57 +19,36 @@ export interface SeekPaginated<T> {
     numberOfResults: number;
 }
 
-export interface SeekPaginationInput {
-    resultsPerPage: number;
-    page: number;
-}
+export type Role = 'NONE' | 'PENDING' | 'USER' | 'ADMIN';
 
-interface SuccessResponse<T> {
-    data: T;
-    error: undefined;
-}
+export type InstanceConnectionType = 'RDP' | 'VNC';
 
-interface ErrorResponse {
-    data: undefined;
-    error: string;
-}
-
-export type ApiResponse<T> = SuccessResponse<T> | ErrorResponse;
-
-export enum Role {
-    NONE = 'NONE',
-    PENDING = 'PENDING',
-    USER = 'USER',
-    ADMIN = 'ADMIN',
-}
-
-export enum InstanceConnectionType {
-    RDP = 'RDP',
-    VNC = 'VNC',
-}
-
-export enum VirtualInstanceState {
-    PENDING = 'PENDING',
-    RUNNING = 'RUNNING',
-    STOPPING = 'STOPPING',
-    STOPPED = 'STOPPED',
-    SHUTTING_DOWN = 'SHUTTING_DOWN',
-    TERMINATED = 'TERMINATED',
-}
+export type VirtualInstanceState =
+    | 'PENDING'
+    | 'RUNNING'
+    | 'STOPPING'
+    | 'STOPPED'
+    | 'SHUTTING_DOWN'
+    | 'TERMINATED';
 
 export interface User {
-    id: number;
+    id: string;
     username: string;
-    role: keyof typeof Role;
+    role: Role;
     createdAt: string;
     updatedAt: string;
-    lastLoginAt: string | null;
-    maxInstances: number;
+    lastLoginAt?: string;
+    groupIds: string[];
+    quotas: {
+        maxInstances: number;
+        allowedInstanceTypes: string[];
+        canLaunchInstanceWithHibernation: boolean;
+    };
 }
 
 export interface Group {
-    id: number;
-    portfolioId: string;
+    id: string;
+    createdBy: string;
     name: string;
     description: string;
     createdAt: string;
@@ -67,40 +56,26 @@ export interface Group {
 }
 
 export interface Instance {
-    id: number;
-    userId: number;
-    logicalId: string | null;
-    provisionToken: string;
+    id: string;
+    virtualId?: string;
+    ownerId: string;
+    launchToken: string;
     name: string;
     description: string;
-    connectionType: keyof typeof InstanceConnectionType | null;
-    platform: string | null;
-    distribution: string | null;
-    instanceType: string | null;
-    cpuCores: string | null;
-    memoryInGb: string | null;
-    storageInGb: string | null;
+    connectionType?: InstanceConnectionType;
+    platform?: string;
+    distribution?: string;
+    instanceType?: string;
+    cpuCores?: string;
+    memoryInGb?: string;
+    storageInGb?: string;
     createdAt: string;
     updatedAt: string;
-    lastConnectionAt: string | null;
-    state: keyof typeof VirtualInstanceState | null;
+    lastConnectionAt?: string;
+    state?: VirtualInstanceState;
 }
 
-export interface ProductProvisioningParameter {
-    key: string;
-    label: string;
-    hidden: boolean;
-    allowedValues?: string[];
-    defaultValue?: string;
-}
-
-export interface Product {
-    id: string;
-    name: string;
-    description: string;
-}
-
-export interface Portfolio {
+export interface InstanceTemplate {
     id: string;
     name: string;
     description: string;

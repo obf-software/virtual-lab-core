@@ -1,17 +1,16 @@
-import { Auth } from 'aws-amplify';
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
+import { fetchAuthSession } from 'aws-amplify/auth';
 import {
     ApiResponse,
     Group,
     Instance,
     InstanceConnection,
-    Portfolio,
-    Product,
-    ProductProvisioningParameter,
+    InstanceTemplate,
     Role,
     SeekPaginated,
-    SeekPaginationInput,
     UrlPath,
     User,
+    VirtualInstanceState,
 } from './protocols';
 import { getErrorMessage } from '../helpers';
 
@@ -34,8 +33,8 @@ const executeRequest = async <T>(props: {
             });
         }
 
-        const session = await Auth.currentSession();
-        const idToken = session.getIdToken().getJwtToken();
+        const { tokens } = await fetchAuthSession();
+        const idToken = tokens?.idToken?.toString();
 
         const response = await fetch(url, {
             method: props.method,
@@ -49,7 +48,7 @@ const executeRequest = async <T>(props: {
         if (response.ok === false) {
             const reason = await response.text();
             console.log(`API ${response.url} returned "${response.status}" "${reason}"`);
-            return { error: reason, data: undefined };
+            return { success: false, error: reason };
         }
 
         let data = undefined;
@@ -62,185 +61,178 @@ const executeRequest = async <T>(props: {
         }
 
         return {
+            success: true,
             data,
-            error: undefined,
         };
     } catch (error) {
         const reason = getErrorMessage(error);
         console.log(`Error while fetching API data: ${reason}`);
-        return { error: reason, data: undefined };
+        return { success: false, error: reason };
     }
 };
 
 // GROUP MODULE
 
-export const createGroup = async (data: Pick<Group, 'name' | 'description' | 'portfolioId'>) =>
+export const createGroup = async (props: { name: string; description: string }) =>
     executeRequest<Group>({
         path: '/api/v1/groups',
         method: 'POST',
-        body: data,
+        body: props,
     });
 
-export const deleteGroup = async (groupId: number) =>
+export const deleteGroup = async (props: { groupId: string }) =>
     executeRequest<void>({
-        path: `/api/v1/groups/${groupId}`,
+        path: `/api/v1/groups/${props.groupId}`,
         method: 'DELETE',
     });
 
-export const linkUsersToGroup = async (groupId: number, userIds: number[]) =>
+export const linkUsersToGroup = async (props: { groupId: number; userIds: number[] }) =>
     executeRequest<void>({
-        path: `/api/v1/groups/${groupId}/link-users`,
+        path: `/api/v1/groups/${props.groupId}/link-users`,
         method: 'POST',
-        body: { userIds },
+        body: { userIds: props.userIds },
     });
 
-export const listGroups = async (pagination: SeekPaginationInput) =>
+export const listGroups = async (props: {
+    orderBy: 'creationDate' | 'lastUpdate' | 'name';
+    order: 'asc' | 'desc';
+    resultsPerPage: number;
+    page: number;
+    createdBy?: string;
+    userId?: string;
+    textQuery?: string;
+}) =>
     executeRequest<SeekPaginated<Group>>({
         path: '/api/v1/groups',
         method: 'GET',
-        queryParams: { ...pagination },
+        queryParams: props,
     });
 
-export const listUserGroups = async (userId: number | 'me', pagination: SeekPaginationInput) =>
-    executeRequest<SeekPaginated<Group>>({
-        path: `/api/v1/users/${userId}/groups`,
-        method: 'GET',
-        queryParams: { ...pagination },
-    });
-
-export const searchGroups = async (textQuery: string) =>
-    executeRequest<Group[]>({
-        path: `/api/v1/search-groups`,
-        method: 'GET',
-        queryParams: { textQuery },
-    });
-
-export const unlinkUsersFromGroup = async (groupId: number, userIds: number[]) =>
+export const unlinkUsersFromGroup = async (props: { groupId: number; userIds: number[] }) =>
     executeRequest<void>({
-        path: `/api/v1/groups/${groupId}/unlink-users`,
+        path: `/api/v1/groups/${props.groupId}/unlink-users`,
         method: 'POST',
-        body: { userIds },
+        body: { userIds: props.userIds },
     });
 
-export const updateGroup = async (
-    groupId: number,
-    data: Partial<Pick<Group, 'name' | 'description'>>,
-) =>
+export const updateGroup = async (props: {
+    groupId: string;
+    name?: string;
+    description?: string;
+}) =>
     executeRequest<Group>({
-        path: `/api/v1/groups/${groupId}`,
+        path: `/api/v1/groups/${props.groupId}`,
         method: 'PATCH',
-        body: { ...data },
+        body: {
+            name: props.name,
+            description: props.description,
+        },
     });
 
 // INSTANCE MODULE
 
-export const deleteInstance = async (userId: number | 'me', instanceId: number) =>
+export const deleteInstance = async (props: { instanceId: string }) =>
     executeRequest<void>({
-        path: `/api/v1/users/${userId}/instances/${instanceId}`,
+        path: `/api/v1/instances/${props.instanceId}`,
         method: 'DELETE',
     });
 
-export const getInstanceConnection = async (userId: number | 'me', instanceId: number) =>
+export const getInstanceConnection = async (props: { instanceId: number }) =>
     executeRequest<InstanceConnection>({
-        path: `/api/v1/users/${userId}/instances/${instanceId}/connection`,
+        path: `/api/v1/instances/${props.instanceId}/connection`,
         method: 'GET',
     });
 
-export const listUserInstances = async (userId: number | 'me', pagination: SeekPaginationInput) =>
-    executeRequest<SeekPaginated<Instance>>({
-        path: `/api/v1/users/${userId}/instances`,
-        method: 'GET',
-        queryParams: { ...pagination },
-    });
-
-export const rebootInstance = async (userId: number | 'me', instanceId: number) =>
-    executeRequest<void>({
-        path: `/api/v1/users/${userId}/instances/${instanceId}/reboot`,
-        method: 'POST',
-    });
-
-export const turnInstanceOff = async (userId: number | 'me', instanceId: number) =>
-    executeRequest<void>({
-        path: `/api/v1/users/${userId}/instances/${instanceId}/turn-off`,
-        method: 'POST',
-    });
-
-export const turnInstanceOn = async (userId: number | 'me', instanceId: number) =>
-    executeRequest<void>({
-        path: `/api/v1/users/${userId}/instances/${instanceId}/turn-on`,
-        method: 'POST',
-    });
-
-// PRODUCT MODULE
-
-export const getProductProvisioningParameters = async (productId: string) =>
-    executeRequest<ProductProvisioningParameter[]>({
-        path: `/api/v1/products/${productId}/provisioning-parameters`,
-        method: 'GET',
-    });
-
-export const listPortfolios = async () =>
-    executeRequest<Portfolio[]>({
-        path: `/api/v1/portfolios`,
-        method: 'GET',
-    });
-
-export const listUserProducts = async (userId: number | 'me') =>
-    executeRequest<Product[]>({
-        path: `/api/v1/users/${userId}/products`,
-        method: 'GET',
-    });
-
-export const provisionProduct = async (
-    userId: number | 'me',
-    productId: string,
-    parameters: Record<string, string>,
-) =>
+export const launchInstance = async (props: {
+    templateId: string;
+    enableHibernation: boolean;
+    instanceType: string;
+    ownerId: string;
+}) =>
     executeRequest<Instance>({
-        path: `/api/v1/products/${productId}/provision`,
+        path: '/api/v1/instances',
         method: 'POST',
-        body: { userId, parameters },
+        body: props,
+    });
+
+export const listInstanceTemplates = async () =>
+    executeRequest<InstanceTemplate[]>({
+        path: '/api/v1/instance-templates',
+        method: 'GET',
+    });
+
+export const listInstances = async (props: {
+    orderBy: 'creationDate' | 'lastConnectionDate' | 'name';
+    order: 'asc' | 'desc';
+    resultsPerPage: number;
+    page: number;
+    ownerId?: string;
+}) =>
+    executeRequest<SeekPaginated<Instance>>({
+        path: `/api/v1/instances`,
+        method: 'GET',
+        queryParams: props,
+    });
+
+export const rebootInstance = async (props: { instanceId: string }) =>
+    executeRequest<void>({
+        path: `/api/v1/instances/${props.instanceId}/reboot`,
+        method: 'POST',
+    });
+
+export const turnInstanceOff = async (props: { instanceId: number }) =>
+    executeRequest<{ state: VirtualInstanceState }>({
+        path: `/api/v1/instances/${props.instanceId}/turn-off`,
+        method: 'POST',
+    });
+
+export const turnInstanceOn = async (props: { instanceId: number }) =>
+    executeRequest<{ state: VirtualInstanceState }>({
+        path: `/api/v1/instances/${props.instanceId}/turn-on`,
+        method: 'POST',
     });
 
 // USER MODULE
 
-export const getUser = async (userId: number | 'me') =>
+export const getUser = async (props: { userId: string | 'me' }) =>
     executeRequest<User>({
-        path: `/api/v1/users/${userId}`,
+        path: `/api/v1/users/${props.userId}`,
         method: 'GET',
     });
 
-export const listGroupUsers = async (groupId: number, pagination: SeekPaginationInput) =>
-    executeRequest<SeekPaginated<User>>({
-        path: `/api/v1/groups/${groupId}/users`,
-        method: 'GET',
-        queryParams: { ...pagination },
-    });
-
-export const listUsers = async (pagination: SeekPaginationInput) =>
+export const listUsers = async (props: {
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'name';
+    order: 'asc' | 'desc';
+    resultsPerPage: number;
+    page: number;
+    groupId?: string;
+    textQuery?: string;
+}) =>
     executeRequest<SeekPaginated<User>>({
         path: '/api/v1/users',
         method: 'GET',
-        queryParams: { ...pagination },
+        queryParams: props,
     });
 
-export const searchUsers = async (textQuery: string) =>
-    executeRequest<User[]>({
-        path: `/api/v1/search-users`,
-        method: 'GET',
-        queryParams: { textQuery },
-    });
-
-export const updateUserQuotas = async (userId: number | 'me', maxInstances: number) =>
+export const updateUserQuotas = async (props: {
+    userId: string | 'me';
+    maxInstances?: number;
+    allowedInstanceTypes?: string[];
+    canLaunchInstanceWithHibernation?: boolean;
+}) =>
     executeRequest<User>({
-        path: `/api/v1/users/${userId}/quotas`,
+        path: `/api/v1/users/${props.userId}/quotas`,
         method: 'PATCH',
-        body: { maxInstances },
+        body: {
+            maxInstances: props.maxInstances,
+            allowedInstanceTypes: props.allowedInstanceTypes,
+            canLaunchInstanceWithHibernation: props.canLaunchInstanceWithHibernation,
+        },
     });
 
-export const updateUserRole = async (userId: string | number, role: keyof typeof Role) =>
+export const updateUserRole = async (props: { userId: string | 'me'; role: Role }) =>
     executeRequest<User>({
-        path: `/api/v1/users/${userId}/role`,
+        path: `/api/v1/users/${props.userId}/role`,
         method: 'PATCH',
-        body: { role },
+        body: { role: props.role },
     });

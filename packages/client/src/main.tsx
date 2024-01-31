@@ -6,7 +6,7 @@ import { theme } from './styles/theme';
 import { MenuProvider } from './contexts/menu/provider.tsx';
 import { AuthProvider } from './components/auth-provider/index.tsx';
 import { Router } from './router.tsx';
-import { NotificationsProvider } from './contexts/notifications/provider.tsx';
+import { ApplicationEventsProvider } from './contexts/application-events/provider.tsx';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './services/query/service.ts';
 
@@ -15,11 +15,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ChakraProvider theme={theme}>
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
-                    <NotificationsProvider>
+                    <ApplicationEventsProvider>
                         <MenuProvider>
                             <Router />
                         </MenuProvider>
-                    </NotificationsProvider>
+                    </ApplicationEventsProvider>
                 </AuthProvider>
             </QueryClientProvider>
         </ChakraProvider>

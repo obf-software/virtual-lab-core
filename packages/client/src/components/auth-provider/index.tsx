@@ -1,18 +1,26 @@
 import '@aws-amplify/ui-react/styles.css';
-import { Authenticator } from '@aws-amplify/ui-react';
+import { Authenticator, translations } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
 import { Amplify } from 'aws-amplify';
+import { I18n } from 'aws-amplify/utils';
 import { Box, Heading } from '@chakra-ui/react';
 
+I18n.putVocabularies(translations);
+I18n.setLanguage('pt');
+
 Amplify.configure({
-    aws_appsync_graphqlEndpoint: import.meta.env.VITE_APP_APP_SYNC_API_URL,
-    aws_appsync_region: import.meta.env.VITE_APP_AWS_REGION,
-    aws_appsync_authenticationType: 'AMAZON_COGNITO_USER_POOLS',
+    API: {
+        GraphQL: {
+            endpoint: import.meta.env.VITE_APP_APP_SYNC_API_URL,
+            region: import.meta.env.VITE_APP_AWS_REGION,
+            defaultAuthMode: 'userPool',
+        },
+    },
     Auth: {
-        region: import.meta.env.VITE_APP_AWS_REGION,
-        userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
-        userPoolWebClientId: import.meta.env.VITE_APP_AWS_USER_POOL_CLIENT_ID,
-        authenticationFlowType: 'USER_SRP_AUTH',
+        Cognito: {
+            userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
+            userPoolClientId: import.meta.env.VITE_APP_AWS_USER_POOL_CLIENT_ID,
+        },
     },
 });
 
