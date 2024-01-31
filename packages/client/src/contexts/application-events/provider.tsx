@@ -74,7 +74,7 @@ export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ childre
 
     const registerHandler = <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
         type: T,
-        handler: (data: K) => void,
+        handler: (detail: K) => void,
     ): string => {
         const id = v4();
 

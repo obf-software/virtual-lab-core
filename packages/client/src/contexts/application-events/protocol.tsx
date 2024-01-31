@@ -44,7 +44,7 @@ export type ApplicationEventHandler = (data: ApplicationEventSubscriptionData) =
 export interface ApplicationEventsContextData {
     registerHandler: <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
         type: T,
-        handler: (data: K) => void,
+        handler: (detail: K) => void,
     ) => string;
     unregisterHandlerById: (id: string) => void;
     unregisterHandlersByType: (type: ApplicationEventType) => void;

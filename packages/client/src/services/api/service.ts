@@ -137,7 +137,7 @@ export const deleteInstance = async (props: { instanceId: string }) =>
         method: 'DELETE',
     });
 
-export const getInstanceConnection = async (props: { instanceId: number }) =>
+export const getInstanceConnection = async (props: { instanceId: string }) =>
     executeRequest<InstanceConnection>({
         path: `/api/v1/instances/${props.instanceId}/connection`,
         method: 'GET',
@@ -180,13 +180,13 @@ export const rebootInstance = async (props: { instanceId: string }) =>
         method: 'POST',
     });
 
-export const turnInstanceOff = async (props: { instanceId: number }) =>
+export const turnInstanceOff = async (props: { instanceId: string }) =>
     executeRequest<{ state: VirtualInstanceState }>({
         path: `/api/v1/instances/${props.instanceId}/turn-off`,
         method: 'POST',
     });
 
-export const turnInstanceOn = async (props: { instanceId: number }) =>
+export const turnInstanceOn = async (props: { instanceId: string }) =>
     executeRequest<{ state: VirtualInstanceState }>({
         path: `/api/v1/instances/${props.instanceId}/turn-on`,
         method: 'POST',

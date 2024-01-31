@@ -35,14 +35,14 @@ import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as api from '../../../services/api/service';
 import { queryClient } from '../../../services/query/service';
-import { useNotificationsContext } from '../../../contexts/notifications/hook';
+import { useApplicationEventsContext } from '../../../contexts/application-events/hook';
 import { getErrorMessage } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 const instanceStateStyleMap: Record<
-    keyof typeof VirtualInstanceState | 'unknown' | 'provisioning',
+    VirtualInstanceState | 'unknown' | 'provisioning',
     { label: string; colorScheme: string; hasSpinner: boolean }
 > = {
     SHUTTING_DOWN: {
@@ -93,15 +93,15 @@ const instancePlatformStyleMap: Record<
 > = {
     LINUX: {
         label: 'Linux',
-        icon: FaLinux as IconType,
+        icon: FaLinux,
     },
     WINDOWS: {
         label: 'Windows',
-        icon: FaWindows as IconType,
+        icon: FaWindows,
     },
     UNKNOWN: {
         label: 'Desconhecido',
-        icon: FaQuestion as IconType,
+        icon: FaQuestion,
     },
 };
 
@@ -110,7 +110,7 @@ interface InstanceCardProps {
 }
 
 export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
-    const { registerHandler, unregisterHandlerById } = useNotificationsContext();
+    const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
     const [isWaitingForInstanceStateChange, setIsWaitingForInstanceStateChange] =
         React.useState<boolean>(false);
     const moreOptionsDisclosure = useDisclosure();
@@ -119,11 +119,11 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const toast = useToast();
 
     const stateStyle =
-        instance.logicalId === null
+        instance.virtualId === undefined
             ? instanceStateStyleMap.provisioning
             : Object.keys(instanceStateStyleMap).includes(instance.state ?? 'unknown')
-            ? instanceStateStyleMap[instance.state ?? 'unknown']
-            : instanceStateStyleMap.unknown;
+              ? instanceStateStyleMap[instance.state ?? 'unknown']
+              : instanceStateStyleMap.unknown;
 
     let platformStyle = instancePlatformStyleMap.UNKNOWN;
     if (instance.platform?.toLocaleLowerCase().includes('linux')) {
@@ -135,46 +135,46 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     const instanceConnectionQuery = useQuery({
         queryKey: ['instanceConnection', instance.id],
         queryFn: async () => {
-            const response = await api.getInstanceConnection('me', instance.id);
-            if (response.error !== undefined) throw new Error(response.error);
+            const response = await api.getInstanceConnection({ instanceId: instance.id });
+            if (!response.success) throw new Error(response.error);
             return response.data;
         },
-        enabled: instance.logicalId !== null && instance.state === 'RUNNING',
+        enabled: instance.virtualId !== undefined && instance.state === 'RUNNING',
         staleTime: 1000 * 60 * 5,
     });
 
     const turnInstanceOnMutation = useMutation({
         mutationFn: async () => {
-            const response = await api.turnInstanceOn('me', instance.id);
-            if (response.error !== undefined) throw new Error(response.error);
+            const response = await api.turnInstanceOn({ instanceId: instance.id });
+            if (!response.success) throw new Error(response.error);
         },
         retry: 1,
     });
 
     const turnInstanceOffMutation = useMutation({
         mutationFn: async () => {
-            const response = await api.turnInstanceOff('me', instance.id);
-            if (response.error !== undefined) throw new Error(response.error);
+            const response = await api.turnInstanceOff({ instanceId: instance.id });
+            if (!response.success) throw new Error(response.error);
         },
         retry: 1,
     });
 
     const rebootInstanceMutation = useMutation({
         mutationFn: async () => {
-            const response = await api.rebootInstance('me', instance.id);
-            if (response.error !== undefined) throw new Error(response.error);
+            const response = await api.rebootInstance({ instanceId: instance.id });
+            if (!response.success) throw new Error(response.error);
         },
         retry: 1,
     });
 
     const deleteInstanceMutation = useMutation({
         mutationFn: async () => {
-            const response = await api.deleteInstance('me', instance.id);
-            if (response.error !== undefined) throw new Error(response.error);
+            const response = await api.deleteInstance({ instanceId: instance.id });
+            if (!response.success) throw new Error(response.error);
         },
         onSuccess: () => {
             // TODO: Use optimistic updates
-            queryClient.invalidateQueries(['instances']).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['instances'] }).catch(console.error);
         },
         onError: (error) => {
             toast({
@@ -191,10 +191,10 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
     });
 
     const isLoading =
-        rebootInstanceMutation.isLoading ||
-        turnInstanceOffMutation.isLoading ||
-        turnInstanceOnMutation.isLoading ||
-        deleteInstanceMutation.isLoading ||
+        rebootInstanceMutation.isPending ||
+        turnInstanceOffMutation.isPending ||
+        turnInstanceOnMutation.isPending ||
+        deleteInstanceMutation.isPending ||
         isWaitingForInstanceStateChange;
 
     React.useEffect(() => {
@@ -254,7 +254,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     direction='row'
                     align='center'
                     mt={'5%'}
-                    hidden={instance.logicalId === null}
+                    hidden={instance.virtualId === undefined}
                 >
                     <Icon
                         aria-label={platformStyle.label}
@@ -266,7 +266,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
 
                 <Wrap
                     mt={'5%'}
-                    hidden={instance.logicalId === null}
+                    hidden={instance.virtualId === undefined}
                 >
                     {[
                         ['Tipo', instance.instanceType ?? '-'],
@@ -308,14 +308,14 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                     ))}
                 </Wrap>
             </CardBody>
-            <CardFooter hidden={instance.logicalId === null}>
+            <CardFooter hidden={instance.virtualId === undefined}>
                 <Wrap spacingY={4}>
                     <Button
                         leftIcon={<FiPlay />}
                         colorScheme='green'
                         hidden={
                             (instance.state !== 'PENDING' && instance.state !== 'RUNNING') ||
-                            instance.logicalId === null
+                            instance.virtualId === undefined
                         }
                         isDisabled={instance.state !== 'RUNNING'}
                         isLoading={
@@ -354,7 +354,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={
                             (instance.state !== 'PENDING' && instance.state !== 'RUNNING') ||
-                            instance.logicalId === null
+                            instance.virtualId === undefined
                         }
                         isDisabled={instance.state !== 'RUNNING'}
                         isLoading={isLoading}
@@ -372,7 +372,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         transition={'all 1s'}
                         hidden={
                             (instance.state !== 'STOPPED' && instance.state !== 'STOPPING') ||
-                            instance.logicalId === null
+                            instance.virtualId === undefined
                         }
                         isDisabled={instance.state !== 'STOPPED'}
                         isLoading={isLoading}
@@ -389,7 +389,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='blackAlpha'
                         hidden={
                             !moreOptionsDisclosure.isOpen ||
-                            instance.logicalId === null ||
+                            instance.virtualId === undefined ||
                             instance.state !== 'RUNNING'
                         }
                         isLoading={isLoading}
@@ -405,7 +405,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         colorScheme='red'
                         hidden={
                             !moreOptionsDisclosure.isOpen ||
-                            instance.logicalId === null ||
+                            instance.virtualId === undefined ||
                             instance.state === 'STOPPING' ||
                             instance.state === 'PENDING'
                         }
@@ -422,7 +422,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance }) => {
                         hidden={
                             instance.state === 'STOPPING' ||
                             instance.state === 'PENDING' ||
-                            instance.logicalId === null ||
+                            instance.virtualId === undefined ||
                             isLoading
                         }
                         icon={

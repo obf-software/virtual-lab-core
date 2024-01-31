@@ -24,29 +24,82 @@ import {
     VStack,
     useColorModeValue,
 } from '@chakra-ui/react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiUser } from 'react-icons/fi';
 import { BiSolidBellRing } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
 import { parseSessionData } from '../../../services/helpers';
-import { useNotificationsContext } from '../../../contexts/notifications/hook';
+import { useApplicationEventsContext } from '../../../contexts/application-events/hook';
 import { PulsingDot } from './pulsing-dot';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
 }
 
-/**
- * Colocar o use authenticator pra pegar as infos do usuário
- */
+interface NavbarNotification {
+    id: string;
+    text: string;
+    viewed: boolean;
+}
+
 export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
     const { user, signOut } = useAuthenticator((context) => [context.user]);
     const { displayName, displayRole } = parseSessionData(user);
-    const { notifications, markNotificationAsViewed } = useNotificationsContext();
+    const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
+    const [notifications, setNotifications] = React.useState<NavbarNotification[]>([]);
+
+    const markNotificationAsViewed = (id: string) => {
+        setNotifications((prevNotifications) =>
+            prevNotifications.map((notification) => {
+                if (notification.id === id) {
+                    return { ...notification, viewed: true };
+                }
+                return notification;
+            }),
+        );
+    };
+
+    const markAllNotificationsAsViewed = () => {
+        setNotifications((prevNotifications) =>
+            prevNotifications.map((notification) => ({ ...notification, viewed: true })),
+        );
+    };
 
     const numberOfUnreadNotifications = notifications.filter(
         (notification) => notification.viewed === false,
     ).length;
+
+    useEffect(() => {
+        const instanceLaunchedHandlerId = registerHandler('INSTANCE_LAUNCHED', (detail) => {
+            setNotifications((prevNotifications) => [
+                ...prevNotifications,
+                {
+                    id: detail.instance.id,
+                    text: `Nova instância lançada: ${detail.instance.name}`,
+                    viewed: false,
+                },
+            ]);
+        });
+
+        const instanceStateChangedHandlerId = registerHandler(
+            'INSTANCE_STATE_CHANGED',
+            (detail) => {
+                setNotifications((prevNotifications) => [
+                    ...prevNotifications,
+                    {
+                        id: detail.instance.id,
+                        text: `Instância ${detail.instance.name} mudou de estado para ${detail.state}`,
+                        viewed: false,
+                    },
+                ]);
+            },
+        );
+
+        return () => {
+            unregisterHandlerById(instanceLaunchedHandlerId);
+            unregisterHandlerById(instanceStateChangedHandlerId);
+        };
+    });
 
     return (
         <Flex
