@@ -81,9 +81,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                             <UsersTableRow
                                 key={`users-table-row-${user.username}-${index}`}
                                 user={user}
-                                tableRowProps={{
-                                    onClick: () => onUserSelect?.(user),
-                                }}
+                                onUserSelect={() => onUserSelect?.(user)}
                             />
                         ))}
                 </Tbody>

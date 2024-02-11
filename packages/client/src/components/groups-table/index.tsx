@@ -1,4 +1,5 @@
 import {
+    IconButtonProps,
     Spinner,
     Table,
     TableCaption,
@@ -9,22 +10,28 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { GroupsTableRow } from './groups-table-row';
+import { GroupsTableRow } from '../groups-table-row';
 import { Group } from '../../services/api-protocols';
 
 interface GroupsTableProps {
     groups: Group[];
     isLoading: boolean;
-    onSelect?: (group: Group) => void;
-    onDelete?: (group: Group) => void;
+    error?: string;
+    onGroupSelect?: (group: Group) => void;
+    actions?: {
+        iconButtonProps: IconButtonProps;
+    }[];
 }
 
 export const GroupsTable: React.FC<GroupsTableProps> = ({
     groups,
     isLoading,
-    onDelete,
-    onSelect,
+    error,
+    onGroupSelect,
+    actions,
 }) => {
+    const shouldHideActions = actions === undefined || actions.length === 0;
+
     return (
         <TableContainer
             bgColor={'white'}
@@ -37,7 +44,11 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
                 variant='simple'
                 colorScheme='blue'
             >
-                {groups.length === 0 && isLoading === false ? (
+                {error !== undefined ? (
+                    <TableCaption color='red.500'>Falha ao carregar grupos: {error}</TableCaption>
+                ) : null}
+
+                {groups.length === 0 && !isLoading && error === undefined ? (
                     <TableCaption>Nenhum grupo encontrado</TableCaption>
                 ) : null}
 
@@ -59,7 +70,7 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
                         <Th>Descrição</Th>
                         <Th>Criado em</Th>
                         <Th>Atualizado</Th>
-                        <Th hidden={onDelete === undefined}></Th>
+                        <Th hidden={shouldHideActions}>Ações</Th>
                     </Tr>
                 </Thead>
 
@@ -69,10 +80,8 @@ export const GroupsTable: React.FC<GroupsTableProps> = ({
                             <GroupsTableRow
                                 key={`groups-table-row-${group.id}-${index}`}
                                 group={group}
-                                onClick={onSelect !== undefined ? () => onSelect(group) : undefined}
-                                onDelete={
-                                    onDelete !== undefined ? () => onDelete(group) : undefined
-                                }
+                                onGroupSelect={() => onGroupSelect?.(group)}
+                                actions={actions}
                             />
                         ))}
                 </Tbody>

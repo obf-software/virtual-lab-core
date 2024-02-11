@@ -14,20 +14,27 @@ interface UsersTableRowProps {
     tableCellProps?: TableCellProps;
 
     user: User;
+    onUserSelect?: () => void;
 }
 
 export const UsersTableRow: React.FC<UsersTableRowProps> = ({
     tableRowProps,
     tableCellProps,
     user,
+    onUserSelect,
 }) => {
     return (
         <Tr
+            {...tableRowProps}
             _hover={{
                 bg: 'gray.50',
                 cursor: 'pointer',
+                ...tableRowProps?._hover,
             }}
-            {...tableRowProps}
+            onClick={(event) => {
+                tableRowProps?.onClick?.(event);
+                onUserSelect?.();
+            }}
         >
             <Td {...tableCellProps}>{user.username}</Td>
             <Td {...tableCellProps}>{roleToDisplayString(user.role)}</Td>
