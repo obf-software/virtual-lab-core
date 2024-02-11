@@ -28,9 +28,9 @@ import React, { useEffect } from 'react';
 import { FiBell, FiChevronDown, FiLogOut, FiMenu, FiUser } from 'react-icons/fi';
 import { BiSolidBellRing } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
-import { parseSessionData } from '../../../services/helpers';
 import { useApplicationEventsContext } from '../../../contexts/application-events/hook';
 import { PulsingDot } from './pulsing-dot';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 interface NavbarProps extends FlexProps {
     onOpen: () => void;
@@ -43,8 +43,8 @@ interface NavbarNotification {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
-    const { user, signOut } = useAuthenticator((context) => [context.user]);
-    const { displayName, displayRole } = parseSessionData(user);
+    const { signOut } = useAuthenticator((context) => [context.user]);
+    const authSessionData = useAuthSessionData();
     const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
     const [notifications, setNotifications] = React.useState<NavbarNotification[]>([]);
 
@@ -99,7 +99,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
             unregisterHandlerById(instanceLaunchedHandlerId);
             unregisterHandlerById(instanceStateChangedHandlerId);
         };
-    });
+    }, []);
 
     return (
         <Flex
@@ -227,7 +227,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                                     borderColor={'blue.600'}
                                     textColor={'white'}
                                     borderWidth={2}
-                                    name={displayName}
+                                    name={authSessionData?.displayName}
                                     size={'sm'}
                                     src={undefined}
                                 />
@@ -238,15 +238,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpen, ...rest }) => {
                                     ml='2'
                                 >
                                     <Text fontSize='sm'>
-                                        {displayName.length <= 30
-                                            ? displayName
-                                            : `${displayName.slice(0, 30)}...`}
+                                        {(authSessionData?.displayName ?? '').length <= 30
+                                            ? authSessionData?.displayName
+                                            : `${authSessionData?.displayName.slice(0, 30)}...`}
                                     </Text>
                                     <Text
                                         fontSize='xs'
                                         color='gray.600'
                                     >
-                                        {displayRole}
+                                        {authSessionData?.displayRole}
                                     </Text>
                                 </VStack>
                                 <Box display={{ base: 'none', md: 'flex' }}>

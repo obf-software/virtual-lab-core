@@ -29,12 +29,12 @@ import {
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import { useNavigate } from 'react-router-dom';
-import { Instance, VirtualInstanceState } from '../../../services/api/protocols';
+import { Instance, VirtualInstanceState } from '../../../services/api-protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import * as api from '../../../services/api/service';
-import { queryClient } from '../../../services/query/service';
+import * as api from '../../../services/api';
+import { queryClient } from '../../../services/query-client';
 import { useApplicationEventsContext } from '../../../contexts/application-events/hook';
 import { getErrorMessage } from '../../../services/helpers';
 

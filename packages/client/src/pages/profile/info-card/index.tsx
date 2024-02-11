@@ -1,4 +1,3 @@
-import { useAuthenticator } from '@aws-amplify/ui-react';
 import {
     Box,
     Flex,
@@ -13,9 +12,8 @@ import {
     VStack,
 } from '@chakra-ui/react';
 import React from 'react';
-import { IconType } from 'react-icons';
 import { FiCheck, FiClock } from 'react-icons/fi';
-import { parseSessionData } from '../../../services/helpers';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 interface ProfileInfoCardProps {
     currentName: string;
@@ -26,8 +24,7 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
     currentName,
     onCurrentNameChange,
 }) => {
-    const { user } = useAuthenticator((context) => [context.user]);
-    const { displayRole, email, emailVerified } = parseSessionData(user);
+    const authSessionData = useAuthSessionData();
 
     return (
         <VStack
@@ -54,7 +51,7 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
                         <Input
                             id='username'
                             type='text'
-                            value={user.username}
+                            value={authSessionData?.username}
                             isReadOnly
                         />
                     </FormControl>
@@ -64,7 +61,7 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
                         <Input
                             id='role'
                             type='text'
-                            value={displayRole}
+                            value={authSessionData?.displayRole}
                             isReadOnly
                         />
                     </FormControl>
@@ -87,13 +84,13 @@ export const ProfileInfoCard: React.FC<ProfileInfoCardProps> = ({
                         <Input
                             id='email'
                             type='email'
-                            value={email}
+                            value={authSessionData?.email}
                             isReadOnly
                         />
                         <InputRightElement>
                             <Icon
-                                as={(emailVerified ? FiCheck : FiClock) as IconType}
-                                color={emailVerified ? 'green.500' : 'yellow.500'}
+                                as={authSessionData?.emailVerified ? FiCheck : FiClock}
+                                color={authSessionData?.emailVerified ? 'green.500' : 'yellow.500'}
                             />
                         </InputRightElement>
                     </InputGroup>

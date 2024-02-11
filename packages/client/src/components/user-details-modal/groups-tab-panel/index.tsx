@@ -9,17 +9,16 @@ import {
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
-import * as api from '../../../services/api/service';
-import { Group, User } from '../../../services/api/protocols';
+import * as api from '../../../services/api';
+import { Group, User } from '../../../services/api-protocols';
 import { Select } from 'chakra-react-select';
 import { FiRefreshCw } from 'react-icons/fi';
 import { Paginator } from '../../paginator';
 import { UserGroupsTable } from '../../user-groups-table';
-import { useUserGroups } from '../../../hooks/user-groups';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient } from '../../../services/query/service';
+import { queryClient } from '../../../services/query-client';
 import { getErrorMessage } from '../../../services/helpers';
-import { useSearchGroups } from '../../../hooks/search-groups';
+import { useGroups } from '../../../hooks/use-groups';
 
 interface UserDetailsModalGroupsTabPanelProps {
     user: User;
@@ -29,13 +28,25 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
     user,
 }) => {
     const [page, setPage] = React.useState(1);
-    const { userGroupsQuery } = useUserGroups(user.id, { resultsPerPage: 5, page });
+    const { groupsQuery: userGroupsQuery } = useGroups({
+        userId: user.id,
+        resultsPerPage: 20,
+        page,
+        orderBy: 'creationDate',
+        order: 'asc',
+    });
     const toast = useToast();
     const [groupsToLink, setGroupsToLink] = React.useState<Group[]>([]);
 
     const [textQuery, setTextQuery] = React.useState('');
     const [textQueryDebounced, setTextQueryDebounced] = React.useState(textQuery);
-    const { searchGroupsQuery } = useSearchGroups({ textQuery: textQueryDebounced });
+    const { groupsQuery: searchGroupsQuery } = useGroups({
+        resultsPerPage: 20,
+        page: 1,
+        orderBy: 'creationDate',
+        order: 'asc',
+        textQuery: textQueryDebounced,
+    });
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -50,13 +61,18 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
     const numberOfPages = userGroupsQuery?.data?.numberOfPages ?? 0;
 
     const unlinkUserFromGroupMutation = useMutation({
-        mutationFn: async (mut: { groupId: number; userId: number }) => {
-            const { error } = await api.unlinkUsersFromGroup(mut.groupId, [mut.userId]);
-            if (error !== undefined) throw new Error(error);
+        mutationFn: async (mut: { groupId: string; userId: string }) => {
+            const response = await api.unlinkUsersFromGroup({
+                groupId: mut.groupId,
+                userIds: [mut.userId],
+            });
+            if (!response.success) throw new Error(response.error);
             return { mut };
         },
         onSuccess: ({ mut }) => {
-            queryClient.invalidateQueries([`userGroups_${mut.userId}`]).catch(console.error);
+            queryClient
+                .invalidateQueries({ queryKey: [`userGroups_${mut.userId}`] })
+                .catch(console.error);
         },
         onError: (error) => {
             toast({
@@ -70,20 +86,29 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
     });
 
     const linkUserToGroupsMutation = useMutation({
-        mutationFn: async (mut: { groupIds: number[]; userId: number }) => {
+        mutationFn: async (mut: { groupIds: string[]; userId: string }) => {
             const results = await Promise.all(
-                mut.groupIds.map((groupId) => api.linkUsersToGroup(groupId, [mut.userId])),
+                mut.groupIds.map((groupId) =>
+                    api.linkUsersToGroup({
+                        groupId,
+                        userIds: [mut.userId],
+                    }),
+                ),
             );
 
-            const errors = results
-                .map((result) => result.error)
-                .filter((error) => error !== undefined)
-                .map((error) => error!);
+            const errors: string[] = [];
+
+            results.forEach((result) => {
+                if (!result.success) errors.push(result.error);
+            });
+
             if (errors.length > 0) throw new Error(errors.join('\n'));
             return { mut };
         },
         onSuccess: ({ mut }) => {
-            queryClient.invalidateQueries([`userGroups_${mut.userId}`]).catch(console.error);
+            queryClient
+                .invalidateQueries({ queryKey: [`userGroups_${mut.userId}`] })
+                .catch(console.error);
             setGroupsToLink([]);
         },
         onError: (error) => {
@@ -110,8 +135,8 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
                             name='Grupos'
                             placeholder='Buscar grupos'
                             isLoading={searchGroupsQuery.isFetching}
-                            options={searchGroupsQuery.data?.map((group) => ({
-                                label: `${group.name} (${group.portfolioId})`,
+                            options={searchGroupsQuery.data?.data?.map((group) => ({
+                                label: group.name,
                                 value: group,
                             }))}
                             onInputChange={(value) => {
@@ -121,7 +146,7 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
                                 setGroupsToLink(selected.map((item) => item.value) ?? []);
                             }}
                             value={groupsToLink.map((group) => ({
-                                label: `${group.name} (${group.portfolioId})`,
+                                label: group.name,
                                 value: group,
                             }))}
                         />
@@ -130,7 +155,7 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
                     <Button
                         colorScheme={'blue'}
                         px={10}
-                        isLoading={linkUserToGroupsMutation.isLoading}
+                        isLoading={linkUserToGroupsMutation.isPending}
                         onClick={() => {
                             if (groupsToLink.length === 0) return;
 
@@ -160,7 +185,7 @@ export const UserDetailsModalGroupsTabPanel: React.FC<UserDetailsModalGroupsTabP
                 <UserGroupsTable
                     groups={userGroups}
                     isLoading={userGroupsQuery.isLoading}
-                    isRemovingFromGroup={unlinkUserFromGroupMutation.isLoading}
+                    isRemovingFromGroup={unlinkUserFromGroupMutation.isPending}
                     onRemoveFromGroup={(group) => {
                         unlinkUserFromGroupMutation.mutate({ groupId: group.id, userId: user.id });
                     }}

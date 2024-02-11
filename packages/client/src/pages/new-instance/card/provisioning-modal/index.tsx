@@ -17,15 +17,15 @@ import {
     Text,
     useToast,
 } from '@chakra-ui/react';
-import { Product, ProductProvisioningParameter } from '../../../../services/api/protocols';
+import { Product, ProductProvisioningParameter } from '../../../../services/api-protocols';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { FiUploadCloud } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import * as api from '../../../../services/api/service';
+import * as api from '../../../../services/api';
 import { useMutation } from '@tanstack/react-query';
 import { getErrorMessage } from '../../../../services/helpers';
-import { queryClient } from '../../../../services/query/service';
+import { queryClient } from '../../../../services/query-client';
 
 interface ProvisioningModalProps {
     product: Product;

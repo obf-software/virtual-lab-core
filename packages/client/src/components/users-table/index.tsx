@@ -3,39 +3,58 @@ import {
     Table,
     TableCaption,
     TableContainer,
+    TableContainerProps,
+    TableProps,
     Tbody,
     Th,
     Thead,
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { UsersTableRow } from './users-table-row';
-import { User } from '../../services/api/protocols';
+import { UsersTableRow } from '../users-table-row';
+import { User } from '../../services/api-protocols';
 
 interface UsersTableProps {
+    tableContainerProps?: TableContainerProps;
+    tableProps?: TableProps;
+
     users: User[];
     isLoading: boolean;
-    onSelect?: (user: User) => void;
+    error?: string;
+    onUserSelect?: (user: User) => void;
 }
 
-export const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, onSelect }) => {
+export const UsersTable: React.FC<UsersTableProps> = ({
+    tableContainerProps,
+    tableProps,
+    users,
+    isLoading,
+    error,
+    onUserSelect,
+}) => {
     return (
         <TableContainer
             bgColor={'white'}
             p={4}
             borderRadius={12}
             boxShadow={'sm'}
+            {...tableContainerProps}
         >
             <Table
                 size={'md'}
                 variant='simple'
                 colorScheme='blue'
+                {...tableProps}
             >
-                {users.length === 0 && isLoading === false ? (
+                {error !== undefined ? (
+                    <TableCaption color='red.500'>Falha ao carregar usuários: {error}</TableCaption>
+                ) : null}
+
+                {users.length === 0 && !isLoading && error === undefined ? (
                     <TableCaption>Nenhum usuário encontrado</TableCaption>
                 ) : null}
 
-                {isLoading !== false ? (
+                {isLoading ? (
                     <TableCaption>
                         <Spinner
                             size='xl'
@@ -57,12 +76,14 @@ export const UsersTable: React.FC<UsersTableProps> = ({ users, isLoading, onSele
                 </Thead>
 
                 <Tbody>
-                    {isLoading === false &&
+                    {!isLoading &&
                         users.map((user, index) => (
                             <UsersTableRow
                                 key={`users-table-row-${user.username}-${index}`}
                                 user={user}
-                                onClick={() => onSelect?.(user)}
+                                tableRowProps={{
+                                    onClick: () => onUserSelect?.(user),
+                                }}
                             />
                         ))}
                 </Tbody>

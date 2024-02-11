@@ -17,28 +17,34 @@ import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useUserGroups } from '../../hooks/user-groups';
 import { GroupsTable } from '../../components/groups-table';
-import { Group } from '../../services/api/protocols';
+import { Group } from '../../services/api-protocols';
 import { GroupDetailsModal } from '../../components/group-details-modal';
-import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
-import { useUserIdSearchParam } from '../../hooks/user-id-search-param';
+import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
+import { useUserIdSearchParam } from '../../hooks/use-user-id-search-param';
+import { useGroups } from '../../hooks/use-groups';
 
 export const UserGroupsPage: React.FC = () => {
-    const { page, setPage } = usePaginationSearchParam();
+    const { page, setParams } = usePaginationSearchParam();
     const { userId } = useUserIdSearchParam();
-    const { userGroupsQuery } = useUserGroups(userId, { resultsPerPage: 20, page });
+    const { groupsQuery } = useGroups({
+        userId,
+        resultsPerPage: 20,
+        page,
+        orderBy: 'creationDate',
+        order: 'asc',
+    });
     const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
     const groupDetailsModalDisclosure = useDisclosure();
     const [selectedGroup, setSelectedGroup] = React.useState<Group>();
 
-    const userGroups = userGroupsQuery.data?.data ?? [];
-    const numberOfGroups = userGroupsQuery.data?.numberOfResults ?? 0;
-    const numberOfPages = userGroupsQuery.data?.numberOfPages ?? 0;
+    const userGroups = groupsQuery.data?.data ?? [];
+    const numberOfGroups = groupsQuery.data?.numberOfResults ?? 0;
+    const numberOfPages = groupsQuery.data?.numberOfPages ?? 0;
 
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
-            setPage(1);
+            setParams({ page: 1 });
         }
 
         if (userId === 'me') {
@@ -86,10 +92,10 @@ export const UserGroupsPage: React.FC = () => {
                             aria-label='Recarregar'
                             variant={'outline'}
                             colorScheme='blue'
-                            hidden={userGroupsQuery.isLoading}
-                            isLoading={userGroupsQuery.isFetching}
+                            hidden={groupsQuery.isLoading}
+                            isLoading={groupsQuery.isFetching}
                             onClick={() => {
-                                userGroupsQuery.refetch().catch(console.error);
+                                groupsQuery.refetch().catch(console.error);
                             }}
                         >
                             <FiRefreshCw />
@@ -121,7 +127,7 @@ export const UserGroupsPage: React.FC = () => {
 
                     <GroupsTable
                         groups={userGroups}
-                        isLoading={userGroupsQuery.isLoading}
+                        isLoading={groupsQuery.isLoading}
                         onSelect={(group) => {
                             setSelectedGroup(group);
                             groupDetailsModalDisclosure.onOpen();
@@ -130,9 +136,9 @@ export const UserGroupsPage: React.FC = () => {
 
                     <Paginator
                         activePage={page}
-                        totalPages={userGroupsQuery.data?.numberOfPages ?? 0}
+                        totalPages={groupsQuery.data?.numberOfPages ?? 0}
                         onPageChange={(selectedPage) => {
-                            setPage(selectedPage);
+                            setParams({ page: selectedPage });
                         }}
                     />
                 </Stack>

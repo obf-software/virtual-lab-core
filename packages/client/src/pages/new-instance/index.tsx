@@ -14,7 +14,7 @@ import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { NewInstanceCard } from './card';
-import { useUserProducts } from '../../hooks/user-products';
+import { useUserProducts } from '../../hooks/use-instance-templates';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();

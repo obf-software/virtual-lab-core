@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Center, Spinner, Stack, Text, useToast } from '@chakra-ui/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useConnection } from '../../hooks/connection';
+import { useConnection } from '../../hooks/use-connection';
 
 enum ConnectionState {
     IDDLE = 'IDDLE',

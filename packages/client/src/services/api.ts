@@ -11,8 +11,8 @@ import {
     UrlPath,
     User,
     VirtualInstanceState,
-} from './protocols';
-import { getErrorMessage } from '../helpers';
+} from './api-protocols';
+import { getErrorMessage } from './helpers';
 
 const executeRequest = async <T>(props: {
     path: UrlPath;
@@ -86,7 +86,7 @@ export const deleteGroup = async (props: { groupId: string }) =>
         method: 'DELETE',
     });
 
-export const linkUsersToGroup = async (props: { groupId: number; userIds: number[] }) =>
+export const linkUsersToGroup = async (props: { groupId: string; userIds: string[] }) =>
     executeRequest<void>({
         path: `/api/v1/groups/${props.groupId}/link-users`,
         method: 'POST',
@@ -94,7 +94,7 @@ export const linkUsersToGroup = async (props: { groupId: number; userIds: number
     });
 
 export const listGroups = async (props: {
-    orderBy: 'creationDate' | 'lastUpdate' | 'name';
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
     order: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;
@@ -108,7 +108,7 @@ export const listGroups = async (props: {
         queryParams: props,
     });
 
-export const unlinkUsersFromGroup = async (props: { groupId: number; userIds: number[] }) =>
+export const unlinkUsersFromGroup = async (props: { groupId: string; userIds: string[] }) =>
     executeRequest<void>({
         path: `/api/v1/groups/${props.groupId}/unlink-users`,
         method: 'POST',
@@ -162,7 +162,7 @@ export const listInstanceTemplates = async () =>
     });
 
 export const listInstances = async (props: {
-    orderBy: 'creationDate' | 'lastConnectionDate' | 'name';
+    orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
     order: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;
@@ -201,7 +201,7 @@ export const getUser = async (props: { userId: string | 'me' }) =>
     });
 
 export const listUsers = async (props: {
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'name';
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastSignInDate' | 'alphabetical';
     order: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;

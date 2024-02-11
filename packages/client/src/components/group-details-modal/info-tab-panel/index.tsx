@@ -13,10 +13,10 @@ import {
 import React from 'react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import * as api from '../../../services/api/service';
-import { Group } from '../../../services/api/protocols';
+import * as api from '../../../services/api';
+import { Group } from '../../../services/api-protocols';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient } from '../../../services/query/service';
+import { queryClient } from '../../../services/query-client';
 import { getErrorMessage } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
@@ -38,17 +38,18 @@ export const GroupDetailsModalInfoTabPanel: React.FC<GroupDetailsModalInfoTabPan
     const [descriptionDebounced, setDescriptionDebounced] = React.useState(group.description);
 
     const updateGroupMutation = useMutation({
-        mutationFn: async (mut: { groupId: number; name?: string; description?: string }) => {
-            const { data, error } = await api.updateGroup(mut.groupId, {
+        mutationFn: async (mut: { groupId: string; name?: string; description?: string }) => {
+            const response = await api.updateGroup({
+                groupId: mut.groupId,
                 name: mut.name,
                 description: mut.description,
             });
-            if (error !== undefined) throw new Error(error);
-            return { mut, data };
+            if (!response.success) throw new Error(response.error);
+            return { mut, data: response.data };
         },
         onSuccess: () => {
             // TODO: use optimistic updates instead
-            queryClient.invalidateQueries([`groups`]).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: [`groups`] }).catch(console.error);
         },
         onError: (error) => {
             toast({
@@ -108,7 +109,7 @@ export const GroupDetailsModalInfoTabPanel: React.FC<GroupDetailsModalInfoTabPan
                         }}
                     />
                     <InputRightElement>
-                        {updateGroupMutation.isLoading ? <Spinner size='sm' /> : null}
+                        {updateGroupMutation.isPending ? <Spinner size='sm' /> : null}
                     </InputRightElement>
                 </InputGroup>
             </FormControl>
@@ -131,20 +132,9 @@ export const GroupDetailsModalInfoTabPanel: React.FC<GroupDetailsModalInfoTabPan
                         }}
                     />
                     <InputRightElement>
-                        {updateGroupMutation.isLoading ? <Spinner size='sm' /> : null}
+                        {updateGroupMutation.isPending ? <Spinner size='sm' /> : null}
                     </InputRightElement>
                 </InputGroup>
-            </FormControl>
-
-            <FormControl
-                mt={'2%'}
-                isReadOnly
-            >
-                <FormLabel htmlFor='portfolioId'>Portfólio</FormLabel>
-                <Input
-                    id='portfolioId'
-                    value={group.portfolioId}
-                />
             </FormControl>
 
             <FormControl

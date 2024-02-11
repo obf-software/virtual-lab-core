@@ -13,11 +13,11 @@ import {
 import dayjs from 'dayjs';
 import React from 'react';
 import { FiUploadCloud } from 'react-icons/fi';
-import { Product } from '../../../services/api/protocols';
+import { Product } from '../../../services/api-protocols';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { ProvisioningModal } from './provisioning-modal';
 import { useQuery } from '@tanstack/react-query';
-import * as api from '../../../services/api/service';
+import * as api from '../../../services/api';
 import { getErrorMessage } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);

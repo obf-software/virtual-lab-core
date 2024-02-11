@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import 'dayjs/locale/pt-br';
 import {
     TabPanel,
@@ -10,13 +11,13 @@ import {
 import React from 'react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import * as api from '../../../services/api/service';
-import { Role, User } from '../../../services/api/protocols';
+import * as api from '../../../services/api';
+import { Role, User } from '../../../services/api-protocols';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient } from '../../../services/query/service';
-import { getErrorMessage, parseSessionData, roleToDisplayString } from '../../../services/helpers';
+import { queryClient } from '../../../services/query-client';
+import { getErrorMessage, roleToDisplayString } from '../../../services/helpers';
 import { Select } from 'chakra-react-select';
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -28,18 +29,17 @@ interface UserDetailsModalInfoTabPanelProps {
 export const UserDetailsModalInfoTabPanel: React.FC<UserDetailsModalInfoTabPanelProps> = ({
     user,
 }) => {
-    const { user: amplifyUser } = useAuthenticator((context) => [context.user]);
-    const { userId } = parseSessionData(amplifyUser);
+    const authSessionData = useAuthSessionData();
     const toast = useToast();
     const updateUserRoleMutation = useMutation({
-        mutationFn: async (mut: { userId: number | 'me'; role: keyof typeof Role }) => {
-            const { data, error } = await api.updateUserRole(user.id, mut.role);
-            if (error !== undefined) throw new Error(error);
-            return { mut, data };
+        mutationFn: async (mut: { userId: string | 'me'; role: Role }) => {
+            const response = await api.updateUserRole({ userId: mut.userId, role: mut.role });
+            if (!response.success) throw new Error(response.error);
+            return { mut, data: response.data };
         },
         onSuccess: ({ mut }) => {
-            queryClient.invalidateQueries(['user', mut.userId]).catch(console.error);
-            queryClient.invalidateQueries(['users']).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['user', mut.userId] }).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['users'] }).catch(console.error);
         },
         onError: (error) => {
             toast({
@@ -67,16 +67,16 @@ export const UserDetailsModalInfoTabPanel: React.FC<UserDetailsModalInfoTabPanel
 
             <FormControl
                 mt={'2%'}
-                isRequired={user.id !== userId}
-                isReadOnly={user.id === userId}
+                isRequired={user.id !== authSessionData?.userId}
+                isReadOnly={user.id === authSessionData?.userId}
             >
                 <FormLabel htmlFor='role'>Cargo</FormLabel>
                 <Select
                     id='role'
-                    isLoading={updateUserRoleMutation.isLoading}
-                    options={Object.keys(Role).map((role) => ({
-                        label: roleToDisplayString(role as keyof typeof Role),
-                        value: role as keyof typeof Role,
+                    isLoading={updateUserRoleMutation.isPending}
+                    options={(['ADMIN', 'USER'] as Role[]).map((role) => ({
+                        label: roleToDisplayString(role),
+                        value: role as Role,
                     }))}
                     value={{
                         label: roleToDisplayString(user.role),
@@ -92,7 +92,9 @@ export const UserDetailsModalInfoTabPanel: React.FC<UserDetailsModalInfoTabPanel
                     }}
                 />
                 <FormHelperText>
-                    {user.id === userId ? 'Você não pode alterar seu próprio cargo' : ''}
+                    {user.id === authSessionData?.userId
+                        ? 'Você não pode alterar seu próprio cargo'
+                        : ''}
                 </FormHelperText>
             </FormControl>
 

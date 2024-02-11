@@ -21,21 +21,26 @@ import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
 import { CreateGroupModal } from './create-group-modal';
-import { useGroups } from '../../hooks/groups';
+import { useGroups } from '../../hooks/use-groups';
 import { GroupsTable } from '../../components/groups-table';
 import { ConfirmDeletionAlertDialog } from '../../components/confirm-deletion-alert-dialog';
-import { Group } from '../../services/api/protocols';
+import { Group } from '../../services/api-protocols';
 import { GroupDetailsModal } from '../../components/group-details-modal';
 import { useMutation } from '@tanstack/react-query';
-import * as api from '../../services/api/service';
-import { queryClient } from '../../services/query/service';
+import * as api from '../../services/api';
+import { queryClient } from '../../services/query-client';
 import { getErrorMessage } from '../../services/helpers';
-import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
+import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 
 export const GroupsPage: React.FC = () => {
-    const { page, setPage } = usePaginationSearchParam();
-    const { groupsQuery } = useGroups({ resultsPerPage: 20, page });
-    const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
+    const { page, setParams } = usePaginationSearchParam();
+    const { groupsQuery } = useGroups({
+        resultsPerPage: 20,
+        page,
+        orderBy: 'creationDate',
+        order: 'asc',
+    });
+    const { setActiveMenuItem } = useMenuContext(); // @todo: Convert context to zustand hook.
     const [selectedGroup, setSelectedGroup] = React.useState<Group>();
     const groupDetailsModalDisclosure = useDisclosure();
     const createGroupModalDisclosure = useDisclosure();
@@ -48,16 +53,16 @@ export const GroupsPage: React.FC = () => {
 
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
-            setPage(1);
+            setParams({ page: 1 });
         }
 
         setActiveMenuItem('ADMIN_GROUPS');
     }, [page, numberOfGroups]);
 
     const deleteGroupMutation = useMutation({
-        mutationFn: async (mut: { groupId: number }) => {
-            const { error } = await api.deleteGroup(mut.groupId);
-            if (error !== undefined) throw new Error(error);
+        mutationFn: async (mut: { groupId: string }) => {
+            const response = await api.deleteGroup({ groupId: mut.groupId });
+            if (!response.success) throw new Error(response.error);
             return mut;
         },
         onSuccess: (data) => {
@@ -69,7 +74,7 @@ export const GroupsPage: React.FC = () => {
                 isClosable: true,
             });
 
-            queryClient.invalidateQueries(['groups']).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['groups'] }).catch(console.error);
             setSelectedGroup(undefined);
             confirmDeletionAlertDialogDisclosure.onClose();
         },
@@ -109,7 +114,7 @@ export const GroupsPage: React.FC = () => {
                     if (selectedGroup === undefined) return;
                     deleteGroupMutation.mutate({ groupId: selectedGroup.id });
                 }}
-                isLoading={deleteGroupMutation.isLoading}
+                isLoading={deleteGroupMutation.isPending}
             />
 
             <Container maxW={'6xl'}>
@@ -202,7 +207,7 @@ export const GroupsPage: React.FC = () => {
                         activePage={page}
                         totalPages={numberOfPages}
                         onPageChange={(selectedPage) => {
-                            setPage(selectedPage);
+                            setParams({ page: selectedPage });
                         }}
                     />
                 </Stack>

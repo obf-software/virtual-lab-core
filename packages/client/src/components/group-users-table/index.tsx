@@ -1,5 +1,5 @@
 import React from 'react';
-import { User } from '../../services/api/protocols';
+import { User } from '../../services/api-protocols';
 import {
     Spinner,
     Table,

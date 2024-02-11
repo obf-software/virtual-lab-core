@@ -12,7 +12,7 @@ import {
     Tabs,
 } from '@chakra-ui/react';
 import React from 'react';
-import { User } from '../../services/api/protocols';
+import { User } from '../../services/api-protocols';
 import { UserDetailsModalInfoTabPanel } from './info-tab-panel';
 import { UserDetailsModalQuotasTabPanel } from './quotas-tab-panel';
 import { UserDetailsModalGroupsTabPanel } from './groups-tab-panel';

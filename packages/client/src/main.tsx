@@ -1,27 +1,51 @@
 import './styles/global.css';
+import '@aws-amplify/ui-react/styles.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ChakraProvider } from '@chakra-ui/react';
 import { theme } from './styles/theme';
 import { MenuProvider } from './contexts/menu/provider.tsx';
-import { AuthProvider } from './components/auth-provider/index.tsx';
-import { Router } from './router.tsx';
+import { AuthContainer } from './components/auth-container/index.tsx';
+import { router } from './router.tsx';
 import { ApplicationEventsProvider } from './contexts/application-events/provider.tsx';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { queryClient } from './services/query/service.ts';
+import { queryClient } from './services/query-client.ts';
+import { RouterProvider } from 'react-router-dom';
+import { translations } from '@aws-amplify/ui-react';
+import { Amplify } from 'aws-amplify';
+import { I18n } from 'aws-amplify/utils';
+
+I18n.putVocabularies(translations);
+I18n.setLanguage('pt');
+
+Amplify.configure({
+    API: {
+        GraphQL: {
+            endpoint: import.meta.env.VITE_APP_APP_SYNC_API_URL,
+            region: import.meta.env.VITE_APP_AWS_REGION,
+            defaultAuthMode: 'userPool',
+        },
+    },
+    Auth: {
+        Cognito: {
+            userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
+            userPoolClientId: import.meta.env.VITE_APP_AWS_USER_POOL_CLIENT_ID,
+        },
+    },
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <ChakraProvider theme={theme}>
-            <QueryClientProvider client={queryClient}>
-                <AuthProvider>
+            <AuthContainer>
+                <QueryClientProvider client={queryClient}>
                     <ApplicationEventsProvider>
                         <MenuProvider>
-                            <Router />
+                            <RouterProvider router={router} />
                         </MenuProvider>
                     </ApplicationEventsProvider>
-                </AuthProvider>
-            </QueryClientProvider>
+                </QueryClientProvider>
+            </AuthContainer>
         </ChakraProvider>
     </React.StrictMode>,
 );

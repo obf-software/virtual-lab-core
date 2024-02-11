@@ -12,11 +12,10 @@ import {
     Tabs,
 } from '@chakra-ui/react';
 import React from 'react';
-import { Group } from '../../services/api/protocols';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../services/helpers';
+import { Group } from '../../services/api-protocols';
 import { GroupDetailsModalInfoTabPanel } from './info-tab-panel';
 import { GroupDetailsModalUsersTabPanel } from './users-tab-panel';
+import { useAuthSessionData } from '../../hooks/use-auth-session-data';
 
 interface GroupDetailsModalProps {
     group: Group;
@@ -25,9 +24,8 @@ interface GroupDetailsModalProps {
 }
 
 export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isOpen, onClose }) => {
-    const { user } = useAuthenticator((state) => [state.user]);
-    const { role } = parseSessionData(user);
-    const isAdmin = role === 'ADMIN';
+    const authSessionData = useAuthSessionData();
+    const isAdmin = authSessionData?.role === 'ADMIN';
 
     return (
         <Modal

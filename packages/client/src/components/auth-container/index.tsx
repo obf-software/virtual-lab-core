@@ -1,30 +1,8 @@
-import '@aws-amplify/ui-react/styles.css';
-import { Authenticator, translations } from '@aws-amplify/ui-react';
+import { Authenticator } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
-import { Amplify } from 'aws-amplify';
-import { I18n } from 'aws-amplify/utils';
 import { Box, Heading } from '@chakra-ui/react';
 
-I18n.putVocabularies(translations);
-I18n.setLanguage('pt');
-
-Amplify.configure({
-    API: {
-        GraphQL: {
-            endpoint: import.meta.env.VITE_APP_APP_SYNC_API_URL,
-            region: import.meta.env.VITE_APP_AWS_REGION,
-            defaultAuthMode: 'userPool',
-        },
-    },
-    Auth: {
-        Cognito: {
-            userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
-            userPoolClientId: import.meta.env.VITE_APP_AWS_USER_POOL_CLIENT_ID,
-        },
-    },
-});
-
-export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
+export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
     return (
         <Authenticator
             initialState='signIn'

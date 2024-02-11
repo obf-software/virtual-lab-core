@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import {
     TabPanel,
     Input,
@@ -10,12 +11,12 @@ import {
     Spinner,
 } from '@chakra-ui/react';
 import React from 'react';
-import * as api from '../../../services/api/service';
-import { Role, User } from '../../../services/api/protocols';
+import * as api from '../../../services/api';
+import { User } from '../../../services/api-protocols';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient } from '../../../services/query/service';
-import { getErrorMessage, parseSessionData } from '../../../services/helpers';
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { queryClient } from '../../../services/query-client';
+import { getErrorMessage } from '../../../services/helpers';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 interface UserDetailsModalQuotasTabPanelProps {
     user: User;
@@ -24,21 +25,25 @@ interface UserDetailsModalQuotasTabPanelProps {
 export const UserDetailsModalQuotasTabPanel: React.FC<UserDetailsModalQuotasTabPanelProps> = ({
     user,
 }) => {
-    const { user: amplifyUser } = useAuthenticator((context) => [context.user]);
-    const { userId } = parseSessionData(amplifyUser);
+    const authSessionData = useAuthSessionData();
     const toast = useToast();
-    const [maxInstances, setMaxInstances] = React.useState(user.maxInstances);
-    const [maxInstancesDebounce, setMaxInstancesDebounce] = React.useState(user.maxInstances);
+    const [maxInstances, setMaxInstances] = React.useState(user.quotas.maxInstances);
+    const [maxInstancesDebounce, setMaxInstancesDebounce] = React.useState(
+        user.quotas.maxInstances,
+    );
 
     const updateUserQuotasMutation = useMutation({
-        mutationFn: async (mut: { userId: number | 'me'; maxInstances: number }) => {
-            const { data, error } = await api.updateUserQuotas(user.id, mut.maxInstances);
-            if (error !== undefined) throw new Error(error);
-            return { mut, data };
+        mutationFn: async (mut: { userId: string | 'me'; maxInstances: number }) => {
+            const response = await api.updateUserQuotas({
+                userId: mut.userId,
+                maxInstances: mut.maxInstances,
+            });
+            if (!response.success) throw new Error(response.error);
+            return { mut, data: response.data };
         },
         onSuccess: ({ mut }) => {
-            queryClient.invalidateQueries(['user', mut.userId]).catch(console.error);
-            queryClient.invalidateQueries(['users']).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['user', mut.userId] }).catch(console.error);
+            queryClient.invalidateQueries({ queryKey: ['users'] }).catch(console.error);
         },
         onError: (error) => {
             toast({
@@ -68,29 +73,33 @@ export const UserDetailsModalQuotasTabPanel: React.FC<UserDetailsModalQuotasTabP
         <TabPanel>
             <FormControl
                 mt={'2%'}
-                isRequired={user.id !== userId && user.role !== Role.ADMIN}
-                isReadOnly={user.id === userId || user.role === Role.ADMIN}
+                isRequired={user.id !== authSessionData?.userId && user.role !== 'ADMIN'}
+                isReadOnly={user.id === authSessionData?.userId || user.role === 'ADMIN'}
             >
                 <FormLabel htmlFor='role'>Número máximo de instâncias</FormLabel>
 
                 <InputGroup>
                     <Input
                         id='role'
-                        value={user.id === userId || user.role === Role.ADMIN ? '-' : maxInstances}
+                        value={
+                            user.id === authSessionData?.userId || user.role === 'ADMIN'
+                                ? '-'
+                                : maxInstances
+                        }
                         onChange={(event) => {
                             const value = parseInt(event.target.value);
-                            if (value >= 0 && value !== user.maxInstances) {
+                            if (value >= 0 && value !== user.quotas.maxInstances) {
                                 setMaxInstances(value);
                             }
                         }}
                     />
                     <InputRightElement>
-                        {updateUserQuotasMutation.isLoading ? <Spinner size='sm' /> : null}
+                        {updateUserQuotasMutation.isPending ? <Spinner size='sm' /> : null}
                     </InputRightElement>
                 </InputGroup>
 
                 <FormHelperText>
-                    {user.id === userId
+                    {user.id === authSessionData?.userId
                         ? 'Administradores não possuem um númeor máximo de instâncias'
                         : ''}
                 </FormHelperText>

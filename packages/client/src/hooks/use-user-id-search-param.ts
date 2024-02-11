@@ -1,17 +1,15 @@
+/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-export const useUserIdSearchParam = (): {
-    userId: number | 'me';
-    setUserId: (userId: number | 'me') => void;
-} => {
+export const useUserIdSearchParam = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const userId = searchParams.get('userId') ?? 'me';
 
     const setUserId = React.useCallback(
-        (userId: number | 'me') => {
+        (userId: string | 'me') => {
             setSearchParams((prev) => {
-                prev.set('userId', String(userId));
+                prev.set('userId', userId);
                 return prev;
             });
         },
@@ -19,17 +17,11 @@ export const useUserIdSearchParam = (): {
     );
 
     React.useEffect(() => {
-        const parsedUserId = Number(userId);
-
-        if (userId === 'me' || Number.isNaN(parsedUserId)) {
-            setUserId('me');
-        } else {
-            setUserId(parsedUserId);
-        }
+        setUserId(userId);
     }, [userId, setUserId]);
 
     return {
-        userId: userId === 'me' ? 'me' : Number(userId),
+        userId,
         setUserId,
     };
 };

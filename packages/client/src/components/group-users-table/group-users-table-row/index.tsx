@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
 import { FiMinusCircle } from 'react-icons/fi';
-import { User } from '../../../services/api/protocols';
+import { User } from '../../../services/api-protocols';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');

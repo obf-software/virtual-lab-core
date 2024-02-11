@@ -5,22 +5,22 @@ import { Box, Button, Container, Heading, Stack, Text, VStack, useToast } from '
 import { FiSave } from 'react-icons/fi';
 import { ProfileQuotaCard } from './quota-card';
 import { ProfileInfoCard } from './info-card';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../services/helpers';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { useUser } from '../../hooks/user';
+import { useUser } from '../../hooks/use-user';
+import { useAuthSessionData } from '../../hooks/use-auth-session-data';
+import { updateUserAttributes } from 'aws-amplify/auth';
+import { getErrorMessage } from '../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 export const ProfilePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const { user } = useAuthenticator((context) => [context.user]);
-    const { name } = parseSessionData(user);
-    const [currentName, setCurrentName] = React.useState<string>(name ?? '');
+    const authSessionData = useAuthSessionData();
+    const [currentName, setCurrentName] = React.useState<string>(authSessionData?.name ?? '');
     const [isLoading, setIsLoading] = React.useState<boolean>(false);
-    const useUserQuery = useUser('me');
+    const { userQuery } = useUser({ userId: 'me' });
     const toast = useToast();
 
     useEffect(() => {
@@ -48,8 +48,8 @@ export const ProfilePage: React.FC = () => {
                             color='gray.600'
                         >
                             {`Membro desde ${
-                                useUserQuery.data?.createdAt !== undefined
-                                    ? dayjs(useUserQuery.data?.createdAt).format('DD/MM/YYYY')
+                                userQuery.data !== undefined
+                                    ? dayjs(userQuery.data.createdAt).format('DD/MM/YYYY')
                                     : 'muito tempo'
                             }`}
                         </Text>
@@ -60,41 +60,43 @@ export const ProfilePage: React.FC = () => {
                         colorScheme='blue'
                         leftIcon={<FiSave />}
                         isLoading={isLoading}
-                        isDisabled={name === currentName}
+                        isDisabled={authSessionData?.name === currentName}
                         onClick={() => {
-                            if (name === currentName) {
+                            if (authSessionData?.name === currentName) {
                                 return;
                             }
 
                             setIsLoading(true);
 
-                            user.updateAttributes(
-                                [{ Name: 'name', Value: currentName }],
-                                (error) => {
+                            updateUserAttributes({
+                                userAttributes: {
+                                    name: currentName,
+                                },
+                            })
+                                .then(() => {
                                     setIsLoading(false);
 
-                                    if (error) {
-                                        toast({
-                                            title: 'Erro ao atualizar perfil!',
-                                            status: 'error',
-                                            duration: 3000,
-                                            colorScheme: 'red',
-                                            variant: 'left-accent',
-                                            description: `${error.message}`,
-                                            position: 'bottom-left',
-                                        });
-                                    } else {
-                                        toast({
-                                            title: 'Perfil atualizado com sucesso!',
-                                            status: 'success',
-                                            duration: 3000,
-                                            colorScheme: 'green',
-                                            variant: 'left-accent',
-                                            position: 'top',
-                                        });
-                                    }
-                                },
-                            );
+                                    toast({
+                                        title: 'Perfil atualizado com sucesso!',
+                                        status: 'success',
+                                        duration: 3000,
+                                        colorScheme: 'green',
+                                        variant: 'left-accent',
+                                        position: 'top',
+                                    });
+                                })
+                                .catch((error) => {
+                                    setIsLoading(false);
+                                    return toast({
+                                        title: 'Erro ao atualizar perfil!',
+                                        status: 'error',
+                                        duration: 3000,
+                                        colorScheme: 'red',
+                                        variant: 'left-accent',
+                                        description: `${getErrorMessage(error)}`,
+                                        position: 'bottom-left',
+                                    });
+                                });
                         }}
                     >
                         Salvar

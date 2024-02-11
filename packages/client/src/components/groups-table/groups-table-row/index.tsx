@@ -1,10 +1,10 @@
 import React from 'react';
-import { ButtonGroup, IconButton, Tag, Td, Tooltip, Tr } from '@chakra-ui/react';
+import { ButtonGroup, IconButton, Td, Tooltip, Tr } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
 import { FiTrash2 } from 'react-icons/fi';
-import { Group } from '../../../services/api/protocols';
+import { Group } from '../../../services/api-protocols';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -28,9 +28,6 @@ export const GroupsTableRow: React.FC<GroupsTableRowProps> = ({ group, onClick, 
                 <Tooltip label={group.description}>
                     {`${group.description.slice(0, 15)}...`}
                 </Tooltip>
-            </Td>
-            <Td onClick={onClick}>
-                <Tag>{group.portfolioId}</Tag>
             </Td>
 
             <Td

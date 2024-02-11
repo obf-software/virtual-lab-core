@@ -1,10 +1,10 @@
 import React from 'react';
-import { ButtonGroup, IconButton, Tag, Td, Tooltip, Tr } from '@chakra-ui/react';
+import { ButtonGroup, IconButton, Td, Tooltip, Tr } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
 import { FiMinusCircle } from 'react-icons/fi';
-import { Group } from '../../../services/api/protocols';
+import { Group } from '../../../services/api-protocols';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
@@ -27,9 +27,6 @@ export const UserGroupsTableRow: React.FC<UserGroupsTableRowProps> = ({
                 <Tooltip label={group.description}>
                     {`${group.description.slice(0, 15)}...`}
                 </Tooltip>
-            </Td>
-            <Td>
-                <Tag>{group.portfolioId}</Tag>
             </Td>
             <Td>{dayjs(group.createdAt).format('DD/MM/YYYY')}</Td>
             <Td>{dayjs(group.updatedAt).fromNow()}</Td>

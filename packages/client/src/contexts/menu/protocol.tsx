@@ -20,19 +20,19 @@ export const menuItemsMap: {
     [key in keyof typeof MenuItems]: MenuItemData;
 } = {
     HOME: {
-        icon: FiHome as IconType,
+        icon: FiHome,
         label: 'Início',
         href: '/',
         adminOnly: false,
     },
     INSTANCES: {
-        icon: FiMonitor as IconType,
+        icon: FiMonitor,
         label: 'Instâncias',
         href: '/instances',
         adminOnly: false,
     },
     MY_GROUPS: {
-        icon: FiUsers as IconType,
+        icon: FiUsers,
         label: 'Meus Grupos',
         href: '/user-groups',
         adminOnly: false,
@@ -43,13 +43,13 @@ export const menuItemsMap: {
      */
 
     ADMIN_USERS: {
-        icon: FiUser as IconType,
+        icon: FiUser,
         label: 'Usuários',
         href: '/admin/users',
         adminOnly: true,
     },
     ADMIN_GROUPS: {
-        icon: FiUsers as IconType,
+        icon: FiUsers,
         label: 'Grupos',
         href: '/admin/groups',
         adminOnly: true,

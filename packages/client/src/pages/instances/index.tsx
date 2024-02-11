@@ -16,13 +16,19 @@ import React from 'react';
 import { InstanceCard } from './instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useInstances } from '../../hooks/instances';
-import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
+import { useInstances } from '../../hooks/use-instances';
+import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { useNavigate } from 'react-router-dom';
 
 export const InstancesPage: React.FC = () => {
-    const { page, setPage } = usePaginationSearchParam();
-    const { instancesQuery } = useInstances({ userId: 'me', resultsPerPage: 20, page });
+    const { page, setParams } = usePaginationSearchParam();
+    const { instancesQuery } = useInstances({
+        ownerId: 'me',
+        resultsPerPage: 20,
+        orderBy: 'lastConnectionDate',
+        order: 'desc',
+        page,
+    });
     const { setActiveMenuItem } = useMenuContext();
     const navigate = useNavigate();
 
@@ -32,7 +38,7 @@ export const InstancesPage: React.FC = () => {
 
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
-            setPage(1);
+            setParams({ page: 1 });
         }
 
         setActiveMenuItem('INSTANCES');
@@ -134,7 +140,7 @@ export const InstancesPage: React.FC = () => {
                 {instances.map((instance) => (
                     <Box
                         pb={10}
-                        key={`instance-${instance.logicalId}`}
+                        key={`instance-${instance.virtualId}`}
                     >
                         <InstanceCard instance={instance} />
                     </Box>
@@ -145,7 +151,7 @@ export const InstancesPage: React.FC = () => {
                         activePage={page}
                         totalPages={numberOfPages}
                         onPageChange={(selectedPage) => {
-                            setPage(selectedPage);
+                            setParams({ page: selectedPage });
                         }}
                     />
                 ) : null}

@@ -10,7 +10,7 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { UserGroupsTableRow } from './user-groups-table-row';
-import { Group } from '../../services/api/protocols';
+import { Group } from '../../services/api-protocols';
 
 interface UserGroupsTableProps {
     groups: Group[];
@@ -57,7 +57,6 @@ export const UserGroupsTable: React.FC<UserGroupsTableProps> = ({
                     <Tr>
                         <Th>Nome</Th>
                         <Th>Descrição</Th>
-                        <Th>Portfólio</Th>
                         <Th>Criado em</Th>
                         <Th>Atualizado</Th>
                         <Th></Th>

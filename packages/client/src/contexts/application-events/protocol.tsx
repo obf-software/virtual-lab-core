@@ -1,4 +1,4 @@
-import { Instance, VirtualInstanceState } from '../../services/api/protocols';
+import { Instance, VirtualInstanceState } from '../../services/api-protocols';
 
 export const applicationEventSubscriptionQuery = `#graphql subscription Subscribe($name: String!) {
     subscribe(name: $name) {

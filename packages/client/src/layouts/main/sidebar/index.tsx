@@ -11,9 +11,8 @@ import {
 import { Link } from 'react-router-dom';
 import { useMenuContext } from '../../../contexts/menu/hook';
 import { menuItemsMap } from '../../../contexts/menu/protocol';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { parseSessionData } from '../../../services/helpers';
 import React from 'react';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 interface SidebarProps extends BoxProps {
     onClose: () => void;
@@ -21,8 +20,7 @@ interface SidebarProps extends BoxProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
     const { getActiveMenuItem, setActiveMenuItem } = useMenuContext();
-    const { user } = useAuthenticator((context) => [context.user]);
-    const { role } = parseSessionData(user);
+    const authSessionData = useAuthSessionData();
 
     const menuItems = [...Object.entries(menuItemsMap)];
 
@@ -60,7 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
             </Flex>
 
             {menuItems
-                .filter(([, item]) => (role === 'ADMIN' ? true : !item.adminOnly))
+                .filter(([, item]) => (authSessionData?.role === 'ADMIN' ? true : !item.adminOnly))
                 .map(([id, item], index) => (
                     <Link
                         key={`nav-item-${item.label}`}

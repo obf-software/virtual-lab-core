@@ -12,21 +12,21 @@ import {
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
-import { useUser } from '../../../hooks/user';
+import { useUser } from '../../../hooks/use-user';
 import { getErrorMessage } from '../../../services/helpers';
 
 export const ProfileQuotaCard: React.FC = () => {
     const toast = useToast();
-    const { data: user, error, isError, isLoading } = useUser('me');
+    const { userQuery } = useUser({ userId: 'me' });
 
-    if (isError) {
+    if (userQuery.isError) {
         toast({
             title: 'Erro ao carregar usuário!',
             status: 'error',
             duration: 3000,
             colorScheme: 'red',
             variant: 'left-accent',
-            description: getErrorMessage(error),
+            description: getErrorMessage(userQuery.error),
             position: 'bottom-left',
         });
     }
@@ -56,13 +56,13 @@ export const ProfileQuotaCard: React.FC = () => {
                         <Input
                             id='instances'
                             type='text'
-                            value={user?.maxInstances ?? '-'}
+                            value={userQuery.data?.quotas.maxInstances ?? '-'}
                             isReadOnly={true}
                         />
                         <InputRightElement>
                             <Spinner
                                 size='sm'
-                                hidden={!isLoading}
+                                hidden={!userQuery.isLoading}
                             />
                         </InputRightElement>
                     </InputGroup>

@@ -17,15 +17,20 @@ import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useUsers } from '../../hooks/users';
-import { User } from '../../services/api/protocols';
+import { useUsers } from '../../hooks/use-users';
+import { User } from '../../services/api-protocols';
 import { UserDetailsModal } from '../../components/user-details-modal';
 import { UsersTable } from '../../components/users-table';
-import { usePaginationSearchParam } from '../../hooks/pagination-search-param';
+import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 
 export const UsersPage: React.FC = () => {
-    const { page, setPage } = usePaginationSearchParam();
-    const { usersQuery } = useUsers({ resultsPerPage: 20, page });
+    const { page, setParams } = usePaginationSearchParam();
+    const { usersQuery } = useUsers({
+        resultsPerPage: 20,
+        page,
+        orderBy: 'lastSignInDate',
+        order: 'desc',
+    });
     const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
     const [selectedUser, setSelectedUser] = React.useState<User>();
     const userDetailsModalDisclosure = useDisclosure();
@@ -36,7 +41,7 @@ export const UsersPage: React.FC = () => {
 
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
-            setPage(1);
+            setParams({ page: 1 });
         }
 
         setActiveMenuItem('ADMIN_USERS');
@@ -128,7 +133,7 @@ export const UsersPage: React.FC = () => {
                         activePage={page}
                         totalPages={numberOfPages}
                         onPageChange={(selectedPage) => {
-                            setPage(selectedPage);
+                            setParams({ page: selectedPage });
                         }}
                     />
                 </Stack>

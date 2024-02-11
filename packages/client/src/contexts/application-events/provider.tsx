@@ -11,6 +11,8 @@ import {
     applicationEventSubscriptionQuery,
 } from './protocol';
 
+const client = generateClient();
+
 export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const { user } = useAuthenticator((context) => [context.user]);
     const [, setSubscription] = useState<unknown>();
@@ -20,7 +22,6 @@ export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ childre
         INSTANCE_LAUNCHED: {},
         INSTANCE_STATE_CHANGED: {},
     });
-    const client = generateClient();
 
     useEffect(() => {
         if (user.username === undefined) {
@@ -30,47 +31,48 @@ export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ childre
             return;
         }
 
-        const newSubscription = client
-            .graphql({
-                query: applicationEventSubscriptionQuery,
-                variables: { name: user.username },
-            })
-            .subscribe({
-                next(value) {
-                    const data = JSON.parse(
-                        value.data.subscribe.data,
-                    ) as ApplicationEventSubscriptionData;
+        // const newSubscription = client
+        //     .graphql({
+        //         query: applicationEventSubscriptionQuery,
+        //         variables: { name: user.username },
+        //         authMode: 'userPool',
+        //     })
+        //     .subscribe({
+        //         next(value) {
+        //             const data = JSON.parse(
+        //                 value.data.subscribe.data,
+        //             ) as ApplicationEventSubscriptionData;
 
-                    console.log(
-                        `[ApplicationEventsProvider]: Received application event ${data.type}`,
-                        data,
-                    );
+        //             console.log(
+        //                 `[ApplicationEventsProvider]: Received application event ${data.type}`,
+        //                 data,
+        //             );
 
-                    const handlersForType = Object.entries(handlers?.[data.type] ?? {});
+        //             const handlersForType = Object.entries(handlers?.[data.type] ?? {});
 
-                    handlersForType.forEach(([handlerId, handler]) => {
-                        console.log(
-                            `[ApplicationEventsProvider]: Executing handler "${handlerId}" (${data.type})`,
-                        );
-                        handler(data);
-                    });
-                },
-                error(error) {
-                    console.error(
-                        '[ApplicationEventsProvider]: Error receiving application event',
-                        error,
-                    );
-                },
-                complete() {
-                    console.log('[ApplicationEventsProvider]: Subscription completed');
-                },
-            });
+        //             handlersForType.forEach(([handlerId, handler]) => {
+        //                 console.log(
+        //                     `[ApplicationEventsProvider]: Executing handler "${handlerId}" (${data.type})`,
+        //                 );
+        //                 handler(data);
+        //             });
+        //         },
+        //         error(error) {
+        //             console.error(
+        //                 '[ApplicationEventsProvider]: Error receiving application event',
+        //                 error,
+        //             );
+        //         },
+        //         complete() {
+        //             console.log('[ApplicationEventsProvider]: Subscription completed');
+        //         },
+        //     });
 
-        setSubscription((currentSubscription: typeof newSubscription | undefined) => {
-            currentSubscription?.unsubscribe();
-            return newSubscription;
-        });
-    }, [handlers, user.username]);
+        // setSubscription((currentSubscription: typeof newSubscription | undefined) => {
+        //     currentSubscription?.unsubscribe();
+        //     return newSubscription;
+        // });
+    }, []);
 
     const registerHandler = <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
         type: T,
