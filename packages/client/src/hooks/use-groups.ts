@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { listGroups } from '../services/api';
 
 export const useGroups = (props: {
-    userId?: string | 'me';
+    userId?: string;
     createdBy?: string;
-    textQuery?: string;
+    textSearch?: string;
     orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
     order: 'asc' | 'desc';
     page: number;
@@ -16,7 +15,7 @@ export const useGroups = (props: {
             'groups',
             props.userId,
             props.createdBy,
-            props.textQuery,
+            props.textSearch,
             props.orderBy,
             props.order,
             props.page,
@@ -26,7 +25,7 @@ export const useGroups = (props: {
             const response = await listGroups({
                 userId: props.userId,
                 createdBy: props.createdBy,
-                textQuery: props.textQuery,
+                textSearch: props.textSearch,
                 orderBy: props.orderBy,
                 order: props.order,
                 page: props.page,

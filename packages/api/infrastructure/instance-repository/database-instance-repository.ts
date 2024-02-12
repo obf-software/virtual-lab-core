@@ -185,13 +185,13 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             collection
                 .find(filter, { ignoreUndefined: true })
                 .sort(sortMap[orderBy])
-                .skip(pagination.page * (pagination.resultsPerPage - 1))
+                .skip(pagination.resultsPerPage * (pagination.page - 1))
                 .limit(pagination.resultsPerPage)
                 .toArray(),
         ]);
 
         return {
-            data: instances.map(DatabaseInstanceRepository.mapInstanceDbModelToEntity),
+            data: instances.map((i) => DatabaseInstanceRepository.mapInstanceDbModelToEntity(i)),
             numberOfPages: Math.ceil(count / pagination.resultsPerPage),
             numberOfResults: count,
             resultsPerPage: pagination.resultsPerPage,

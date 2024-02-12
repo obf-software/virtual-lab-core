@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import * as api from '../services/api';
 
 export const useInstances = (props: {
-    ownerId?: string | 'me';
-    orderBy: 'creationDate' | 'lastConnectionDate' | 'name';
+    ownerId?: string;
+    orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
     order: 'asc' | 'desc';
     page: number;
     resultsPerPage: number;
+    textSearch?: string;
 }) => {
     const instancesQuery = useQuery({
         queryKey: [
@@ -25,6 +25,7 @@ export const useInstances = (props: {
                 order: props.order,
                 page: props.page,
                 resultsPerPage: props.resultsPerPage,
+                textSearch: props.textSearch,
             });
             if (!response.success) throw new Error(response.error);
             return response.data;

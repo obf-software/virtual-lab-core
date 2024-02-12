@@ -13,7 +13,7 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
-import { InstanceCard } from './instance-card';
+import { InstanceCard } from '../../components/instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
 import { useInstances } from '../../hooks/use-instances';

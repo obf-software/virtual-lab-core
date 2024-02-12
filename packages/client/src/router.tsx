@@ -26,23 +26,23 @@ export const router = createBrowserRouter([
             //     path: 'new-instance',
             //     element: <NewInstancePage />,
             // },
-            {
-                path: 'user-groups',
-                element: <UserGroupsPage />,
-            },
-            {
-                path: 'profile',
-                element: <ProfilePage />,
-            },
+            // {
+            //     path: 'user-groups',
+            //     element: <UserGroupsPage />,
+            // },
+            // {
+            //     path: 'profile',
+            //     element: <ProfilePage />,
+            // },
 
-            {
-                path: 'admin/users',
-                element: <UsersPage />,
-            },
-            {
-                path: 'admin/groups',
-                element: <GroupsPage />,
-            },
+            // {
+            //     path: 'admin/users',
+            //     element: <UsersPage />,
+            // },
+            // {
+            //     path: 'admin/groups',
+            //     element: <GroupsPage />,
+            // },
         ],
         // errorElement: <div>error</div>,
     },

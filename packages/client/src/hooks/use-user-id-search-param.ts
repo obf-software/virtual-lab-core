@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -7,7 +6,7 @@ export const useUserIdSearchParam = () => {
     const userId = searchParams.get('userId') ?? 'me';
 
     const setUserId = React.useCallback(
-        (userId: string | 'me') => {
+        (userId: string) => {
             setSearchParams((prev) => {
                 prev.set('userId', userId);
                 return prev;

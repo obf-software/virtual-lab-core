@@ -3,9 +3,9 @@ import { listUsers } from '../services/api';
 
 export const useUsers = (props: {
     groupId?: string;
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastSignInDate' | 'name';
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical';
     order: 'asc' | 'desc';
-    textQuery?: string;
+    textSearch?: string;
     page: number;
     resultsPerPage: number;
 }) => {
@@ -15,7 +15,7 @@ export const useUsers = (props: {
             props.groupId,
             props.orderBy,
             props.order,
-            props.textQuery,
+            props.textSearch,
             props.page,
             props.resultsPerPage,
         ],
@@ -24,7 +24,7 @@ export const useUsers = (props: {
                 groupId: props.groupId,
                 orderBy: props.orderBy,
                 order: props.order,
-                textQuery: props.textQuery,
+                textSearch: props.textSearch,
                 page: props.page,
                 resultsPerPage: props.resultsPerPage,
             });

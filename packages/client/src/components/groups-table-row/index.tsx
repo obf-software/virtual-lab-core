@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton, IconButtonProps, Td, Tooltip, Tr } from '@chakra-ui/react';
+import { ButtonGroup, IconButton, IconButtonProps, Td, Tooltip, Tr } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
@@ -55,14 +55,16 @@ export const GroupsTableRow: React.FC<GroupsTableRowProps> = ({
                     isNumeric
                     cursor='initial'
                 >
-                    {actions?.map((action, index) => (
-                        <Tooltip
-                            key={index}
-                            label={action.iconButtonProps['aria-label']}
-                        >
-                            <IconButton {...action.iconButtonProps} />
-                        </Tooltip>
-                    )) ?? null}
+                    <ButtonGroup>
+                        {actions?.map((action, index) => (
+                            <Tooltip
+                                key={index}
+                                label={action.iconButtonProps['aria-label']}
+                            >
+                                <IconButton {...action.iconButtonProps} />
+                            </Tooltip>
+                        )) ?? null}
+                    </ButtonGroup>
                 </Td>
             )}
         </Tr>

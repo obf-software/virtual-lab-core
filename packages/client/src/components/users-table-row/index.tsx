@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableCellProps, TableRowProps, Td, Tr } from '@chakra-ui/react';
+import { ButtonGroup, IconButton, IconButtonProps, Td, Tooltip, Tr } from '@chakra-ui/react';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { User } from '../../services/api-protocols';
 import dayjs from 'dayjs';
@@ -10,38 +10,48 @@ dayjs.extend(relativeTime);
 dayjs.locale('pt-br');
 
 interface UsersTableRowProps {
-    tableRowProps?: TableRowProps;
-    tableCellProps?: TableCellProps;
-
     user: User;
     onUserSelect?: () => void;
+    actions?: {
+        iconButtonProps: IconButtonProps;
+    }[];
 }
 
-export const UsersTableRow: React.FC<UsersTableRowProps> = ({
-    tableRowProps,
-    tableCellProps,
-    user,
-    onUserSelect,
-}) => {
+export const UsersTableRow: React.FC<UsersTableRowProps> = ({ user, onUserSelect, actions }) => {
     return (
         <Tr
-            {...tableRowProps}
             _hover={{
                 bg: 'gray.50',
                 cursor: 'pointer',
-                ...tableRowProps?._hover,
-            }}
-            onClick={(event) => {
-                tableRowProps?.onClick?.(event);
-                onUserSelect?.();
             }}
         >
-            <Td {...tableCellProps}>{user.username}</Td>
-            <Td {...tableCellProps}>{roleToDisplayString(user.role)}</Td>
-            <Td {...tableCellProps}>{dayjs(user.createdAt).format('DD/MM/YYYY')}</Td>
-            <Td {...tableCellProps}>
+            <Td onClick={() => onUserSelect?.()}>{user.username}</Td>
+            <Td onClick={() => onUserSelect?.()}>{roleToDisplayString(user.role)}</Td>
+            <Td onClick={() => onUserSelect?.()}>{dayjs(user.createdAt).format('DD/MM/YYYY')}</Td>
+            <Td onClick={() => onUserSelect?.()}>
                 {user.lastLoginAt !== null ? dayjs(user.lastLoginAt).fromNow() : 'Nunca'}
             </Td>
+
+            {actions === undefined || actions.length === 0 ? null : (
+                <Td
+                    isNumeric
+                    cursor='initial'
+                >
+                    <ButtonGroup>
+                        {actions?.map((action, index) => (
+                            <Tooltip
+                                key={index}
+                                label={action.iconButtonProps['aria-label']}
+                            >
+                                <IconButton
+                                    key={index}
+                                    {...action.iconButtonProps}
+                                />
+                            </Tooltip>
+                        ))}
+                    </ButtonGroup>
+                </Td>
+            )}
         </Tr>
     );
 };

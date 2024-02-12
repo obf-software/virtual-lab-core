@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
 import { fetchAuthSession } from 'aws-amplify/auth';
 import {
     ApiResponse,
@@ -100,7 +99,7 @@ export const listGroups = async (props: {
     page: number;
     createdBy?: string;
     userId?: string;
-    textQuery?: string;
+    textSearch?: string;
 }) =>
     executeRequest<SeekPaginated<Group>>({
         path: '/api/v1/groups',
@@ -167,6 +166,7 @@ export const listInstances = async (props: {
     resultsPerPage: number;
     page: number;
     ownerId?: string;
+    textSearch?: string;
 }) =>
     executeRequest<SeekPaginated<Instance>>({
         path: `/api/v1/instances`,
@@ -194,19 +194,19 @@ export const turnInstanceOn = async (props: { instanceId: string }) =>
 
 // USER MODULE
 
-export const getUser = async (props: { userId: string | 'me' }) =>
+export const getUser = async (props: { userId: string }) =>
     executeRequest<User>({
         path: `/api/v1/users/${props.userId}`,
         method: 'GET',
     });
 
 export const listUsers = async (props: {
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastSignInDate' | 'alphabetical';
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical';
     order: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;
     groupId?: string;
-    textQuery?: string;
+    textSearch?: string;
 }) =>
     executeRequest<SeekPaginated<User>>({
         path: '/api/v1/users',
@@ -215,7 +215,7 @@ export const listUsers = async (props: {
     });
 
 export const updateUserQuotas = async (props: {
-    userId: string | 'me';
+    userId: string;
     maxInstances?: number;
     allowedInstanceTypes?: string[];
     canLaunchInstanceWithHibernation?: boolean;
@@ -230,7 +230,7 @@ export const updateUserQuotas = async (props: {
         },
     });
 
-export const updateUserRole = async (props: { userId: string | 'me'; role: Role }) =>
+export const updateUserRole = async (props: { userId: string; role: Role }) =>
     executeRequest<User>({
         path: `/api/v1/users/${props.userId}/role`,
         method: 'PATCH',

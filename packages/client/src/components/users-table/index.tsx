@@ -1,10 +1,9 @@
 import {
+    IconButtonProps,
     Spinner,
     Table,
     TableCaption,
     TableContainer,
-    TableContainerProps,
-    TableProps,
     Tbody,
     Th,
     Thead,
@@ -15,36 +14,35 @@ import { UsersTableRow } from '../users-table-row';
 import { User } from '../../services/api-protocols';
 
 interface UsersTableProps {
-    tableContainerProps?: TableContainerProps;
-    tableProps?: TableProps;
-
     users: User[];
     isLoading: boolean;
     error?: string;
     onUserSelect?: (user: User) => void;
+    actions?: {
+        iconButtonProps: IconButtonProps;
+    }[];
 }
 
 export const UsersTable: React.FC<UsersTableProps> = ({
-    tableContainerProps,
-    tableProps,
     users,
     isLoading,
     error,
     onUserSelect,
+    actions,
 }) => {
+    const shouldHideActions = actions === undefined || actions.length === 0;
+
     return (
         <TableContainer
             bgColor={'white'}
             p={4}
             borderRadius={12}
             boxShadow={'sm'}
-            {...tableContainerProps}
         >
             <Table
                 size={'md'}
                 variant='simple'
                 colorScheme='blue'
-                {...tableProps}
             >
                 {error !== undefined ? (
                     <TableCaption color='red.500'>Falha ao carregar usuários: {error}</TableCaption>
@@ -72,6 +70,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                         <Th>Cargo</Th>
                         <Th>Criado em</Th>
                         <Th>Último acesso</Th>
+                        <Th hidden={shouldHideActions}>Ações</Th>
                     </Tr>
                 </Thead>
 
@@ -82,6 +81,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                                 key={`users-table-row-${user.username}-${index}`}
                                 user={user}
                                 onUserSelect={() => onUserSelect?.(user)}
+                                actions={actions}
                             />
                         ))}
                 </Tbody>

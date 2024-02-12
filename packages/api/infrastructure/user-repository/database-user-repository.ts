@@ -144,7 +144,7 @@ export class DatabaseUserRepository implements UserRepository {
             collection
                 .find(filter, { ignoreUndefined: true })
                 .sort(sortMap[orderBy])
-                .skip(pagination.page * (pagination.resultsPerPage - 1))
+                .skip(pagination.resultsPerPage * (pagination.page - 1))
                 .limit(pagination.resultsPerPage)
                 .toArray(),
         ]);

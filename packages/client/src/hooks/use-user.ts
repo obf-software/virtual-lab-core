@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-redundant-type-constituents */
-
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getUser } from '../services/api';
 
-export const useUser = (props: { userId: string | 'me' }) => {
+export const useUser = (props: { userId: string }) => {
     const userQuery = useQuery({
         queryKey: ['user', props.userId],
         queryFn: async () => {
