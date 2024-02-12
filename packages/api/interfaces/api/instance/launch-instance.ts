@@ -60,6 +60,7 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             instanceType: body.data.instaceType,
             ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
         });
+        await Promise.allSettled([userRepository.disconnect(), instanceRepository.disconnect()]);
 
         return {
             statusCode: 200,

@@ -23,13 +23,15 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
         const query = z
             .object({
-                orderBy: z.enum(['creationDate', 'lastUpdate', 'name']).default('creationDate'),
+                orderBy: z
+                    .enum(['creationDate', 'lastUpdateDate', 'alphabetical'])
+                    .default('creationDate'),
                 order: z.enum(['asc', 'desc']).default('asc'),
                 resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
                 page: z.number({ coerce: true }).min(1).default(1),
                 createdBy: z.string().optional(),
                 userId: z.string().optional(),
-                textQuery: z.string().optional(),
+                textSearch: z.string().optional(),
             })
             .safeParse({ ...event.queryStringParameters });
         if (!query.success) throw Errors.validationError(query.error);
@@ -44,8 +46,9 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             },
             createdBy: query.data.createdBy,
             userId: query.data.userId,
-            textQuery: query.data.textQuery,
+            textSearch: query.data.textSearch,
         });
+        await groupRepository.disconnect();
 
         return {
             statusCode: 200,

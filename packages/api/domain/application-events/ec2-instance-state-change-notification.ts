@@ -16,7 +16,7 @@ export type EC2InstanceStateChangeNotificationDetail = z.infer<
  * This event is triggered when an EC2 instance is launched. Should not be fired manually.
  */
 export class EC2InstanceStateChangeNotification extends ApplicationEvent<EC2InstanceStateChangeNotificationDetail> {
-    constructor(public detail: EC2InstanceStateChangeNotificationDetail) {
+    private constructor(public detail: EC2InstanceStateChangeNotificationDetail) {
         super(
             'BUS',
             'EC2 Instance State-change Notification',

@@ -90,6 +90,8 @@ export const handler = LambdaHandlerAdapter.adaptSNS(
                 }
             }),
         );
+
+        await Promise.allSettled([userRepository.disconnect(), instanceRepository.disconnect()]);
     },
     { logger },
 );

@@ -11,8 +11,9 @@ import { Errors } from '../../../domain/dtos/errors';
 export const listInstancesInputSchema = z
     .object({
         principal: principalSchema,
+        textSearch: z.string().optional(),
         ownerId: z.string().optional(),
-        orderBy: z.enum(['creationDate', 'lastConnectionDate', 'name']),
+        orderBy: z.enum(['creationDate', 'lastConnectionDate', 'alphabetical']),
         order: z.enum(['asc', 'desc']),
         pagination: seekPaginationInputSchema,
     })
@@ -39,17 +40,16 @@ export class ListInstances {
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
         const { id } = this.auth.getClaims(validInput.principal);
 
-        if (
-            !this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') &&
-            validInput.ownerId !== undefined &&
-            validInput.ownerId !== id
-        ) {
+        const ownerId = validInput.ownerId === 'me' ? id : validInput.ownerId;
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && ownerId !== id) {
             throw Errors.insufficientRole('ADMIN');
         }
 
         const paginatedInstances = await this.instanceRepository.list(
             {
-                ownerId: validInput.ownerId,
+                ownerId,
+                textSearch: validInput.textSearch,
             },
             validInput.orderBy,
             validInput.order,

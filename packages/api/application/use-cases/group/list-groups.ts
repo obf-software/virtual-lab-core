@@ -9,10 +9,10 @@ import { Errors } from '../../../domain/dtos/errors';
 
 export const listGroupsInputSchema = z.object({
     principal: principalSchema,
-    textQuery: z.string().optional(),
+    textSearch: z.string().optional(),
     createdBy: z.string().optional(),
     userId: z.string().optional(),
-    orderBy: z.enum(['creationDate', 'lastUpdate', 'name']),
+    orderBy: z.enum(['creationDate', 'lastUpdateDate', 'alphabetical']),
     order: z.enum(['asc', 'desc']),
     pagination: seekPaginationInputSchema,
 });
@@ -37,19 +37,17 @@ export class ListGroups {
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'NONE');
         const { id } = this.auth.getClaims(validInput.principal);
 
-        if (
-            !this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') &&
-            validInput.userId !== undefined &&
-            validInput.userId !== id
-        ) {
+        const userId = validInput.userId === 'me' ? id : validInput.userId;
+
+        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && userId !== id) {
             throw Errors.insufficientRole('ADMIN');
         }
 
         return await this.groupRepository.list(
             {
-                textQuery: validInput.textQuery,
+                textSearch: validInput.textSearch,
                 createdBy: validInput.createdBy,
-                userId: validInput.userId,
+                userId,
             },
             validInput.orderBy,
             validInput.order,

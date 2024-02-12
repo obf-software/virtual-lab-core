@@ -7,10 +7,10 @@ export interface GroupRepository {
     list: (
         match: {
             createdBy?: string;
-            textQuery?: string;
+            textSearch?: string;
             userId?: string;
         },
-        orderBy: 'creationDate' | 'lastUpdate' | 'name',
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ) => Promise<SeekPaginated<Group>>;

@@ -18,7 +18,7 @@ export class AWSConfigVault implements ConfigVault {
     getSecret = async (name: string): Promise<string | undefined> => {
         const command = new GetSecretValueCommand({ SecretId: this.AWS_SECRET_NAME });
         const { SecretString } = await this.secretsManagerClient.send(command);
-        const parsedSecret = JSON.parse(SecretString || '{}') as Record<string, string | undefined>;
+        const parsedSecret = JSON.parse(SecretString ?? '{}') as Record<string, string | undefined>;
         return parsedSecret[name];
     };
 

@@ -10,7 +10,7 @@ import { InstanceState } from '../../../domain/dtos/instance-state';
 export const turnInstanceOffInputSchema = z
     .object({
         principal: principalSchema,
-        instanceId: z.string().nonempty(),
+        instanceId: z.string().min(1),
     })
     .strict();
 export type TurnInstanceOffInput = z.infer<typeof turnInstanceOffInputSchema>;

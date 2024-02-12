@@ -9,8 +9,9 @@ export interface InstanceRepository {
     list: (
         match: {
             ownerId?: string;
+            textSearch?: string;
         },
-        orderBy: 'creationDate' | 'lastConnectionDate' | 'name',
+        orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ) => Promise<SeekPaginated<Instance>>;

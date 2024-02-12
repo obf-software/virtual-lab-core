@@ -7,10 +7,10 @@ export interface UserRepository {
     getByUsername: (username: string) => Promise<User | undefined>;
     list: (
         match: {
-            textQuery?: string;
             groupId?: string;
+            textSearch?: string;
         },
-        orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'name',
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ) => Promise<SeekPaginated<User>>;

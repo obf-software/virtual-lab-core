@@ -9,9 +9,9 @@ import { Errors } from '../../../domain/dtos/errors';
 export const updateGroupInputSchema = z
     .object({
         principal: principalSchema,
-        groupId: z.string().nonempty(),
-        name: z.string().nonempty().optional(),
-        description: z.string().nonempty().optional(),
+        groupId: z.string().min(1),
+        name: z.string().min(1).optional(),
+        description: z.string().min(1).optional(),
     })
     .refine((data) => !!(data.name !== undefined || data.description !== undefined), {
         message: 'At least one of name or description must be provided',

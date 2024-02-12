@@ -23,6 +23,9 @@ export const handler = LambdaHandlerAdapter.adaptCustom<PostConfirmationTriggerH
             username: event.userName,
             selfRegister: false,
         });
+
+        await userRepository.disconnect();
+
         return event;
     },
     { logger },

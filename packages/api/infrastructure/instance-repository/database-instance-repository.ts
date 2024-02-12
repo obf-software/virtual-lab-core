@@ -7,7 +7,7 @@ import { Instance } from '../../domain/entities/instance';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 
 export class DatabaseInstanceRepository implements InstanceRepository {
-    private databaseUrl?: string;
+    private dbClient?: MongoClient;
 
     constructor(
         private readonly configVault: ConfigVault,
@@ -15,38 +15,72 @@ export class DatabaseInstanceRepository implements InstanceRepository {
     ) {}
 
     private async getMongoClient(): Promise<MongoClient> {
-        if (this.databaseUrl) {
-            return new MongoClient(this.databaseUrl);
-        }
+        if (this.dbClient) return this.dbClient;
 
         const retrievedDatabaseUrl = await this.configVault.getParameter(
             this.DATABASE_URL_PARAMETER_NAME,
         );
-        if (retrievedDatabaseUrl === undefined) {
-            throw Errors.internalError(
-                `Failed to retrieve ${this.DATABASE_URL_PARAMETER_NAME} from config vault`,
-            );
+        if (!retrievedDatabaseUrl) {
+            throw Errors.internalError(`Ivalid "${this.DATABASE_URL_PARAMETER_NAME}" parameter`);
         }
 
-        this.databaseUrl = retrievedDatabaseUrl;
-        return new MongoClient(retrievedDatabaseUrl);
+        const newDbClient = new MongoClient(retrievedDatabaseUrl);
+        this.dbClient = newDbClient;
+        return newDbClient;
     }
+
+    disconnect = async (): Promise<void> => {
+        if (this.dbClient !== undefined) {
+            await this.dbClient.close();
+            this.dbClient = undefined;
+        }
+    };
 
     static mapInstanceDbModelToEntity = (model: InstanceDbModel): Instance => {
         return Instance.restore({
-            ...model,
             id: model._id.toJSON(),
+            virtualId: model.virtualId,
             ownerId: model.ownerId.toJSON(),
+            launchToken: model.launchToken,
+            name: model.name,
+            description: model.description,
+            connectionType: model.connectionType,
+            platform: model.platform,
+            distribution: model.distribution,
+            instanceType: model.instanceType,
+            cpuCores: model.cpuCores,
+            memoryInGb: model.memoryInGb,
+            storageInGb: model.storageInGb,
+            createdAt: model.createdAt,
+            updatedAt: model.updatedAt,
+            lastConnectionAt: model.lastConnectionAt,
         });
     };
 
     static mapInstanceEntityToDbModel = (entity: Instance): InstanceDbModel => {
-        const { id, ownerId, ...rest } = entity.getData();
+        const data = entity.getData();
 
         return {
-            ...rest,
-            _id: id ? new ObjectId(id) : new ObjectId(),
-            ownerId: new ObjectId(ownerId),
+            _id: data.id ? new ObjectId(data.id) : new ObjectId(),
+            textSearch: [data.name, data.description]
+                .filter((x): x is string => typeof x === 'string')
+                .map((x) => x.toLowerCase())
+                .join(' '),
+            virtualId: data.virtualId,
+            ownerId: new ObjectId(data.ownerId),
+            launchToken: data.launchToken,
+            name: data.name,
+            description: data.description,
+            connectionType: data.connectionType,
+            platform: data.platform,
+            distribution: data.distribution,
+            instanceType: data.instanceType,
+            cpuCores: data.cpuCores,
+            memoryInGb: data.memoryInGb,
+            storageInGb: data.storageInGb,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            lastConnectionAt: data.lastConnectionAt,
         };
     };
 
@@ -58,7 +92,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance), {
                 ignoreUndefined: true,
             });
-        await client.close();
         return newInstance.insertedId.toJSON();
     };
 
@@ -69,7 +102,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .db()
             .collection<InstanceDbModel>('instances')
             .findOne({ _id: new ObjectId(id) });
-        await client.close();
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
@@ -80,7 +112,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .db()
             .collection<InstanceDbModel>('instances')
             .findOne({ virtualId: virtualId });
-        await client.close();
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
@@ -91,7 +122,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .db()
             .collection<InstanceDbModel>('instances')
             .findOne({ launchToken: launchToken });
-        await client.close();
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
     };
@@ -106,15 +136,15 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .db()
             .collection<InstanceDbModel>('instances')
             .countDocuments(filter, { ignoreUndefined: true });
-        await client.close();
         return count;
     };
 
     list = async (
         match: {
             ownerId?: string;
+            textSearch?: string;
         },
-        orderBy: 'creationDate' | 'lastConnectionDate' | 'name',
+        orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<Instance>> => {
@@ -131,6 +161,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
 
         const filter: Filter<InstanceDbModel> = {
             ownerId: match.ownerId ? new ObjectId(match.ownerId) : undefined,
+            textSearch: match.textSearch ? { $regex: match.textSearch, $options: 'i' } : undefined,
         };
 
         const sortOrder = order === 'asc' ? 1 : -1;
@@ -142,8 +173,8 @@ export class DatabaseInstanceRepository implements InstanceRepository {
                 lastConnectionAt: sortOrder,
                 _id: sortOrder,
             },
-            name: {
-                name: sortOrder,
+            alphabetical: {
+                textSearch: sortOrder,
                 _id: sortOrder,
             },
         };
@@ -153,13 +184,11 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
                 .find(filter, { ignoreUndefined: true })
-                .collation({ locale: 'en', strength: 2 })
                 .sort(sortMap[orderBy])
                 .skip(pagination.page * (pagination.resultsPerPage - 1))
                 .limit(pagination.resultsPerPage)
                 .toArray(),
         ]);
-        await client.close();
 
         return {
             data: instances.map(DatabaseInstanceRepository.mapInstanceDbModelToEntity),
@@ -179,7 +208,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
                 { $set: DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance) },
                 { ignoreUndefined: true, upsert: false },
             );
-        await client.close();
     };
 
     delete = async (instance: Instance): Promise<void> => {
@@ -188,6 +216,5 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             .db()
             .collection<InstanceDbModel>('instances')
             .deleteOne({ _id: new ObjectId(instance.id) }, { ignoreUndefined: true });
-        await client.close();
     };
 }

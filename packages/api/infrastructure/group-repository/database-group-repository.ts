@@ -8,7 +8,7 @@ import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-pagin
 import { UserDbModel } from '../db/models/user';
 
 export class DatabaseGroupRepository implements GroupRepository {
-    private databaseUrl?: string;
+    private dbClient?: MongoClient;
 
     constructor(
         private readonly configVault: ConfigVault,
@@ -16,22 +16,26 @@ export class DatabaseGroupRepository implements GroupRepository {
     ) {}
 
     private async getMongoClient(): Promise<MongoClient> {
-        if (this.databaseUrl) {
-            return new MongoClient(this.databaseUrl);
-        }
+        if (this.dbClient) return this.dbClient;
 
         const retrievedDatabaseUrl = await this.configVault.getParameter(
             this.DATABASE_URL_PARAMETER_NAME,
         );
-        if (retrievedDatabaseUrl === undefined) {
-            throw Errors.internalError(
-                `Failed to retrieve ${this.DATABASE_URL_PARAMETER_NAME} from config vault`,
-            );
+        if (!retrievedDatabaseUrl) {
+            throw Errors.internalError(`Ivalid "${this.DATABASE_URL_PARAMETER_NAME}" parameter`);
         }
 
-        this.databaseUrl = retrievedDatabaseUrl;
-        return new MongoClient(retrievedDatabaseUrl);
+        const newDbClient = new MongoClient(retrievedDatabaseUrl);
+        this.dbClient = newDbClient;
+        return newDbClient;
     }
+
+    disconnect = async (): Promise<void> => {
+        if (this.dbClient !== undefined) {
+            await this.dbClient.close();
+            this.dbClient = undefined;
+        }
+    };
 
     static mapGroupDbModelToEntity = (model: GroupDbModel): Group => {
         return Group.restore({
@@ -45,12 +49,16 @@ export class DatabaseGroupRepository implements GroupRepository {
     };
 
     static mapGroupEntityToDbModel = (entity: Group): GroupDbModel => {
-        const { id, createdBy, ...rest } = entity.toJSON();
+        const data = entity.toJSON();
 
         return {
-            _id: id ? new ObjectId(id) : new ObjectId(),
-            createdBy: new ObjectId(createdBy),
-            ...rest,
+            _id: data.id ? new ObjectId(data.id) : new ObjectId(),
+            textSearch: [data.name, data.description].map((x) => x.toLowerCase()).join(' '),
+            name: data.name,
+            description: data.description,
+            createdBy: new ObjectId(data.createdBy),
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
         };
     };
 
@@ -62,7 +70,6 @@ export class DatabaseGroupRepository implements GroupRepository {
             .insertOne(DatabaseGroupRepository.mapGroupEntityToDbModel(group), {
                 ignoreUndefined: true,
             });
-        await client.close();
         return newGroup.insertedId.toJSON();
     };
 
@@ -74,7 +81,6 @@ export class DatabaseGroupRepository implements GroupRepository {
             .db()
             .collection<GroupDbModel>('groups')
             .findOne({ _id: new ObjectId(id) }, { ignoreUndefined: true });
-        await client.close();
         if (!group) return undefined;
         return DatabaseGroupRepository.mapGroupDbModelToEntity(group);
     };
@@ -82,10 +88,10 @@ export class DatabaseGroupRepository implements GroupRepository {
     list = async (
         match: {
             createdBy?: string;
-            textQuery?: string;
+            textSearch?: string;
             userId?: string;
         },
-        orderBy: 'creationDate' | 'lastUpdate' | 'name',
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<Group>> => {
@@ -115,7 +121,7 @@ export class DatabaseGroupRepository implements GroupRepository {
 
         const filter: Filter<GroupDbModel> = {
             createdBy: match.createdBy ? new ObjectId(match.createdBy) : undefined,
-            name: match.textQuery ? { $regex: match.textQuery, $options: 'i' } : undefined,
+            textSearch: match.textSearch ? { $regex: match.textSearch, $options: 'i' } : undefined,
             _id: userGroupsIds.length > 0 ? { $in: userGroupsIds } : undefined,
         };
 
@@ -124,12 +130,12 @@ export class DatabaseGroupRepository implements GroupRepository {
             creationDate: {
                 _id: sortOrder,
             },
-            lastUpdate: {
+            lastUpdateDate: {
                 updatedAt: sortOrder,
                 _id: sortOrder,
             },
-            name: {
-                name: sortOrder,
+            alphabetical: {
+                textSearch: sortOrder,
                 _id: sortOrder,
             },
         };
@@ -139,13 +145,11 @@ export class DatabaseGroupRepository implements GroupRepository {
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
                 .find(filter, { ignoreUndefined: true })
-                .collation({ locale: 'en', strength: 2 })
                 .sort(sortMap[orderBy])
                 .skip(pagination.page * (pagination.resultsPerPage - 1))
                 .limit(pagination.resultsPerPage)
                 .toArray(),
         ]);
-        await client.close();
 
         return {
             data: sites.map(DatabaseGroupRepository.mapGroupDbModelToEntity),
@@ -165,7 +169,6 @@ export class DatabaseGroupRepository implements GroupRepository {
                 { $set: DatabaseGroupRepository.mapGroupEntityToDbModel(group) },
                 { ignoreUndefined: true, upsert: false },
             );
-        await client.close();
     };
 
     delete = async (group: Group): Promise<void> => {
@@ -174,6 +177,5 @@ export class DatabaseGroupRepository implements GroupRepository {
             .db()
             .collection<GroupDbModel>('groups')
             .deleteOne({ _id: new ObjectId(group.id) });
-        await client.close();
     };
 }

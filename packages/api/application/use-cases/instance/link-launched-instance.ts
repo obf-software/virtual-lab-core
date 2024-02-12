@@ -8,7 +8,7 @@ import { VirtualizationGateway } from '../../virtualization-gateway';
 import { z } from 'zod';
 
 export const linkLaunchedInstanceInputSchema = z.object({
-    stackName: z.string().nonempty(),
+    stackName: z.string().min(1),
 });
 export type LinkLaunchedInstanceInput = z.infer<typeof linkLaunchedInstanceInputSchema>;
 

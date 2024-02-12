@@ -8,7 +8,7 @@ import { UserRepository } from '../../user-repository';
 
 export const unlinkUsersFromGroupInputSchema = z.object({
     principal: principalSchema,
-    groupId: z.string().nonempty(),
+    groupId: z.string().min(1),
     userIds: z.array(z.string()).nonempty(),
 });
 export type UnlinkUsersFromGroupInput = z.infer<typeof unlinkUsersFromGroupInputSchema>;

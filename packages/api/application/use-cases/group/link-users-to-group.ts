@@ -8,7 +8,7 @@ import { UserRepository } from '../../user-repository';
 
 export const linkUsersToGroupInputSchema = z.object({
     principal: principalSchema,
-    groupId: z.string().nonempty(),
+    groupId: z.string().min(1),
     userIds: z.array(z.string()).nonempty(),
 });
 export type LinkUsersToGroupInput = z.infer<typeof linkUsersToGroupInputSchema>;

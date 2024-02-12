@@ -36,6 +36,7 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             groupId: event.pathParameters?.groupId ?? '',
             userIds: body.data.userIds,
         });
+        await Promise.allSettled([groupRepository.disconnect(), userRepository.disconnect()]);
 
         return {
             statusCode: 200,

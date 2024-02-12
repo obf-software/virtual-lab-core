@@ -11,7 +11,7 @@ import { ConfigVault } from '../../config-vault';
 export const getInstanceConnectionInputSchema = z
     .object({
         principal: principalSchema,
-        instanceId: z.string().nonempty(),
+        instanceId: z.string().min(1),
     })
     .strict();
 export type GetInstanceConnectionInput = z.infer<typeof getInstanceConnectionInputSchema>;

@@ -11,8 +11,8 @@ export const listUsersInputSchema = z
     .object({
         principal: principalSchema,
         groupId: z.string().optional(),
-        textQuery: z.string().optional(),
-        orderBy: z.enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'name']),
+        textSearch: z.string().optional(),
+        orderBy: z.enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'alphabetical']),
         order: z.enum(['asc', 'desc']),
         pagination: seekPaginationInputSchema,
     })
@@ -52,7 +52,7 @@ export class ListUsers {
         const paginatedUsers = await this.userRepository.list(
             {
                 groupId: validInput.groupId,
-                textQuery: validInput.textQuery,
+                textSearch: validInput.textSearch,
             },
             validInput.orderBy,
             validInput.order,

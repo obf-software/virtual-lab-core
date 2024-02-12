@@ -2,6 +2,7 @@ import { ObjectId } from 'mongodb';
 
 export interface InstanceDbModel {
     _id: ObjectId;
+    textSearch: string;
     virtualId?: string;
     ownerId: ObjectId;
     launchToken: string;

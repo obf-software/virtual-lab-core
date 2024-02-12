@@ -56,6 +56,10 @@ export const handler =
                 virtualId,
                 state: stateMap[stateName],
             });
+            await Promise.allSettled([
+                instanceRepository.disconnect(),
+                userRepository.disconnect(),
+            ]);
         },
         { logger },
     );

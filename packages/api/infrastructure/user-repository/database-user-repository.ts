@@ -7,7 +7,7 @@ import { UserDbModel } from '../db/models/user';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 
 export class DatabaseUserRepository implements UserRepository {
-    private databaseUrl?: string;
+    private dbClient?: MongoClient;
 
     constructor(
         private readonly configVault: ConfigVault,
@@ -15,38 +15,53 @@ export class DatabaseUserRepository implements UserRepository {
     ) {}
 
     private async getMongoClient(): Promise<MongoClient> {
-        if (this.databaseUrl) {
-            return new MongoClient(this.databaseUrl);
-        }
+        if (this.dbClient) return this.dbClient;
 
         const retrievedDatabaseUrl = await this.configVault.getParameter(
             this.DATABASE_URL_PARAMETER_NAME,
         );
-        if (retrievedDatabaseUrl === undefined) {
-            throw Errors.internalError(
-                `Failed to retrieve ${this.DATABASE_URL_PARAMETER_NAME} from config vault`,
-            );
+        if (!retrievedDatabaseUrl) {
+            throw Errors.internalError(`Ivalid "${this.DATABASE_URL_PARAMETER_NAME}" parameter`);
         }
 
-        this.databaseUrl = retrievedDatabaseUrl;
-        return new MongoClient(retrievedDatabaseUrl);
+        const newDbClient = new MongoClient(retrievedDatabaseUrl);
+        this.dbClient = newDbClient;
+        return newDbClient;
     }
+
+    disconnect = async (): Promise<void> => {
+        if (this.dbClient !== undefined) {
+            await this.dbClient.close();
+            this.dbClient = undefined;
+        }
+    };
 
     static mapUserDbModelToEntity = (model: UserDbModel): User => {
         return User.restore({
-            ...model,
             id: model._id.toJSON(),
+            username: model.username,
+            role: model.role,
+            createdAt: model.createdAt,
+            updatedAt: model.updatedAt,
+            lastLoginAt: model.lastLoginAt,
             groupIds: model.groupIds.map((id) => id.toJSON()),
+            quotas: model.quotas,
         });
     };
 
     static mapUserEntityToDbModel = (entity: User): UserDbModel => {
-        const { id, groupIds, ...rest } = entity.toJSON();
+        const data = entity.toJSON();
 
         return {
-            ...rest,
-            _id: id ? new ObjectId(id) : new ObjectId(),
-            groupIds: groupIds.map((id) => new ObjectId(id)),
+            _id: data.id ? new ObjectId(data.id) : new ObjectId(),
+            textSearch: [data.username].join(' '),
+            username: data.username,
+            role: data.role,
+            createdAt: data.createdAt,
+            updatedAt: data.updatedAt,
+            lastLoginAt: data.lastLoginAt,
+            groupIds: data.groupIds.map((id) => new ObjectId(id)),
+            quotas: data.quotas,
         };
     };
 
@@ -58,7 +73,6 @@ export class DatabaseUserRepository implements UserRepository {
             .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user), {
                 ignoreUndefined: true,
             });
-        await client.close();
         return newUser.insertedId.toJSON();
     };
 
@@ -69,7 +83,6 @@ export class DatabaseUserRepository implements UserRepository {
             .db()
             .collection<UserDbModel>('users')
             .findOne({ _id: new ObjectId(id) });
-        await client.close();
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
     };
@@ -77,17 +90,16 @@ export class DatabaseUserRepository implements UserRepository {
     getByUsername = async (username: string): Promise<User | undefined> => {
         const client = await this.getMongoClient();
         const user = await client.db().collection<UserDbModel>('users').findOne({ username });
-        await client.close();
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
     };
 
     list = async (
         match: {
-            textQuery?: string;
             groupId?: string;
+            textSearch?: string;
         },
-        orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'name',
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<User>> => {
@@ -103,7 +115,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
 
         const filter: Filter<UserDbModel> = {
-            username: match.textQuery ? { $regex: match.textQuery, $options: 'i' } : undefined,
+            textSearch: match.textSearch ? { $regex: match.textSearch, $options: 'i' } : undefined,
             groupIds: match.groupId ? new ObjectId(match.groupId) : undefined,
         };
 
@@ -120,8 +132,8 @@ export class DatabaseUserRepository implements UserRepository {
                 lastLoginAt: sortOrder,
                 _id: sortOrder,
             },
-            name: {
-                name: sortOrder,
+            alphabetical: {
+                textSearch: sortOrder,
                 _id: sortOrder,
             },
         };
@@ -131,7 +143,6 @@ export class DatabaseUserRepository implements UserRepository {
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
                 .find(filter, { ignoreUndefined: true })
-                .collation({ locale: 'en', strength: 2 })
                 .sort(sortMap[orderBy])
                 .skip(pagination.page * (pagination.resultsPerPage - 1))
                 .limit(pagination.resultsPerPage)
@@ -154,7 +165,6 @@ export class DatabaseUserRepository implements UserRepository {
             .collection<UserDbModel>('users')
             .find({ _id: { $in: validIds } })
             .toArray();
-        await client.close();
         return users.map(DatabaseUserRepository.mapUserDbModelToEntity);
     };
 
@@ -168,7 +178,6 @@ export class DatabaseUserRepository implements UserRepository {
                 { $set: DatabaseUserRepository.mapUserEntityToDbModel(user) },
                 { ignoreUndefined: true, upsert: false },
             );
-        await client.close();
     };
 
     bulkUpdate = async (users: User[]): Promise<void> => {
@@ -187,6 +196,5 @@ export class DatabaseUserRepository implements UserRepository {
                 })),
                 { ignoreUndefined: true },
             );
-        await client.close();
     };
 }
