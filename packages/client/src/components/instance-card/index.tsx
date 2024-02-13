@@ -9,14 +9,29 @@ import {
     Heading,
     Icon,
     IconButton,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuList,
     SimpleGrid,
     Stack,
     Text,
     Tooltip,
+    useDisclosure,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import React from 'react';
-import { FiCalendar, FiClock, FiCpu, FiMoreVertical, FiPlay, FiPower } from 'react-icons/fi';
+import {
+    FiCalendar,
+    FiClock,
+    FiCpu,
+    FiInfo,
+    FiMoreVertical,
+    FiPlay,
+    FiPower,
+    FiRefreshCw,
+    FiTrash,
+} from 'react-icons/fi';
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
@@ -24,6 +39,7 @@ import { Instance } from '../../services/api-protocols';
 import { InstanceCardStateTag } from './status-tag';
 import { BiHdd, BiMicrochip } from 'react-icons/bi';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
+import { InstanceDetailsModal } from '../instance-details-modal';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -32,9 +48,24 @@ dayjs.locale('pt-br');
 interface InstanceCardProps {
     instance: Instance;
     isLoading?: boolean;
+    onConnect?: () => void;
+    onPowerOff?: () => void;
+    onPowerOn?: () => void;
+    onReboot?: () => void;
+    onDelete?: () => void;
 }
 
-export const InstanceCard: React.FC<InstanceCardProps> = ({ instance, isLoading }) => {
+export const InstanceCard: React.FC<InstanceCardProps> = ({
+    instance,
+    isLoading,
+    onConnect,
+    onPowerOff,
+    onPowerOn,
+    onReboot,
+    onDelete,
+}) => {
+    const detailsModalDisclosure = useDisclosure();
+
     const platformIconMap: Record<'LINUX' | 'WINDOWS' | 'UNKNOWN', IconType> = {
         LINUX: FaLinux,
         WINDOWS: FaWindows,
@@ -62,9 +93,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance, isLoading 
         {
             icon: BiHdd,
             label: 'Armazenamento',
-            value: instance.storageInGb
-                ? `${instance.storageInGb} GBasdasda sdasdasdasdasdas`
-                : '-',
+            value: instance.storageInGb ? `${instance.storageInGb} GB` : '-',
         },
         {
             icon: FiClock,
@@ -93,19 +122,16 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance, isLoading 
             borderRadius='xl'
             boxShadow='md'
             overflow='hidden'
-            // width='100%'
-            width='lg'
+            width={{ base: '100%' }}
             p={4}
-            // margin='auto'
+            margin='auto'
         >
             <CardHeader textAlign='center'>
                 <Heading
                     size='lg'
                     noOfLines={2}
                 >
-                    Máquina de sistemas operacionais 2Máquina de sistemas operacionais 2Máquina de
-                    sistemas operacionais 2Máquina de sistemas operacionais 2Máquina de sistemas
-                    operacionais 2{/* {instance.name} */}
+                    {instance.name}
                 </Heading>
 
                 <Text
@@ -114,11 +140,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance, isLoading 
                     mt={5}
                     noOfLines={3}
                 >
-                    Máquina de sistemas operacionais 2Máquina de sistemas operacionais 2Máquina de
-                    sistemas operacionais 2Máquina de sistemas operacionais 2Máquina de sistemas
-                    operacionais 2Máquina de sistemas operacionais 2Máquina de sistemas operacionais
-                    2Máquina de sistemas operacionais 2Máquina de sistemas operacionais 2Máquina de
-                    sistemas operacionais 2{/* {instance.description} */}
+                    {instance.description}
                 </Text>
             </CardHeader>
 
@@ -169,56 +191,78 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({ instance, isLoading 
                 </SimpleGrid>
             </CardBody>
             <CardFooter justifyContent='center'>
-                {instance.virtualId === undefined ||
-                    (instance.state === 'PENDING' && (
-                        <Text color='gray.600'>Aguarde enquanto a máquina é provisionada</Text>
-                    ))}
-
-                {(instance.state === 'TERMINATED' || instance.state === 'SHUTTING_DOWN') && (
-                    <Text color='gray.600'>A máquina foi excluída</Text>
-                )}
-
-                {(instance.state === 'RUNNING' ||
-                    instance.state === 'STOPPED' ||
-                    instance.state === 'STOPPING') && (
-                    <ButtonGroup>
-                        <Button
-                            leftIcon={<FiPlay />}
-                            size={'lg'}
-                            colorScheme='green'
-                            hidden={instance.state !== 'RUNNING'}
-                            isLoading={isLoading}
-                        >
-                            Conectar
-                        </Button>
-                        <Button
-                            leftIcon={<FiPower />}
-                            size={'lg'}
-                            colorScheme='red'
-                            hidden={instance.state !== 'RUNNING'}
-                            isLoading={isLoading}
-                        >
-                            Desligar
-                        </Button>
-                        <Button
-                            leftIcon={<FiPower />}
-                            size={'lg'}
-                            colorScheme='green'
-                            hidden={instance.state !== 'STOPPED'}
-                            isLoading={isLoading}
-                        >
-                            Ligar
-                        </Button>
-                        <IconButton
+                <ButtonGroup>
+                    <Button
+                        leftIcon={<FiPlay />}
+                        size={'lg'}
+                        colorScheme='green'
+                        hidden={instance.state !== 'RUNNING'}
+                        isLoading={isLoading}
+                        onClick={onConnect}
+                    >
+                        Conectar
+                    </Button>
+                    <Button
+                        leftIcon={<FiPower />}
+                        size={'lg'}
+                        colorScheme='red'
+                        hidden={instance.state !== 'RUNNING'}
+                        isLoading={isLoading}
+                        onClick={onPowerOff}
+                    >
+                        Desligar
+                    </Button>
+                    <Button
+                        leftIcon={<FiPower />}
+                        size={'lg'}
+                        colorScheme='green'
+                        hidden={instance.state !== 'STOPPED'}
+                        isLoading={isLoading}
+                        onClick={onPowerOn}
+                    >
+                        Ligar
+                    </Button>
+                    <Menu>
+                        <MenuButton
+                            as={IconButton}
                             icon={<FiMoreVertical />}
                             size={'lg'}
                             aria-label='Mais opções'
                             variant={'outline'}
                             colorScheme='blue'
-                            hidden={isLoading}
                         />
-                    </ButtonGroup>
-                )}
+
+                        <MenuList>
+                            <MenuItem
+                                icon={<FiInfo />}
+                                onClick={detailsModalDisclosure.onOpen}
+                            >
+                                Detalhes
+                                <InstanceDetailsModal
+                                    instance={instance}
+                                    isOpen={detailsModalDisclosure.isOpen}
+                                    onClose={detailsModalDisclosure.onClose}
+                                />
+                            </MenuItem>
+
+                            <MenuItem
+                                isDisabled={instance.state !== 'RUNNING'}
+                                icon={<FiRefreshCw />}
+                                onClick={onReboot}
+                            >
+                                Reiniciar
+                            </MenuItem>
+
+                            <MenuItem
+                                icon={<FiTrash />}
+                                textColor={'red.400'}
+                                onClick={onDelete}
+                            >
+                                Excluir
+                            </MenuItem>
+                        </MenuList>
+                    </Menu>
+                </ButtonGroup>
             </CardFooter>
         </Card>
     );

@@ -10,6 +10,8 @@ import {
     IconButton,
     Spinner,
     Tooltip,
+    SimpleGrid,
+    Fade,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -19,16 +21,26 @@ import { Paginator } from '../../components/paginator';
 import { useInstances } from '../../hooks/use-instances';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { useNavigate } from 'react-router-dom';
+import { useInstanceOperations } from '../../hooks/use-instance-operations';
 
 export const InstancesPage: React.FC = () => {
-    const { page, setParams } = usePaginationSearchParam();
+    const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
+        allowedOrderByValues: ['creationDate', 'lastConnectionDate', 'alphabetical'],
+        defaultOrderBy: 'creationDate',
+        allowedOrderValues: ['asc', 'desc'],
+        defaultOrder: 'desc',
+        defaultPage: 1,
+        defaultResultsPerPage: 2,
+    });
     const { instancesQuery } = useInstances({
         ownerId: 'me',
-        resultsPerPage: 20,
-        orderBy: 'lastConnectionDate',
-        order: 'desc',
+        resultsPerPage,
+        orderBy,
+        order,
         page,
     });
+    const { turnInstanceOn, deleteInstance, rebootInstance, turnInstanceOff } =
+        useInstanceOperations();
     const { setActiveMenuItem } = useMenuContext();
     const navigate = useNavigate();
 
@@ -137,24 +149,53 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {instances.map((instance) => (
-                    <Box
-                        pb={10}
-                        key={`instance-${instance.virtualId}`}
-                    >
-                        <InstanceCard instance={instance} />
-                    </Box>
-                ))}
+                {instances.length > 0 && !instancesQuery.isLoading && (
+                    <Box>
+                        <Fade in>
+                            <SimpleGrid
+                                pb={10}
+                                columns={{ base: 1, md: 2 }}
+                                spacing={10}
+                            >
+                                {instances.map((instance) => (
+                                    <InstanceCard
+                                        key={`instance-${instance.id}-card`}
+                                        instance={instance}
+                                        isLoading={
+                                            turnInstanceOff.isPending ||
+                                            turnInstanceOn.isPending ||
+                                            deleteInstance.isPending ||
+                                            rebootInstance.isPending
+                                        }
+                                        onConnect={() => {
+                                            console.log('Connect');
+                                        }}
+                                        onPowerOff={() => {
+                                            turnInstanceOff.mutate({ instanceId: instance.id });
+                                        }}
+                                        onDelete={() => {
+                                            deleteInstance.mutate({ instanceId: instance.id });
+                                        }}
+                                        onPowerOn={() => {
+                                            turnInstanceOn.mutate({ instanceId: instance.id });
+                                        }}
+                                        onReboot={() => {
+                                            rebootInstance.mutate({ instanceId: instance.id });
+                                        }}
+                                    />
+                                ))}
+                            </SimpleGrid>
 
-                {instances.length > 0 && !instancesQuery.isLoading ? (
-                    <Paginator
-                        activePage={page}
-                        totalPages={numberOfPages}
-                        onPageChange={(selectedPage) => {
-                            setParams({ page: selectedPage });
-                        }}
-                    />
-                ) : null}
+                            <Paginator
+                                activePage={page}
+                                totalPages={numberOfPages}
+                                onPageChange={(selectedPage) => {
+                                    setParams({ page: selectedPage });
+                                }}
+                            />
+                        </Fade>
+                    </Box>
+                )}
             </Container>
         </Box>
     );

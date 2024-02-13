@@ -3,8 +3,8 @@ import * as api from '../services/api';
 
 export const useInstances = (props: {
     ownerId?: string;
-    orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
-    order: 'asc' | 'desc';
+    orderBy?: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
+    order?: 'asc' | 'desc';
     page: number;
     resultsPerPage: number;
     textSearch?: string;
@@ -21,8 +21,8 @@ export const useInstances = (props: {
         queryFn: async () => {
             const response = await api.listInstances({
                 ownerId: props.ownerId,
-                orderBy: props.orderBy,
-                order: props.order,
+                orderBy: props.orderBy ?? 'creationDate',
+                order: props.order ?? 'desc',
                 page: props.page,
                 resultsPerPage: props.resultsPerPage,
                 textSearch: props.textSearch,
