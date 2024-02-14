@@ -6,7 +6,7 @@ import { Navbar } from './navbar';
 import React from 'react';
 
 export const MainLayout: React.FC = () => {
-    const { isOpen, onOpen, onClose } = useDisclosure();
+    const sidebarDisclosure = useDisclosure();
 
     return (
         <Box
@@ -14,23 +14,23 @@ export const MainLayout: React.FC = () => {
             bg={useColorModeValue('gray.100', 'gray.900')}
         >
             <Sidebar
-                onClose={() => onClose}
+                onClose={() => sidebarDisclosure.onClose}
                 display={{ base: 'none', md: 'block' }}
             />
             <Drawer
-                isOpen={isOpen}
+                isOpen={sidebarDisclosure.isOpen}
                 placement='left'
-                onClose={onClose}
+                onClose={sidebarDisclosure.onClose}
                 returnFocusOnClose={false}
-                onOverlayClick={onClose}
+                onOverlayClick={sidebarDisclosure.onClose}
                 size='full'
             >
                 <DrawerContent>
-                    <Sidebar onClose={onClose} />
+                    <Sidebar onClose={sidebarDisclosure.onClose} />
                 </DrawerContent>
             </Drawer>
 
-            <Navbar onOpen={onOpen} />
+            <Navbar onOpenSidebar={sidebarDisclosure.onOpen} />
 
             <Box
                 ml={{ base: 0, md: 60 }}

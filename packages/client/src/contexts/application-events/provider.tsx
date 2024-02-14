@@ -11,8 +11,6 @@ import {
     applicationEventSubscriptionQuery,
 } from './protocol';
 
-const client = generateClient();
-
 export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ children }) => {
     const { user } = useAuthenticator((context) => [context.user]);
     const [, setSubscription] = useState<unknown>();
@@ -31,107 +29,120 @@ export const ApplicationEventsProvider: React.FC<PropsWithChildren> = ({ childre
             return;
         }
 
-        // const newSubscription = client
-        //     .graphql({
-        //         query: applicationEventSubscriptionQuery,
-        //         variables: { name: user.username },
-        //         authMode: 'userPool',
-        //     })
-        //     .subscribe({
-        //         next(value) {
-        //             const data = JSON.parse(
-        //                 value.data.subscribe.data,
-        //             ) as ApplicationEventSubscriptionData;
+        const client = generateClient();
+        const newSubscription = client
+            .graphql({
+                query: applicationEventSubscriptionQuery,
+                variables: { name: user.username },
+            })
+            .subscribe({
+                next(value) {
+                    const data = JSON.parse(
+                        value.data.subscribe.data,
+                    ) as ApplicationEventSubscriptionData;
 
-        //             console.log(
-        //                 `[ApplicationEventsProvider]: Received application event ${data.type}`,
-        //                 data,
-        //             );
-
-        //             const handlersForType = Object.entries(handlers?.[data.type] ?? {});
-
-        //             handlersForType.forEach(([handlerId, handler]) => {
-        //                 console.log(
-        //                     `[ApplicationEventsProvider]: Executing handler "${handlerId}" (${data.type})`,
-        //                 );
-        //                 handler(data);
-        //             });
-        //         },
-        //         error(error) {
-        //             console.error(
-        //                 '[ApplicationEventsProvider]: Error receiving application event',
-        //                 error,
-        //             );
-        //         },
-        //         complete() {
-        //             console.log('[ApplicationEventsProvider]: Subscription completed');
-        //         },
-        //     });
-
-        // setSubscription((currentSubscription: typeof newSubscription | undefined) => {
-        //     currentSubscription?.unsubscribe();
-        //     return newSubscription;
-        // });
-    }, []);
-
-    const registerHandler = <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
-        type: T,
-        handler: (detail: K) => void,
-    ): string => {
-        const id = v4();
-
-        setHandlers((currentHandlers) => {
-            return {
-                ...currentHandlers,
-                [type]: {
-                    ...currentHandlers[type],
-                    [id]: handler,
-                },
-            };
-        });
-
-        console.log(`[ApplicationEventsProvider]: Registered handler "${id}" (${type})`);
-        return id;
-    };
-
-    const unregisterHandlerById = (id: string) => {
-        setHandlers((currentHandlers) => {
-            const newHandlers = { ...currentHandlers };
-            Object.entries(newHandlers).forEach(([type, handlers]) => {
-                if (handlers !== undefined) {
                     console.log(
-                        `[ApplicationEventsProvider]: Unregistered handler "${id}" (${type})`,
+                        `[ApplicationEventsProvider]: Received application event ${data.type}`,
+                        data,
                     );
-                    delete handlers[id];
-                }
+
+                    const handlersForType = Object.entries(handlers?.[data.type] ?? {});
+
+                    handlersForType.forEach(([handlerId, handler]) => {
+                        console.log(
+                            `[ApplicationEventsProvider]: Executing handler "${handlerId}" (${data.type})`,
+                        );
+                        handler(data.detail);
+                    });
+                },
+                error(error) {
+                    console.error(
+                        '[ApplicationEventsProvider]: Error receiving application event',
+                        error,
+                    );
+                },
+                complete() {
+                    console.log('[ApplicationEventsProvider]: Subscription completed');
+                },
             });
-            return newHandlers;
-        });
-    };
 
-    const unregisterHandlersByType = (type: ApplicationEventType) => {
-        setHandlers((currentHandlers) => {
-            Object.entries(currentHandlers[type] ?? {}).forEach(([handlerId]) => {
-                console.log(
-                    `[ApplicationEventsProvider]: Unregistered handler "${handlerId}" (${type})`,
-                );
+        setSubscription((currentSubscription: typeof newSubscription | undefined) => {
+            currentSubscription?.unsubscribe();
+            return newSubscription;
+        });
+
+        return () => {
+            newSubscription.unsubscribe();
+        };
+    }, [handlers, user]);
+
+    const registerHandler = React.useCallback(
+        <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
+            type: T,
+            handler: (detail: K) => void,
+        ): string => {
+            const id = v4();
+
+            setHandlers((currentHandlers) => {
+                return {
+                    ...currentHandlers,
+                    [type]: {
+                        ...currentHandlers[type],
+                        [id]: handler,
+                    },
+                };
             });
 
-            return {
-                ...currentHandlers,
-                [type]: undefined,
-            };
-        });
-    };
+            console.log(`[ApplicationEventsProvider]: Registered handler "${id}" (${type})`);
+            return id;
+        },
+        [setHandlers],
+    );
 
-    const unregisterAllHandlers = () => {
+    const unregisterHandlerById = React.useCallback(
+        (id: string) => {
+            setHandlers((currentHandlers) => {
+                const newHandlers = { ...currentHandlers };
+                Object.entries(newHandlers).forEach(([type, handlers]) => {
+                    if (handlers?.[id] !== undefined) {
+                        console.log(
+                            `[ApplicationEventsProvider]: Unregistered handler "${id}" (${type})`,
+                        );
+                        delete handlers[id];
+                    }
+                });
+                return newHandlers;
+            });
+        },
+        [setHandlers],
+    );
+
+    const unregisterHandlersByType = React.useCallback(
+        (type: ApplicationEventType) => {
+            setHandlers((currentHandlers) => {
+                Object.entries(currentHandlers[type] ?? {}).forEach(([handlerId]) => {
+                    console.log(
+                        `[ApplicationEventsProvider]: Unregistered handler "${handlerId}" (${type})`,
+                    );
+                });
+
+                return {
+                    ...currentHandlers,
+                    [type]: undefined,
+                };
+            });
+        },
+        [setHandlers],
+    );
+
+    const unregisterAllHandlers = React.useCallback(() => {
         setHandlers({
             INSTANCE_LAUNCHED: undefined,
             INSTANCE_STATE_CHANGED: undefined,
         });
 
         console.log('[ApplicationEventsProvider]: Unregistered all handlers');
-    };
+    }, [setHandlers]);
 
     return (
         <ApplicationEventsContext.Provider

@@ -1,6 +1,6 @@
 import { Instance, VirtualInstanceState } from '../../services/api-protocols';
 
-export const applicationEventSubscriptionQuery = `#graphql subscription Subscribe($name: String!) {
+export const applicationEventSubscriptionQuery = `subscription Subscribe($name: String!) {
     subscribe(name: $name) {
         name
         data
@@ -39,7 +39,7 @@ export interface ApplicationEventSubscriptionData {
     detail: ApplicationEventDetail[ApplicationEventType];
 }
 
-export type ApplicationEventHandler = (data: ApplicationEventSubscriptionData) => void;
+export type ApplicationEventHandler = (data: ApplicationEventSubscriptionData['detail']) => void;
 
 export interface ApplicationEventsContextData {
     registerHandler: <T extends ApplicationEventType, K = ApplicationEventDetail[T]>(
