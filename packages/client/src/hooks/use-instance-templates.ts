@@ -10,7 +10,7 @@ export const useInstanceTemplates = () => {
             return response.data;
         },
         placeholderData: keepPreviousData,
-        staleTime: 1000 * 60 * 5,
+        staleTime: 1000 * 60 * 60,
         refetchOnWindowFocus: false,
     });
 

@@ -65,9 +65,7 @@ export const InstancesPage: React.FC = () => {
             'INSTANCE_STATE_CHANGED',
             (detail) => {
                 queryClient.setQueriesData<SeekPaginated<Instance>>(
-                    {
-                        queryKey: ['instances'],
-                    },
+                    { queryKey: ['instances'] },
                     (currentData) => {
                         if (!currentData) return currentData;
 
@@ -205,6 +203,7 @@ export const InstancesPage: React.FC = () => {
                                             deleteInstance.isPending ||
                                             rebootInstance.isPending
                                         }
+                                        isDisabled={instancesQuery.isFetching}
                                         onConnect={() => {
                                             console.log('Connect');
                                         }}

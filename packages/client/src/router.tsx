@@ -8,6 +8,7 @@ import { ProfilePage } from './pages/profile';
 import { ConnectionPage } from './pages/connection';
 // import { NewInstancePage } from './pages/new-instance';
 import { UserGroupsPage } from './pages/user-groups';
+import { NewInstancePage } from './pages/new-instance';
 
 export const router = createBrowserRouter([
     {
@@ -22,10 +23,10 @@ export const router = createBrowserRouter([
                 path: 'instances',
                 element: <InstancesPage />,
             },
-            // {
-            //     path: 'new-instance',
-            //     element: <NewInstancePage />,
-            // },
+            {
+                path: 'new-instance',
+                element: <NewInstancePage />,
+            },
             // {
             //     path: 'user-groups',
             //     element: <UserGroupsPage />,

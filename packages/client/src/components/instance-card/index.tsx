@@ -48,7 +48,8 @@ dayjs.locale('pt-br');
 
 interface InstanceCardProps {
     instance: Instance;
-    isLoading?: boolean;
+    isLoading: boolean;
+    isDisabled: boolean;
     onConnect?: () => void;
     onPowerOff?: () => void;
     onPowerOn?: () => void;
@@ -59,6 +60,7 @@ interface InstanceCardProps {
 export const InstanceCard: React.FC<InstanceCardProps> = ({
     instance,
     isLoading,
+    isDisabled,
     onConnect,
     onPowerOff,
     onPowerOn,
@@ -199,6 +201,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                         colorScheme='green'
                         hidden={instance.state !== 'RUNNING'}
                         isLoading={isLoading}
+                        isDisabled={isDisabled}
                         onClick={onConnect}
                     >
                         Conectar
@@ -211,6 +214,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             colorScheme='red'
                             hidden={instance.state !== 'RUNNING'}
                             isLoading={isLoading}
+                            isDisabled={isDisabled}
                             onClick={onPowerOff}
                         />
                     ) : (
@@ -220,6 +224,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             colorScheme='red'
                             hidden={instance.state !== 'RUNNING'}
                             isLoading={isLoading}
+                            isDisabled={isDisabled}
                             onClick={onPowerOff}
                         >
                             Desligar
@@ -232,6 +237,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                         colorScheme='green'
                         hidden={instance.state !== 'STOPPED'}
                         isLoading={isLoading}
+                        isDisabled={isDisabled}
                         onClick={onPowerOn}
                     >
                         Ligar
@@ -250,6 +256,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             <MenuItem
                                 icon={<FiInfo />}
                                 onClick={detailsModalDisclosure.onOpen}
+                                isDisabled={isLoading || isDisabled}
                             >
                                 Detalhes
                                 <InstanceDetailsModal
@@ -260,7 +267,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             </MenuItem>
 
                             <MenuItem
-                                isDisabled={instance.state !== 'RUNNING'}
+                                isDisabled={instance.state !== 'RUNNING' || isLoading || isDisabled}
                                 icon={<FiRefreshCw />}
                                 onClick={onReboot}
                             >
@@ -270,6 +277,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             <MenuItem
                                 icon={<FiTrash />}
                                 textColor={'red.400'}
+                                isDisabled={isLoading || isDisabled}
                                 onClick={onDelete}
                             >
                                 Excluir

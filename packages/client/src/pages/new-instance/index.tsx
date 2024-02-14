@@ -9,18 +9,21 @@ import {
     IconButton,
     Spinner,
     Tooltip,
+    Fade,
+    SimpleGrid,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { NewInstanceCard } from './card';
-import { useUserProducts } from '../../hooks/use-instance-templates';
+import { useInstanceTemplates } from '../../hooks/use-instance-templates';
+import { InstanceTemplateCard } from '../../components/instance-template-card';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const { products, numberOfProducts, isFetching, isLoading, refetch } = useUserProducts({
-        userId: 'me',
-    });
+    const { instanceTemplatesQuery } = useInstanceTemplates();
+
+    const templates = instanceTemplatesQuery.data ?? [];
+    const numberOfTemplates = templates.length;
 
     useEffect(() => {
         setActiveMenuItem('INSTANCES');
@@ -46,9 +49,9 @@ export const NewInstancePage: React.FC = () => {
                             fontSize='md'
                             color='gray.600'
                         >
-                            {numberOfProducts === 0 ? 'Nenhum produto disponível' : null}
-                            {numberOfProducts === 1 ? '1 produto disponível' : null}
-                            {numberOfProducts > 1 ? 'Produtos disponíveis' : null}
+                            {numberOfTemplates === 0 && 'Nenhum template disponível'}
+                            {numberOfTemplates === 1 && '1 template disponível'}
+                            {numberOfTemplates > 1 && `${numberOfTemplates} template disponíveis`}
                         </Text>
                     </VStack>
 
@@ -58,9 +61,11 @@ export const NewInstancePage: React.FC = () => {
                                 aria-label='Recarregar'
                                 variant={'outline'}
                                 colorScheme='blue'
-                                hidden={isLoading}
-                                isLoading={isFetching}
-                                onClick={refetch}
+                                hidden={instanceTemplatesQuery.isLoading}
+                                isLoading={instanceTemplatesQuery.isFetching}
+                                onClick={() => {
+                                    instanceTemplatesQuery.refetch().catch(console.error);
+                                }}
                             >
                                 <FiRefreshCw />
                             </IconButton>
@@ -68,7 +73,7 @@ export const NewInstancePage: React.FC = () => {
                     </ButtonGroup>
                 </Stack>
 
-                {numberOfProducts === 0 && !isLoading ? (
+                {numberOfTemplates === 0 && !instanceTemplatesQuery.isLoading && (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -80,12 +85,12 @@ export const NewInstancePage: React.FC = () => {
                             fontSize='xl'
                             color='gray.600'
                         >
-                            Nenhum produto encontrado
+                            Nenhum template encontrado
                         </Text>
                     </Box>
-                ) : null}
+                )}
 
-                {isLoading ? (
+                {instanceTemplatesQuery.isLoading && (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -100,16 +105,31 @@ export const NewInstancePage: React.FC = () => {
                             emptyColor={'gray.200'}
                         />
                     </Box>
-                ) : null}
+                )}
 
-                {products.map((product) => (
-                    <Box
-                        pb={10}
-                        key={`product-${product.id}`}
-                    >
-                        <NewInstanceCard product={product} />
+                {numberOfTemplates > 0 && !instanceTemplatesQuery.isLoading && (
+                    <Box>
+                        <Fade in>
+                            <SimpleGrid
+                                pb={10}
+                                columns={{ base: 1, md: 2 }}
+                                spacing={10}
+                            >
+                                {templates.map((template) => (
+                                    <InstanceTemplateCard
+                                        key={`instance-template-${template.id}-card`}
+                                        instanceTemplate={template}
+                                        isLoading={false}
+                                        isDisabled={instanceTemplatesQuery.isFetching}
+                                        onProvision={() => {
+                                            console.log('Provision');
+                                        }}
+                                    />
+                                ))}
+                            </SimpleGrid>
+                        </Fade>
                     </Box>
-                ))}
+                )}
             </Container>
         </Box>
     );
