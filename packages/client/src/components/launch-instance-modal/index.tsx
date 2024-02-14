@@ -312,8 +312,6 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                         <ModalFooter
                             justifyContent={'center'}
                             alignItems={'center'}
-
-                            // display={'flex'}
                         >
                             <Button
                                 leftIcon={<BiRocket />}
@@ -321,11 +319,6 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 // eslint-disable-next-line @typescript-eslint/no-misused-promises
                                 onClick={formMethods.handleSubmit(submitHandler)}
                                 isLoading={launchInstance.isPending}
-                                isDisabled={
-                                    userQuery.isError ||
-                                    userQuery.isLoading ||
-                                    !formMethods.formState.isValid
-                                }
                             >
                                 Criar instância
                             </Button>
