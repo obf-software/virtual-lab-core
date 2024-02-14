@@ -22,6 +22,9 @@ import { useInstances } from '../../hooks/use-instances';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { useNavigate } from 'react-router-dom';
 import { useInstanceOperations } from '../../hooks/use-instance-operations';
+import { useApplicationEventsContext } from '../../contexts/application-events/hook';
+import { queryClient } from '../../services/query-client';
+import { Instance, SeekPaginated } from '../../services/api-protocols';
 
 export const InstancesPage: React.FC = () => {
     const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
@@ -41,6 +44,7 @@ export const InstancesPage: React.FC = () => {
     });
     const { turnInstanceOn, deleteInstance, rebootInstance, turnInstanceOff } =
         useInstanceOperations();
+    const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
     const { setActiveMenuItem } = useMenuContext();
     const navigate = useNavigate();
 
@@ -55,6 +59,40 @@ export const InstancesPage: React.FC = () => {
 
         setActiveMenuItem('INSTANCES');
     }, [page, numberOfPages]);
+
+    React.useEffect(() => {
+        const instanceStateChangedHandlerId = registerHandler(
+            'INSTANCE_STATE_CHANGED',
+            (detail) => {
+                queryClient.setQueriesData<SeekPaginated<Instance>>(
+                    {
+                        queryKey: ['instances'],
+                    },
+                    (currentData) => {
+                        if (!currentData) return currentData;
+
+                        return {
+                            ...currentData,
+                            data: currentData.data.map((instance) => {
+                                if (instance.id === detail.instance.id) {
+                                    console.log('Updating instance state', detail.state);
+                                    return {
+                                        ...instance,
+                                        state: detail.state,
+                                    };
+                                }
+                                return instance;
+                            }),
+                        };
+                    },
+                );
+            },
+        );
+
+        return () => {
+            unregisterHandlerById(instanceStateChangedHandlerId);
+        };
+    }, []);
 
     return (
         <Box>
