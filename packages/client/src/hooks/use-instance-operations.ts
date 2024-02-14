@@ -2,8 +2,11 @@ import { useMutation } from '@tanstack/react-query';
 import * as api from '../services/api';
 import { queryClient } from '../services/query-client';
 import { Instance, SeekPaginated } from '../services/api-protocols';
+import { useNavigate } from 'react-router-dom';
 
 export const useInstanceOperations = () => {
+    const navigate = useNavigate();
+
     const turnInstanceOn = useMutation({
         mutationFn: async (mut: { instanceId: string }) => {
             const response = await api.turnInstanceOn({ instanceId: mut.instanceId });
@@ -83,10 +86,37 @@ export const useInstanceOperations = () => {
         },
     });
 
+    const launchInstance = useMutation({
+        mutationFn: async (mut: {
+            ownerId: string;
+            templateId: string;
+            instanceType: string;
+            description: string;
+            enableHibernation: boolean;
+            name: string;
+        }) => {
+            const response = await api.launchInstance({
+                ownerId: mut.ownerId,
+                templateId: mut.templateId,
+                instanceType: mut.instanceType,
+                description: mut.description,
+                enableHibernation: mut.enableHibernation,
+                name: mut.name,
+            });
+            if (!response.success) throw new Error(response.error);
+            return response.data;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['instances'] });
+            navigate('/instances');
+        },
+    });
+
     return {
         turnInstanceOn,
         turnInstanceOff,
         rebootInstance,
         deleteInstance,
+        launchInstance,
     };
 };

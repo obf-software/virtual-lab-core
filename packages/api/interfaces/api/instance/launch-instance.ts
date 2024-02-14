@@ -45,10 +45,12 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
         const body = z
             .object({
-                templateId: z.string(),
-                enableHibernation: z.boolean(),
-                instaceType: z.string(),
                 ownerId: z.string().optional(),
+                name: z.string(),
+                description: z.string(),
+                templateId: z.string(),
+                instanceType: z.string(),
+                enableHibernation: z.boolean(),
             })
             .safeParse(JSON.parse(event.body ?? '{}'));
         if (!body.success) throw Errors.validationError(body.error);
@@ -57,7 +59,9 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             principal: CognitoAuth.extractPrincipal(event),
             templateId: body.data.templateId,
             enableHibernation: body.data.enableHibernation,
-            instanceType: body.data.instaceType,
+            instanceType: body.data.instanceType,
+            name: body.data.name,
+            description: body.data.description,
             ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
         });
         await Promise.allSettled([userRepository.disconnect(), instanceRepository.disconnect()]);

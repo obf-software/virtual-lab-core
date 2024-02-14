@@ -18,6 +18,7 @@ import { VirtualInstanceDetailedInfo } from '../../domain/dtos/virtual-instance-
 import { VirtualInstanceTemplate } from '../../domain/dtos/virtual-instance-template';
 import {
     DescribeProductAsAdminCommand,
+    DescribeProvisioningParametersCommand,
     DescribeRecordCommand,
     ListLaunchPathsCommand,
     ProvisionProductCommand,
@@ -233,25 +234,44 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         const { LaunchPathSummaries } = await this.serviceCatalogClient.send(
             new ListLaunchPathsCommand({ ProductId: instanceTemplateId }),
         );
+        const pathId = LaunchPathSummaries?.[0].Id;
+
+        const { ProvisioningArtifactParameters } = await this.serviceCatalogClient.send(
+            new DescribeProvisioningParametersCommand({
+                ProductId: instanceTemplateId,
+                ProvisioningArtifactName: 'latest',
+                PathId: pathId,
+            }),
+        );
+
+        const provisioningParameters = ProvisioningArtifactParameters?.map((p) => {
+            if (p.Description === 'Instance Type') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.instanceType,
+                };
+            }
+            if (p.Description === 'Enable Hibernation') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.enableHibernation ? 'true' : 'false',
+                };
+            }
+            return {
+                Key: p.ParameterKey,
+                Value: p.DefaultValue,
+            };
+        });
 
         await this.serviceCatalogClient.send(
             new ProvisionProductCommand({
                 ProductId: instanceTemplateId,
-                PathId: LaunchPathSummaries?.[0].Id,
+                PathId: pathId,
                 ProvisioningArtifactName: 'latest',
                 ProvisionedProductName: launchToken,
                 ProvisionToken: launchToken,
                 NotificationArns: [this.API_SNS_TOPIC_ARN],
-                ProvisioningParameters: [
-                    {
-                        Key: 'Instance Type',
-                        Value: parameters.instanceType,
-                    },
-                    {
-                        Key: 'Enable Hibernation',
-                        Value: parameters.enableHibernation ? 'true' : 'false',
-                    },
-                ],
+                ProvisioningParameters: provisioningParameters,
                 Tags: [
                     {
                         Key: 'launchToken',

@@ -82,7 +82,7 @@ export const NavbarNotificationsButton: React.FC = () => {
         );
 
         const instanceLaunchedHandlerId = registerHandler('INSTANCE_LAUNCHED', (detail) => {
-            addNotification(`A instância ${detail.instance.name} foi provisionada com sucesso!`);
+            addNotification(`A instância ${detail.instance.name} foi configurada.`);
         });
 
         return () => {

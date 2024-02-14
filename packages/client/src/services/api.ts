@@ -144,6 +144,8 @@ export const getInstanceConnection = async (props: { instanceId: string }) =>
 
 export const launchInstance = async (props: {
     templateId: string;
+    name: string;
+    description: string;
     enableHibernation: boolean;
     instanceType: string;
     ownerId: string;

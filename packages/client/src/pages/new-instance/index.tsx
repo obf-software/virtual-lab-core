@@ -11,6 +11,7 @@ import {
     Tooltip,
     Fade,
     SimpleGrid,
+    SlideFade,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
 import React, { useEffect } from 'react';
@@ -40,37 +41,50 @@ export const NewInstancePage: React.FC = () => {
                     align={{ base: 'center', md: 'center' }}
                     spacing={{ base: 5, md: 10 }}
                 >
-                    <VStack
-                        spacing={0}
-                        align={{ base: 'center', md: 'initial' }}
+                    <SlideFade
+                        in
+                        offsetX={'-20px'}
+                        offsetY={0}
                     >
-                        <Heading color='gray.800'>Nova Instância</Heading>
-                        <Text
-                            fontSize='md'
-                            color='gray.600'
+                        <VStack
+                            spacing={0}
+                            align={{ base: 'center', md: 'initial' }}
                         >
-                            {numberOfTemplates === 0 && 'Nenhum template disponível'}
-                            {numberOfTemplates === 1 && '1 template disponível'}
-                            {numberOfTemplates > 1 && `${numberOfTemplates} template disponíveis`}
-                        </Text>
-                    </VStack>
-
-                    <ButtonGroup>
-                        <Tooltip label='Recarregar'>
-                            <IconButton
-                                aria-label='Recarregar'
-                                variant={'outline'}
-                                colorScheme='blue'
-                                hidden={instanceTemplatesQuery.isLoading}
-                                isLoading={instanceTemplatesQuery.isFetching}
-                                onClick={() => {
-                                    instanceTemplatesQuery.refetch().catch(console.error);
-                                }}
+                            <Heading color='gray.800'>Nova Instância</Heading>
+                            <Text
+                                fontSize='md'
+                                color='gray.600'
                             >
-                                <FiRefreshCw />
-                            </IconButton>
-                        </Tooltip>
-                    </ButtonGroup>
+                                {numberOfTemplates === 0 && 'Nenhum template disponível'}
+                                {numberOfTemplates === 1 && '1 template disponível'}
+                                {numberOfTemplates > 1 &&
+                                    `${numberOfTemplates} template disponíveis`}
+                            </Text>
+                        </VStack>
+                    </SlideFade>
+
+                    <SlideFade
+                        in
+                        offsetX={'20px'}
+                        offsetY={0}
+                    >
+                        <ButtonGroup>
+                            <Tooltip label='Recarregar'>
+                                <IconButton
+                                    aria-label='Recarregar'
+                                    variant={'outline'}
+                                    colorScheme='blue'
+                                    hidden={instanceTemplatesQuery.isLoading}
+                                    isLoading={instanceTemplatesQuery.isFetching}
+                                    onClick={() => {
+                                        instanceTemplatesQuery.refetch().catch(console.error);
+                                    }}
+                                >
+                                    <FiRefreshCw />
+                                </IconButton>
+                            </Tooltip>
+                        </ButtonGroup>
+                    </SlideFade>
                 </Stack>
 
                 {numberOfTemplates === 0 && !instanceTemplatesQuery.isLoading && (

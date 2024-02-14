@@ -52,7 +52,7 @@ export const InstanceCardStateTag: React.FC<InstanceCardStateTagProps> = ({ stat
             hasSpinner: false,
         },
         PROVISIONING: {
-            label: 'Provisionando',
+            label: 'Configurando',
             colorScheme: 'orange',
             hasSpinner: true,
         },

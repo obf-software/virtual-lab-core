@@ -1,21 +1,30 @@
-import { Button, Card, CardBody, CardFooter, CardHeader, Heading } from '@chakra-ui/react';
+import {
+    Button,
+    Card,
+    CardBody,
+    CardFooter,
+    CardHeader,
+    Heading,
+    useDisclosure,
+} from '@chakra-ui/react';
 import React from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { InstanceTemplate } from '../../services/api-protocols';
+import { LaunchInstanceModal } from '../launch-instance-modal';
 
 interface InstanceTemplateCardProps {
     instanceTemplate: InstanceTemplate;
     isLoading?: boolean;
     isDisabled?: boolean;
-    onProvision?: () => void;
 }
 
 export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({
     instanceTemplate,
     isLoading,
     isDisabled,
-    onProvision,
 }) => {
+    const launchInstanceModalDisclosure = useDisclosure();
+
     return (
         <Card
             borderRadius='xl'
@@ -50,9 +59,14 @@ export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({
                     colorScheme='blue'
                     isLoading={isLoading}
                     isDisabled={isDisabled}
-                    onClick={onProvision}
+                    onClick={launchInstanceModalDisclosure.onOpen}
                 >
                     Criar a partir deste template
+                    <LaunchInstanceModal
+                        instanceTemplate={instanceTemplate}
+                        isOpen={launchInstanceModalDisclosure.isOpen}
+                        onClose={launchInstanceModalDisclosure.onClose}
+                    />
                 </Button>
             </CardFooter>
         </Card>

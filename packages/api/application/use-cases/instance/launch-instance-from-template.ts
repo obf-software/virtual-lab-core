@@ -13,6 +13,8 @@ export const launchInstanceFromTemplateInputSchema = z
         principal: principalSchema,
         ownerId: z.string().optional(),
         templateId: z.string().min(1),
+        name: z.string().min(1),
+        description: z.string().min(1),
         instanceType: z.string().min(1),
         enableHibernation: z.boolean(),
     })
@@ -72,17 +74,14 @@ export class LaunchInstanceFromTemplate {
             }
         }
 
-        const [launchToken, instanceTemplate] = await Promise.all([
-            this.virtualizationGateway.launchInstance(validInput.templateId, {
-                instanceType: validInput.instanceType,
-                enableHibernation: validInput.enableHibernation,
-            }),
-            this.virtualizationGateway.getInstanceTemplate(validInput.templateId),
-        ]);
+        const launchToken = await this.virtualizationGateway.launchInstance(validInput.templateId, {
+            instanceType: validInput.instanceType,
+            enableHibernation: validInput.enableHibernation,
+        });
 
         const instance = Instance.create({
-            name: instanceTemplate.name,
-            description: instanceTemplate.description,
+            name: validInput.name,
+            description: validInput.description,
             ownerId,
             launchToken,
         });

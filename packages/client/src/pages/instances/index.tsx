@@ -12,6 +12,7 @@ import {
     Tooltip,
     SimpleGrid,
     Fade,
+    SlideFade,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -87,8 +88,33 @@ export const InstancesPage: React.FC = () => {
             },
         );
 
+        const instanceLaunchedHandlerId = registerHandler('INSTANCE_LAUNCHED', (detail) => {
+            queryClient.setQueriesData<SeekPaginated<Instance>>(
+                { queryKey: ['instances'] },
+                (currentData) => {
+                    if (!currentData) return currentData;
+
+                    return {
+                        ...currentData,
+                        data: currentData.data.map((instance) => {
+                            if (instance.id === detail.instance.id) {
+                                console.log('Updating instance state', detail.state);
+                                return {
+                                    ...instance,
+                                    ...detail.instance,
+                                    state: detail.state,
+                                };
+                            }
+                            return instance;
+                        }),
+                    };
+                },
+            );
+        });
+
         return () => {
             unregisterHandlerById(instanceStateChangedHandlerId);
+            unregisterHandlerById(instanceLaunchedHandlerId);
         };
     }, []);
 
@@ -103,52 +129,64 @@ export const InstancesPage: React.FC = () => {
                     align={{ base: 'center', md: 'center' }}
                     spacing={{ base: 5, md: 10 }}
                 >
-                    <VStack
-                        spacing={0}
-                        align={{ base: 'center', md: 'initial' }}
+                    <SlideFade
+                        in
+                        offsetX={'-20px'}
+                        offsetY={0}
                     >
-                        <Heading color='gray.800'>Instâncias</Heading>
-                        <Text
-                            fontSize='md'
-                            color='gray.600'
+                        <VStack
+                            spacing={0}
+                            align={{ base: 'center', md: 'initial' }}
                         >
-                            {numberOfInstances === 0 ? 'Nenhuma instância encontrada' : null}
-                            {numberOfInstances === 1
-                                ? `${numberOfInstances} instância encontrada`
-                                : null}
-                            {numberOfInstances > 1
-                                ? `${numberOfInstances} instâncias encontradas`
-                                : null}
-                        </Text>
-                    </VStack>
+                            <Heading color='gray.800'>Instâncias</Heading>
+                            <Text
+                                fontSize='md'
+                                color='gray.600'
+                            >
+                                {numberOfInstances === 0 ? 'Nenhuma instância encontrada' : null}
+                                {numberOfInstances === 1
+                                    ? `${numberOfInstances} instância encontrada`
+                                    : null}
+                                {numberOfInstances > 1
+                                    ? `${numberOfInstances} instâncias encontradas`
+                                    : null}
+                            </Text>
+                        </VStack>
+                    </SlideFade>
 
-                    <ButtonGroup>
-                        <Tooltip label='Recarregar'>
-                            <IconButton
-                                aria-label='Recarregar'
-                                variant={'outline'}
+                    <SlideFade
+                        in
+                        offsetX={'20px'}
+                        offsetY={0}
+                    >
+                        <ButtonGroup>
+                            <Tooltip label='Recarregar'>
+                                <IconButton
+                                    aria-label='Recarregar'
+                                    variant={'outline'}
+                                    colorScheme='blue'
+                                    hidden={instancesQuery.isLoading}
+                                    isLoading={instancesQuery.isFetching}
+                                    onClick={() => {
+                                        instancesQuery.refetch().catch(console.error);
+                                    }}
+                                >
+                                    <FiRefreshCw />
+                                </IconButton>
+                            </Tooltip>
+
+                            <Button
+                                variant={'solid'}
                                 colorScheme='blue'
-                                hidden={instancesQuery.isLoading}
-                                isLoading={instancesQuery.isFetching}
+                                leftIcon={<FiPlus />}
                                 onClick={() => {
-                                    instancesQuery.refetch().catch(console.error);
+                                    navigate('/new-instance');
                                 }}
                             >
-                                <FiRefreshCw />
-                            </IconButton>
-                        </Tooltip>
-
-                        <Button
-                            variant={'solid'}
-                            colorScheme='blue'
-                            leftIcon={<FiPlus />}
-                            onClick={() => {
-                                navigate('/new-instance');
-                            }}
-                        >
-                            Nova instância
-                        </Button>
-                    </ButtonGroup>
+                                Nova instância
+                            </Button>
+                        </ButtonGroup>
+                    </SlideFade>
                 </Stack>
 
                 {instances.length === 0 && !instancesQuery.isLoading ? (
