@@ -1,6 +1,7 @@
 import { Box, Spinner, Stack, Tag, Text } from '@chakra-ui/react';
 import React from 'react';
 import { VirtualInstanceState } from '../../../services/api-protocols';
+import { instanceStateToDisplayString } from '../../../services/helpers';
 
 interface InstanceCardStateTagProps {
     state?: VirtualInstanceState | 'PROVISIONING';
@@ -16,32 +17,32 @@ export const InstanceCardStateTag: React.FC<InstanceCardStateTagProps> = ({ stat
         }
     > = {
         SHUTTING_DOWN: {
-            label: 'Terminando',
+            label: instanceStateToDisplayString('SHUTTING_DOWN'),
             colorScheme: 'red',
             hasSpinner: true,
         },
         PENDING: {
-            label: 'Pendente',
+            label: instanceStateToDisplayString('PENDING'),
             colorScheme: 'orange',
             hasSpinner: true,
         },
         RUNNING: {
-            label: 'Ativa',
+            label: instanceStateToDisplayString('RUNNING'),
             colorScheme: 'green',
             hasSpinner: false,
         },
         STOPPED: {
-            label: 'Desligada',
+            label: instanceStateToDisplayString('STOPPED'),
             colorScheme: 'red',
             hasSpinner: false,
         },
         STOPPING: {
-            label: 'Desligando',
+            label: instanceStateToDisplayString('STOPPING'),
             colorScheme: 'red',
             hasSpinner: true,
         },
         TERMINATED: {
-            label: 'Excluída',
+            label: instanceStateToDisplayString('TERMINATED'),
             colorScheme: 'gray',
             hasSpinner: false,
         },

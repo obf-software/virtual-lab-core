@@ -17,6 +17,7 @@ import {
     Stack,
     Text,
     Tooltip,
+    useBreakpointValue,
     useDisclosure,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
@@ -202,16 +203,29 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                     >
                         Conectar
                     </Button>
-                    <Button
-                        leftIcon={<FiPower />}
-                        size={'lg'}
-                        colorScheme='red'
-                        hidden={instance.state !== 'RUNNING'}
-                        isLoading={isLoading}
-                        onClick={onPowerOff}
-                    >
-                        Desligar
-                    </Button>
+                    {useBreakpointValue({ base: true, md: false }) ? (
+                        <IconButton
+                            icon={<FiPower />}
+                            aria-label='Desligar'
+                            size={'lg'}
+                            colorScheme='red'
+                            hidden={instance.state !== 'RUNNING'}
+                            isLoading={isLoading}
+                            onClick={onPowerOff}
+                        />
+                    ) : (
+                        <Button
+                            leftIcon={<FiPower />}
+                            size={'lg'}
+                            colorScheme='red'
+                            hidden={instance.state !== 'RUNNING'}
+                            isLoading={isLoading}
+                            onClick={onPowerOff}
+                        >
+                            Desligar
+                        </Button>
+                    )}
+
                     <Button
                         leftIcon={<FiPower />}
                         size={'lg'}

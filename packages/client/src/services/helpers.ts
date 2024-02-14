@@ -12,7 +12,7 @@ export const roleToDisplayString = (role: string): string => {
 
 export const instanceStateToDisplayString = (state: VirtualInstanceState): string => {
     const stateToDisplayMap: Record<VirtualInstanceState, string | undefined> = {
-        PENDING: 'Pendente',
+        PENDING: 'Iniciando',
         RUNNING: 'Ativa',
         STOPPED: 'Desligada',
         STOPPING: 'Desligando',

@@ -38,7 +38,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSidebar, ...rest }) => {
                 Virtual Lab
             </Text>
 
-            <HStack spacing={{ base: '4', md: '6' }}>
+            <HStack
+                spacing={{ base: '4', md: '6' }}
+                paddingRight={4}
+            >
                 <NavbarNotificationsButton />
                 <NavbarMenu />
             </HStack>
