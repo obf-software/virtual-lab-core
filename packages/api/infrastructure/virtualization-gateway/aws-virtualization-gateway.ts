@@ -229,7 +229,8 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         instanceTemplateId: string,
         parameters: VirtualInstanceLaunchParameters,
     ): Promise<string> => {
-        const launchToken = randomUUID();
+        const randomId = randomUUID();
+        const launchToken = `virtual-lab-${randomId}-${Date.now()}`;
 
         const { LaunchPathSummaries } = await this.serviceCatalogClient.send(
             new ListLaunchPathsCommand({ ProductId: instanceTemplateId }),

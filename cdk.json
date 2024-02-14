@@ -1,0 +1,5 @@
+{
+    "context": {
+        "@aws-cdk/aws-ec2:uniqueImdsv2TemplateName": true
+    }
+}
