@@ -219,8 +219,8 @@ export const getInstanceTemplate = async (props: { instanceTemplateId: string })
 export const listInstanceTemplates = async (props: {
     createdBy?: string;
     textSearch?: string;
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
-    order: 'asc' | 'desc';
+    orderBy?: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
+    order?: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;
 }) =>
