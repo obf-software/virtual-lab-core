@@ -75,12 +75,24 @@ export interface Instance {
     state?: VirtualInstanceState;
 }
 
+export interface InstanceConnection {
+    connectionString: string;
+}
+
 export interface InstanceTemplate {
+    id: string;
+    createdBy: string;
+    name: string;
+    description: string;
+    productId: string;
+    machineImageId: string;
+    storageInGb: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Product {
     id: string;
     name: string;
     description: string;
-}
-
-export interface InstanceConnection {
-    connectionString: string;
 }

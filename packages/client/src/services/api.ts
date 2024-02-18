@@ -5,6 +5,7 @@ import {
     Instance,
     InstanceConnection,
     InstanceTemplate,
+    Product,
     Role,
     SeekPaginated,
     UrlPath,
@@ -156,12 +157,6 @@ export const launchInstance = async (props: {
         body: props,
     });
 
-export const listInstanceTemplates = async () =>
-    executeRequest<InstanceTemplate[]>({
-        path: '/api/v1/instance-templates',
-        method: 'GET',
-    });
-
 export const listInstances = async (props: {
     orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
     order: 'asc' | 'desc';
@@ -192,6 +187,64 @@ export const turnInstanceOn = async (props: { instanceId: string }) =>
     executeRequest<{ state: VirtualInstanceState }>({
         path: `/api/v1/instances/${props.instanceId}/turn-on`,
         method: 'POST',
+    });
+
+// INSTANCE TEMPLATE MODULE
+
+export const createInstanceTemplate = async (props: {
+    name: string;
+    description: string;
+    machineImageId: string;
+    productId: string;
+    storageInGb?: number;
+}) =>
+    executeRequest<InstanceTemplate>({
+        path: '/api/v1/instance-templates',
+        method: 'POST',
+        body: props,
+    });
+
+export const deleteInstanceTemplate = async (props: { instanceTemplateId: string }) =>
+    executeRequest<void>({
+        path: `/api/v1/instance-templates/${props.instanceTemplateId}`,
+        method: 'DELETE',
+    });
+
+export const getInstanceTemplate = async (props: { instanceTemplateId: string }) =>
+    executeRequest<InstanceTemplate>({
+        path: `/api/v1/instance-templates/${props.instanceTemplateId}`,
+        method: 'GET',
+    });
+
+export const listInstanceTemplates = async (props: {
+    createdBy?: string;
+    textSearch?: string;
+    orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
+    order: 'asc' | 'desc';
+    resultsPerPage: number;
+    page: number;
+}) =>
+    executeRequest<SeekPaginated<InstanceTemplate>>({
+        path: '/api/v1/instance-templates',
+        method: 'GET',
+        queryParams: props,
+    });
+
+export const listProducts = async () =>
+    executeRequest<Product[]>({
+        path: '/api/v1/products',
+        method: 'GET',
+    });
+
+export const updateInstanceTemplate = async (props: {
+    instanceTemplateId: string;
+    name?: string;
+    description?: string;
+}) =>
+    executeRequest<InstanceTemplate>({
+        path: `/api/v1/instance-templates/${props.instanceTemplateId}`,
+        method: 'PATCH',
+        body: props,
     });
 
 // USER MODULE
