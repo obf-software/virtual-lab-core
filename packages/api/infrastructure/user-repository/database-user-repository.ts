@@ -12,6 +12,7 @@ export class DatabaseUserRepository implements UserRepository {
     constructor(
         private readonly configVault: ConfigVault,
         private readonly DATABASE_URL_PARAMETER_NAME: string,
+        private readonly DATABASE_COLLECTION_NAME = 'users',
     ) {}
 
     private async getMongoClient(): Promise<MongoClient> {
@@ -69,7 +70,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const newUser = await client
             .db()
-            .collection<UserDbModel>('users')
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
             .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user), {
                 ignoreUndefined: true,
             });
@@ -81,7 +82,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const user = await client
             .db()
-            .collection<UserDbModel>('users')
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
             .findOne({ _id: new ObjectId(id) });
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
@@ -89,7 +90,10 @@ export class DatabaseUserRepository implements UserRepository {
 
     getByUsername = async (username: string): Promise<User | undefined> => {
         const client = await this.getMongoClient();
-        const user = await client.db().collection<UserDbModel>('users').findOne({ username });
+        const user = await client
+            .db()
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .findOne({ username });
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
     };
@@ -138,7 +142,7 @@ export class DatabaseUserRepository implements UserRepository {
             },
         };
 
-        const collection = client.db().collection<UserDbModel>('users');
+        const collection = client.db().collection<UserDbModel>(this.DATABASE_COLLECTION_NAME);
         const [count, users] = await Promise.all([
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
@@ -162,7 +166,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const users = await client
             .db()
-            .collection<UserDbModel>('users')
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
             .find({ _id: { $in: validIds } })
             .toArray();
         return users.map(DatabaseUserRepository.mapUserDbModelToEntity);
@@ -172,7 +176,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<UserDbModel>('users')
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
             .updateOne(
                 { _id: new ObjectId(user.id) },
                 { $set: DatabaseUserRepository.mapUserEntityToDbModel(user) },
@@ -185,7 +189,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<UserDbModel>('users')
+            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
             .bulkWrite(
                 users.map((user) => ({
                     updateOne: {

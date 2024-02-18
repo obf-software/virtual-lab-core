@@ -1,43 +1,41 @@
-import { ListInstanceTemplates } from '../../../application/use-cases/instance/list-instance-templates';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/instance-template-repository/database-instance-template-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
-import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { DeleteInstanceTemplate } from '../../../application/use-cases/instance-template/delete-instance-template';
 
-const {
-    IS_LOCAL,
-    AWS_REGION,
-    AWS_SESSION_TOKEN,
-    SHARED_SECRET_NAME,
-    API_SNS_TOPIC_ARN,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
-} = process.env;
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
+    process.env;
+
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
         ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
         : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
-const virtualizationGateway = new AwsVirtualizationGateway(
+const instanceTemplateRepository = new DatabaseInstanceTemplateRepository(
     configVault,
-    AWS_REGION,
-    API_SNS_TOPIC_ARN,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    DATABASE_URL_PARAMETER_NAME,
 );
-const listInstanceTemplates = new ListInstanceTemplates(logger, auth, virtualizationGateway);
+const deleteInstanceTemplate = new DeleteInstanceTemplate(logger, auth, instanceTemplateRepository);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const output = await listInstanceTemplates.execute({
+        const instanceTemplateId = event.pathParameters?.instanceTemplateId;
+
+        await deleteInstanceTemplate.execute({
             principal: CognitoAuth.extractPrincipal(event),
+            instanceTemplateId: instanceTemplateId ?? '',
         });
 
         return {
             statusCode: 200,
-            body: JSON.stringify(output),
-            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: 'Instance template deleted' }),
+            headers: {
+                'Content-Type': 'application/json',
+            },
         };
     },
     { logger },

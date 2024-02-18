@@ -68,67 +68,49 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         keyName: `service-catalog-${stack.stage}`,
     });
 
-    const defaultLinuxProduct = new serviceCatalog.CloudFormationProduct(
-        stack,
-        'DefaultLinuxProduct',
-        {
-            owner: 'SST',
-            productName: 'Máquina Virtual Linux',
-            description:
-                'Configurada para uso padrão, com os seguintes softwares instalados: Google Chrome.',
-            productVersions: [
-                {
-                    productVersionName: 'latest',
-                    validateTemplate: true,
-                    cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
-                        new BaseLinuxProduct(stack, 'DefaultLinuxProductVersion', {
-                            vpc,
-                            region: stack.region,
-                            machineImage: new ec2.AmazonLinuxImage({
-                                edition: ec2.AmazonLinuxEdition.STANDARD,
-                                generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
-                                cpuType: ec2.AmazonLinuxCpuType.X86_64,
-                                virtualization: ec2.AmazonLinuxVirt.HVM,
-                                kernel: ec2.AmazonLinuxKernel.KERNEL5_X,
-                            }),
-                            userDataS3FileKey: 'base-linux-user-data.sh',
-                            userDataS3FileBucket: scriptsBucket.cdk.bucket,
-                            extraUserDataCommands: [
-                                'wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm',
-                                'yum -y install ./google-chrome-stable_current_*.rpm',
-                            ],
-                            passwordSsmParameterName: ssmParameters.instancePassword.name,
-                            sshKeyName: serviceCatalogSshKey.keyName,
-                        }),
-                    ),
-                },
-            ],
-        },
-    );
+    const baseLinuxProduct = new serviceCatalog.CloudFormationProduct(stack, 'BaseLinuxProduct', {
+        owner: 'SST',
+        productName: 'Base Linux Product',
+        productVersions: [
+            {
+                productVersionName: 'latest',
+                validateTemplate: true,
+                cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
+                    new BaseLinuxProduct(stack, 'BaseLinuxProductVersion', {
+                        vpc,
+                        region: stack.region,
+                        userDataS3FileKey: 'base-linux-user-data.sh',
+                        userDataS3FileBucket: scriptsBucket.cdk.bucket,
+                        passwordSsmParameterName: ssmParameters.instancePassword.name,
+                        sshKeyName: serviceCatalogSshKey.keyName,
+                        connectionProxyIpv4Cidr: undefined,
+                        connectionProxyIpv6Cidr: undefined,
+                    }),
+                ),
+            },
+        ],
+    });
 
-    const defaultWindowsProduct = new serviceCatalog.CloudFormationProduct(
+    const baseWindowsProduct = new serviceCatalog.CloudFormationProduct(
         stack,
-        'DefaultWindowsProduct',
+        'BaseWindowsProduct',
         {
             owner: 'SST',
-            productName: 'Máquina Virtual Windows',
-            description: 'Configurada para uso padrão. Não possui softwares instalados.',
+            productName: 'Base Windows Product',
             productVersions: [
                 {
                     productVersionName: 'latest',
                     validateTemplate: true,
                     cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
-                        new BaseWindowsProduct(stack, 'DefaultWindowsProductVersion', {
+                        new BaseWindowsProduct(stack, 'BaseWindowsProductVersion', {
                             vpc,
                             region: stack.region,
-                            machineImage: new ec2.WindowsImage(
-                                ec2.WindowsVersion.WINDOWS_SERVER_2019_ENGLISH_FULL_BASE,
-                            ),
                             userDataS3FileKey: 'base-windows-user-data.ps1',
                             userDataS3FileBucket: scriptsBucket.cdk.bucket,
-                            // extraUserDataCommands: [''],
                             passwordSsmParameterName: ssmParameters.instancePassword.name,
                             sshKeyName: serviceCatalogSshKey.keyName,
+                            connectionProxyIpv4Cidr: undefined,
+                            connectionProxyIpv6Cidr: undefined,
                         }),
                     ),
                 },
@@ -136,8 +118,8 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         },
     );
 
-    defaultPortfolio.addProduct(defaultLinuxProduct);
-    defaultPortfolio.addProduct(defaultWindowsProduct);
+    defaultPortfolio.addProduct(baseLinuxProduct);
+    defaultPortfolio.addProduct(baseWindowsProduct);
 
     return {
         defaultPortfolio,

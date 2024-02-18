@@ -1,5 +1,4 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import * as iam from 'aws-cdk-lib/aws-iam';
 import * as servicecatalog from 'aws-cdk-lib/aws-servicecatalog';
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
@@ -15,10 +14,6 @@ interface BaseWindowsProductProps {
      */
     region: string;
     /**
-     * Machine Image to use for the instance
-     */
-    machineImage: ec2.WindowsImage;
-    /**
      * File Key for the User Data script in S3 used to prepare the instance
      */
     userDataS3FileKey: string;
@@ -27,22 +22,6 @@ interface BaseWindowsProductProps {
      */
     userDataS3FileBucket: s3.IBucket;
     /**
-     * User Data to run once on instance launch
-     */
-    extraUserDataCommands?: string[];
-    /**
-     * Block Devices to attach to the instance
-     */
-    blockDevices?: ec2.BlockDevice[];
-    /**
-     * Inline Policies to attach to the role
-     */
-    inlinePolicies?: Record<string, iam.PolicyDocument>;
-    /**
-     * Managed Policies to attach to the role
-     */
-    managedPolicies?: iam.IManagedPolicy[];
-    /**
      * SSM Parameter Name for the password
      */
     passwordSsmParameterName: string;
@@ -50,6 +29,14 @@ interface BaseWindowsProductProps {
      * SSH Key Name to use for the instance
      */
     sshKeyName?: string;
+    /**
+     * Connection Proxy IPV4 CIDR
+     */
+    connectionProxyIpv4Cidr?: string;
+    /**
+     * Connection Proxy IPV6 CIDR
+     */
+    connectionProxyIpv6Cidr?: string;
 }
 
 export class BaseWindowsProduct extends servicecatalog.ProductStack {
@@ -64,16 +51,26 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             serverSideEncryptionAwsKmsKeyId: props.serverSideEncryptionAwsKmsKeyId,
         });
 
+        const machineImageIdParam = new cdk.CfnParameter(this, `${id}-MachineImageIdParam`, {
+            type: 'String',
+            description: 'machineImageId',
+        });
+
         const instanceTypeParam = new cdk.CfnParameter(this, `${id}-InstanceTypeParam`, {
             type: 'String',
-            description: 'Instance Type',
-            constraintDescription: 'Must be a valid EC2 instance type.',
+            description: 'instanceType',
+        });
+
+        const ebsVolumeSizeParam = new cdk.CfnParameter(this, `${id}-EbsVolumeSizeParam`, {
+            type: 'Number',
+            description: 'ebsVolumeSize',
+            minValue: 30,
+            default: 30,
         });
 
         const enableHibernationParam = new cdk.CfnParameter(this, `${id}-EnableHibernationParam`, {
             type: 'String',
-            description: 'Enable Hibernation',
-            constraintDescription: 'Must be a valid boolean.',
+            description: 'enableHibernation',
             allowedValues: ['true', 'false'],
             default: 'false',
         });
@@ -84,16 +81,57 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             allowAllOutbound: true,
         });
 
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH Connection IPV4');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv6(), ec2.Port.tcp(22), 'SSH Connection IPV6');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3389), 'RDP Connection IPV4');
-        securityGroup.addIngressRule(ec2.Peer.anyIpv6(), ec2.Port.tcp(3389), 'RDP Connection IPV6');
+        if (props.connectionProxyIpv4Cidr !== undefined) {
+            securityGroup.addIngressRule(
+                ec2.Peer.ipv4(props.connectionProxyIpv4Cidr),
+                ec2.Port.tcp(22),
+                'SSH Connection IPV4 from Connection Proxy',
+            );
+            securityGroup.addIngressRule(
+                ec2.Peer.ipv4(props.connectionProxyIpv4Cidr),
+                ec2.Port.tcp(3389),
+                'RDP Connection IPV4 from Connection Proxy',
+            );
+        }
 
-        const role = new iam.Role(scope, `${id}-Role`, {
-            assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
-            inlinePolicies: props.inlinePolicies,
-            managedPolicies: props.managedPolicies,
-        });
+        if (props.connectionProxyIpv6Cidr !== undefined) {
+            securityGroup.addIngressRule(
+                ec2.Peer.ipv6(props.connectionProxyIpv6Cidr),
+                ec2.Port.tcp(22),
+                'SSH Connection IPV6 from Connection Proxy',
+            );
+            securityGroup.addIngressRule(
+                ec2.Peer.ipv6(props.connectionProxyIpv6Cidr),
+                ec2.Port.tcp(3389),
+                'RDP Connection IPV6 from Connection Proxy',
+            );
+        }
+
+        if (
+            props.connectionProxyIpv4Cidr === undefined &&
+            props.connectionProxyIpv6Cidr === undefined
+        ) {
+            securityGroup.addIngressRule(
+                ec2.Peer.anyIpv4(),
+                ec2.Port.tcp(22),
+                'SSH Connection IPV4',
+            );
+            securityGroup.addIngressRule(
+                ec2.Peer.anyIpv6(),
+                ec2.Port.tcp(22),
+                'SSH Connection IPV6',
+            );
+            securityGroup.addIngressRule(
+                ec2.Peer.anyIpv4(),
+                ec2.Port.tcp(3389),
+                'RDP Connection IPV4',
+            );
+            securityGroup.addIngressRule(
+                ec2.Peer.anyIpv6(),
+                ec2.Port.tcp(3389),
+                'RDP Connection IPV6',
+            );
+        }
 
         const userData = ec2.UserData.forWindows();
         const baseWindowsUserDataFilePath = userData.addS3DownloadCommand({
@@ -106,25 +144,38 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             filePath: baseWindowsUserDataFilePath,
             arguments: [props.passwordSsmParameterName, props.region].join(' '),
         });
-        if (props.extraUserDataCommands !== undefined && props.extraUserDataCommands.length > 0) {
-            userData.addCommands(...props.extraUserDataCommands);
-        }
 
         const instance = new ec2.Instance(this, `${id}-Instance`, {
             vpc: props.vpc,
             instanceType: new ec2.InstanceType(instanceTypeParam.valueAsString),
-            machineImage: props.machineImage,
+            machineImage: ec2.MachineImage.genericWindows({
+                [props.region]: machineImageIdParam.valueAsString,
+            }),
             securityGroup,
-            role,
             userData,
             keyName: props.sshKeyName,
-            blockDevices: props.blockDevices,
+            blockDevices: [
+                {
+                    deviceName: 'xvda',
+                    volume: ec2.BlockDeviceVolume.ebs(ebsVolumeSizeParam.valueAsNumber, {
+                        deleteOnTermination: true,
+                        encrypted: true,
+                        volumeType: ec2.EbsDeviceVolumeType.GP2,
+                    }),
+                },
+            ],
             vpcSubnets: {
                 subnetType: ec2.SubnetType.PUBLIC,
             },
             requireImdsv2: true,
             ssmSessionPermissions: true,
         });
+
+        const instanceAsL1 = instance.node.defaultChild as ec2.CfnInstance;
+        instanceAsL1.addPropertyOverride(
+            'HibernationOptions.Configured',
+            enableHibernationParam.valueAsString === 'true',
+        );
 
         new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {
             value: instance.instanceId,

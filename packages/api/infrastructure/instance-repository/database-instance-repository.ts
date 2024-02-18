@@ -12,6 +12,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
     constructor(
         private readonly configVault: ConfigVault,
         private readonly DATABASE_URL_PARAMETER_NAME: string,
+        private readonly DATABASE_COLLECTION_NAME = 'instances',
     ) {}
 
     private async getMongoClient(): Promise<MongoClient> {
@@ -88,7 +89,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const newInstance = await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance), {
                 ignoreUndefined: true,
             });
@@ -100,7 +101,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .findOne({ _id: new ObjectId(id) });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -110,7 +111,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .findOne({ virtualId: virtualId });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -120,7 +121,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .findOne({ launchToken: launchToken });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -134,7 +135,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const count = await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .countDocuments(filter, { ignoreUndefined: true });
         return count;
     };
@@ -179,7 +180,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             },
         };
 
-        const collection = client.db().collection<InstanceDbModel>('instances');
+        const collection = client.db().collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME);
         const [count, instances] = await Promise.all([
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
@@ -191,7 +192,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         ]);
 
         return {
-            data: instances.map((i) => DatabaseInstanceRepository.mapInstanceDbModelToEntity(i)),
+            data: instances.map(DatabaseInstanceRepository.mapInstanceDbModelToEntity),
             numberOfPages: Math.ceil(count / pagination.resultsPerPage),
             numberOfResults: count,
             resultsPerPage: pagination.resultsPerPage,
@@ -202,7 +203,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .updateOne(
                 { _id: new ObjectId(instance.id) },
                 { $set: DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance) },
@@ -214,7 +215,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<InstanceDbModel>('instances')
+            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
             .deleteOne({ _id: new ObjectId(instance.id) }, { ignoreUndefined: true });
     };
 }

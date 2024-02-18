@@ -7,8 +7,9 @@ import { UserRepository } from '../../user-repository';
 import { InstanceRepository } from '../../instance-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
+import { InstanceTemplateRepository } from '../../instance-template-repository';
 
-export const launchInstanceFromTemplateInputSchema = z
+export const launchInstanceInputSchema = z
     .object({
         principal: principalSchema,
         ownerId: z.string().optional(),
@@ -19,25 +20,24 @@ export const launchInstanceFromTemplateInputSchema = z
         enableHibernation: z.boolean(),
     })
     .strict();
-export type LaunchInstanceFromTemplateInput = z.infer<typeof launchInstanceFromTemplateInputSchema>;
+export type LaunchInstanceInput = z.infer<typeof launchInstanceInputSchema>;
 
-export type LaunchInstanceFromTemplateOutput = Instance;
+export type LaunchInstanceOutput = Instance;
 
-export class LaunchInstanceFromTemplate {
+export class LaunchInstance {
     constructor(
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
         private readonly instanceRepository: InstanceRepository,
+        private readonly instanceTemplateRepository: InstanceTemplateRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (
-        input: LaunchInstanceFromTemplateInput,
-    ): Promise<LaunchInstanceFromTemplateOutput> => {
-        this.logger.debug('LaunchInstanceFromTemplate.execute', { input });
+    execute = async (input: LaunchInstanceInput): Promise<LaunchInstanceOutput> => {
+        this.logger.debug('LaunchInstance.execute', { input });
 
-        const inputValidation = launchInstanceFromTemplateInputSchema.safeParse(input);
+        const inputValidation = launchInstanceInputSchema.safeParse(input);
         if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
         const { data: validInput } = inputValidation;
 
@@ -45,11 +45,19 @@ export class LaunchInstanceFromTemplate {
         const { id } = this.auth.getClaims(validInput.principal);
         const ownerId = validInput.ownerId ?? id;
 
-        const [user, userInstanceCount] = await Promise.all([
+        const [user, userInstanceCount, instanceTemplate] = await Promise.all([
             this.userRepository.getById(ownerId),
             this.instanceRepository.count({ ownerId: ownerId }),
+            this.instanceTemplateRepository.getById(validInput.templateId),
         ]);
-        if (!user) throw Errors.resourceNotFound('User', ownerId);
+
+        if (!user) {
+            throw Errors.resourceNotFound('User', ownerId);
+        }
+
+        if (!instanceTemplate) {
+            throw Errors.resourceNotFound('InstanceTemplate', validInput.templateId);
+        }
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN')) {
             if (ownerId !== id) {
@@ -74,10 +82,15 @@ export class LaunchInstanceFromTemplate {
             }
         }
 
-        const launchToken = await this.virtualizationGateway.launchInstance(validInput.templateId, {
-            instanceType: validInput.instanceType,
-            enableHibernation: validInput.enableHibernation,
-        });
+        const launchToken = await this.virtualizationGateway.launchInstance(
+            instanceTemplate.getData().productId,
+            {
+                instanceType: validInput.instanceType,
+                enableHibernation: validInput.enableHibernation,
+                machineImageId: instanceTemplate.getData().machineImageId,
+                storageInGb: instanceTemplate.getData().storageInGb,
+            },
+        );
 
         const instance = Instance.create({
             name: validInput.name,

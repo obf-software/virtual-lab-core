@@ -51,21 +51,22 @@ export class User {
     }
 
     static restore(props: UserData & { id: string }): User {
-        const validation = userDataSchema.safeParse(props);
-        if (!validation.success || props.id === null) {
-            throw Errors.internalError('Failed to restore user');
+        const validation = userDataSchema.extend({ id: z.string() }).safeParse(props);
+        if (!validation.success) {
+            throw Errors.internalError(`Failed to restore User: ${validation.error.message}`);
         }
         return new User(validation.data);
     }
 
     get id() {
         if (this.data.id === null)
-            throw Errors.internalError('Cannot get id of user that has not been created');
+            throw Errors.internalError('Cannot get id of User that has not been stored.');
         return this.data.id;
     }
 
     set id(id: string) {
-        if (this.data.id !== null) throw Errors.internalError('Cannot set id of existing user');
+        if (this.data.id !== null)
+            throw Errors.internalError('Cannot set id of User that has already been stored.');
         this.data.id = id;
     }
 

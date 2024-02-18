@@ -58,7 +58,7 @@ export const NewInstancePage: React.FC = () => {
                                 {numberOfTemplates === 0 && 'Nenhum template disponível'}
                                 {numberOfTemplates === 1 && '1 template disponível'}
                                 {numberOfTemplates > 1 &&
-                                    `${numberOfTemplates} template disponíveis`}
+                                    `${numberOfTemplates} templates disponíveis`}
                             </Text>
                         </VStack>
                     </SlideFade>
@@ -135,9 +135,6 @@ export const NewInstancePage: React.FC = () => {
                                         instanceTemplate={template}
                                         isLoading={false}
                                         isDisabled={instanceTemplatesQuery.isFetching}
-                                        onProvision={() => {
-                                            console.log('Provision');
-                                        }}
                                     />
                                 ))}
                             </SimpleGrid>

@@ -220,11 +220,15 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 <Select
                                     id='instanceType'
                                     {...formMethods.register('instanceType', {
-                                        required: {
-                                            value: true,
-                                            message: 'O tipo de instância é obrigatório',
-                                        },
                                         validate: {
+                                            noAllowedInstanceTypes: () => {
+                                                if (
+                                                    userQuery.data.quotas.allowedInstanceTypes
+                                                        .length === 0
+                                                ) {
+                                                    return 'Não há tipos de instâncias permitidos para este usuário';
+                                                }
+                                            },
                                             invalidUser: () => {
                                                 if (!userQuery.data || userQuery.isError) {
                                                     return 'Não foi possível verificar as permissões do usuário';

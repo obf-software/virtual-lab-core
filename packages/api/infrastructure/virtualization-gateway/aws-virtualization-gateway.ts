@@ -15,7 +15,7 @@ import { InstanceState } from '../../domain/dtos/instance-state';
 import { VirtualInstanceSummary } from '../../domain/dtos/virtual-instance-summary';
 import { Errors } from '../../domain/dtos/errors';
 import { VirtualInstanceDetailedInfo } from '../../domain/dtos/virtual-instance-detailed-info';
-import { VirtualInstanceTemplate } from '../../domain/dtos/virtual-instance-template';
+import { Product } from '../../domain/dtos/product';
 import {
     DescribeProductAsAdminCommand,
     DescribeProvisioningParametersCommand,
@@ -36,6 +36,7 @@ import { VirtualInstanceLaunchParameters } from '../../domain/dtos/virtual-insta
 import { randomUUID } from 'node:crypto';
 import { VirtualInstanceStack } from '../../domain/dtos/virtual-instance-stack';
 import { instanceConnectionTypeSchema } from '../../domain/dtos/instance-connection-type';
+import { MachineImage } from '../../domain/dtos/machine-image';
 
 export class AwsVirtualizationGateway implements VirtualizationGateway {
     private ec2Client: EC2Client;
@@ -186,105 +187,6 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         await this.ec2Client.send(command);
     };
 
-    listInstanceTemplates = async (): Promise<VirtualInstanceTemplate[]> => {
-        const serviceCatalogPortfolioId = await this.configVault.getParameter(
-            this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
-        );
-        if (serviceCatalogPortfolioId === undefined) {
-            throw Errors.internalError(
-                `Failed to retrieve ${this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME} from config vault`,
-            );
-        }
-
-        const templates: VirtualInstanceTemplate[] = [];
-        const paginator = paginateSearchProductsAsAdmin(
-            { client: this.serviceCatalogClient },
-            { PortfolioId: serviceCatalogPortfolioId, PageSize: 100 },
-        );
-        for await (const page of paginator) {
-            templates.push(
-                ...(page.ProductViewDetails ?? []).map((p) => ({
-                    id: p.ProductViewSummary?.ProductId ?? '',
-                    name: p.ProductViewSummary?.Name ?? '',
-                    description: p.ProductViewSummary?.ShortDescription ?? '',
-                })),
-            );
-        }
-        return templates;
-    };
-
-    getInstanceTemplate = async (instanceTemplateId: string): Promise<VirtualInstanceTemplate> => {
-        const { ProductViewDetail } = await this.serviceCatalogClient.send(
-            new DescribeProductAsAdminCommand({ Id: instanceTemplateId }),
-        );
-
-        return {
-            id: ProductViewDetail?.ProductViewSummary?.ProductId ?? '',
-            name: ProductViewDetail?.ProductViewSummary?.Name ?? '',
-            description: ProductViewDetail?.ProductViewSummary?.ShortDescription ?? '',
-        };
-    };
-
-    launchInstance = async (
-        instanceTemplateId: string,
-        parameters: VirtualInstanceLaunchParameters,
-    ): Promise<string> => {
-        const randomId = randomUUID();
-        const launchToken = `virtual-lab-${randomId}-${Date.now()}`;
-
-        const { LaunchPathSummaries } = await this.serviceCatalogClient.send(
-            new ListLaunchPathsCommand({ ProductId: instanceTemplateId }),
-        );
-        const pathId = LaunchPathSummaries?.[0].Id;
-
-        const { ProvisioningArtifactParameters } = await this.serviceCatalogClient.send(
-            new DescribeProvisioningParametersCommand({
-                ProductId: instanceTemplateId,
-                ProvisioningArtifactName: 'latest',
-                PathId: pathId,
-            }),
-        );
-
-        const provisioningParameters = ProvisioningArtifactParameters?.map((p) => {
-            if (p.Description === 'Instance Type') {
-                return {
-                    Key: p.ParameterKey,
-                    Value: parameters.instanceType,
-                };
-            }
-            if (p.Description === 'Enable Hibernation') {
-                return {
-                    Key: p.ParameterKey,
-                    Value: parameters.enableHibernation ? 'true' : 'false',
-                };
-            }
-            return {
-                Key: p.ParameterKey,
-                Value: p.DefaultValue,
-            };
-        });
-
-        await this.serviceCatalogClient.send(
-            new ProvisionProductCommand({
-                ProductId: instanceTemplateId,
-                PathId: pathId,
-                ProvisioningArtifactName: 'latest',
-                ProvisionedProductName: launchToken,
-                ProvisionToken: launchToken,
-                NotificationArns: [this.API_SNS_TOPIC_ARN],
-                ProvisioningParameters: provisioningParameters,
-                Tags: [
-                    {
-                        Key: 'launchToken',
-                        Value: launchToken,
-                    },
-                ],
-            }),
-        );
-
-        return launchToken;
-    };
-
     terminateInstance = async (launchToken: string): Promise<void> => {
         const { RecordDetail } = await this.serviceCatalogClient.send(
             new TerminateProvisionedProductCommand({
@@ -315,6 +217,78 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 ClientRequestToken: randomUUID(),
             }),
         );
+    };
+
+    launchInstance = async (
+        productId: string,
+        parameters: VirtualInstanceLaunchParameters,
+    ): Promise<string> => {
+        const randomId = randomUUID();
+        const launchToken = `virtual-lab-${randomId}-${Date.now()}`;
+
+        const { LaunchPathSummaries } = await this.serviceCatalogClient.send(
+            new ListLaunchPathsCommand({ ProductId: productId }),
+        );
+        const pathId = LaunchPathSummaries?.[0].Id;
+
+        const { ProvisioningArtifactParameters } = await this.serviceCatalogClient.send(
+            new DescribeProvisioningParametersCommand({
+                ProductId: productId,
+                ProvisioningArtifactName: 'latest',
+                PathId: pathId,
+            }),
+        );
+
+        const provisioningParameters = ProvisioningArtifactParameters?.map((p) => {
+            if (p.ParameterKey === 'machineImageId') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.machineImageId,
+                };
+            }
+            if (p.Description === 'instanceType') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.instanceType,
+                };
+            }
+            if (p.Description === 'ebsVolumeSize') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.storageInGb.toString(),
+                };
+            }
+            if (p.Description === 'enableHibernation') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: parameters.enableHibernation ? 'true' : 'false',
+                };
+            }
+            return {
+                Key: p.ParameterKey,
+                Value: p.DefaultValue,
+            };
+        });
+
+        await this.serviceCatalogClient.send(
+            new ProvisionProductCommand({
+                ProductId: productId,
+                PathId: pathId,
+                ProvisioningArtifactName: 'latest',
+                ProvisionedProductName: launchToken,
+                ProvisionToken: launchToken,
+                NotificationArns: [this.API_SNS_TOPIC_ARN],
+                ProvisioningParameters: provisioningParameters,
+                Tags: [
+                    {
+                        Key: 'launchToken',
+                        Value: launchToken,
+                    },
+                ],
+            }),
+        );
+
+        return launchToken;
     };
 
     getInstanceStack = async (stackName: string): Promise<VirtualInstanceStack> => {
@@ -348,5 +322,69 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             virtualId: instanceId,
             launchToken,
         };
+    };
+
+    listProducts = async (): Promise<Product[]> => {
+        const serviceCatalogPortfolioId = await this.configVault.getParameter(
+            this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+        );
+        if (serviceCatalogPortfolioId === undefined) {
+            throw Errors.internalError(
+                `Failed to retrieve ${this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME} from config vault`,
+            );
+        }
+
+        const products: Product[] = [];
+        const paginator = paginateSearchProductsAsAdmin(
+            { client: this.serviceCatalogClient },
+            { PortfolioId: serviceCatalogPortfolioId, PageSize: 100 },
+        );
+        for await (const page of paginator) {
+            products.push(
+                ...(page.ProductViewDetails ?? []).map((p) => ({
+                    id: p.ProductViewSummary?.ProductId ?? '',
+                    name: p.ProductViewSummary?.Name ?? '',
+                    description: p.ProductViewSummary?.ShortDescription ?? '',
+                })),
+            );
+        }
+        return products;
+    };
+
+    getProductById = async (productId: string): Promise<Product | undefined> => {
+        try {
+            const { ProductViewDetail } = await this.serviceCatalogClient.send(
+                new DescribeProductAsAdminCommand({ Id: productId }),
+            );
+
+            return {
+                id: ProductViewDetail?.ProductViewSummary?.ProductId ?? '',
+                name: ProductViewDetail?.ProductViewSummary?.Name ?? '',
+                description: ProductViewDetail?.ProductViewSummary?.ShortDescription ?? '',
+            };
+        } catch (error) {
+            return undefined;
+        }
+    };
+
+    getMachineImageById = async (machineImageId: string): Promise<MachineImage | undefined> => {
+        try {
+            const { Images } = await this.ec2Client.send(
+                new DescribeImagesCommand({ ImageIds: [machineImageId] }),
+            );
+
+            const storageInGb =
+                Images?.map((i) => i.BlockDeviceMappings?.[0].Ebs?.VolumeSize ?? 0)?.reduce(
+                    (acc, curr) => acc + curr,
+                    0,
+                ) ?? 0;
+
+            return {
+                id: machineImageId,
+                storageInGb,
+            };
+        } catch (error) {
+            return undefined;
+        }
     };
 }

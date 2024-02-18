@@ -94,7 +94,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             },
 
             /**
-             * Update this to the URL of your frontend app.
+             * @todo Update this to the client's actual URL with deployment script
              */
             callbackUrls: ['http://localhost:3000'],
             logoutUrls: ['http://localhost:3000'],

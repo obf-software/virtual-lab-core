@@ -3,7 +3,8 @@ import { VirtualInstanceDetailedInfo } from '../domain/dtos/virtual-instance-det
 import { VirtualInstanceLaunchParameters } from '../domain/dtos/virtual-instance-launch-parameters';
 import { VirtualInstanceStack } from '../domain/dtos/virtual-instance-stack';
 import { VirtualInstanceSummary } from '../domain/dtos/virtual-instance-summary';
-import { VirtualInstanceTemplate } from '../domain/dtos/virtual-instance-template';
+import { Product } from '../domain/dtos/product';
+import { MachineImage } from '../domain/dtos/machine-image';
 
 export interface VirtualizationGateway {
     getInstanceSummary(virtualId: string): Promise<VirtualInstanceSummary>;
@@ -13,12 +14,10 @@ export interface VirtualizationGateway {
     startInstance(virtualId: string): Promise<InstanceState>;
     stopInstance(virtualId: string, hibernate: boolean, force: boolean): Promise<InstanceState>;
     rebootInstance(virtualId: string): Promise<void>;
-    listInstanceTemplates(): Promise<VirtualInstanceTemplate[]>;
-    getInstanceTemplate(instanceTemplateId: string): Promise<VirtualInstanceTemplate>;
-    launchInstance(
-        instanceTemplateId: string,
-        parameters: VirtualInstanceLaunchParameters,
-    ): Promise<string>;
     terminateInstance(launchToken: string): Promise<void>;
+    launchInstance(productId: string, parameters: VirtualInstanceLaunchParameters): Promise<string>;
     getInstanceStack(stackName: string): Promise<VirtualInstanceStack>;
+    listProducts(): Promise<Product[]>;
+    getProductById(productId: string): Promise<Product | undefined>;
+    getMachineImageById(machineImageId: string): Promise<MachineImage | undefined>;
 }

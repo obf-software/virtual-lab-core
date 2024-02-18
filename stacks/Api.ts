@@ -120,9 +120,6 @@ export const Api = ({ stack }: sst.StackContext) => {
         'POST /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/launch-instance.handler',
         },
-        'GET /api/v1/instance-templates': {
-            function: 'packages/api/interfaces/api/instance/list-instance-templates.handler',
-        },
         'GET /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/list-instances.handler',
         },
@@ -134,6 +131,35 @@ export const Api = ({ stack }: sst.StackContext) => {
         },
         'POST /api/v1/instances/{instanceId}/turn-on': {
             function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
+        },
+    });
+
+    /**
+     * Instance template module
+     */
+    api.addRoutes(stack, {
+        'POST /api/v1/instance-templates': {
+            function:
+                'packages/api/interfaces/api/instance-templates/create-instance-template.handler',
+        },
+        'DELETE /api/v1/instance-templates/{instanceTemplateId}': {
+            function:
+                'packages/api/interfaces/api/instance-templates/delete-instance-template.handler',
+        },
+        'GET /api/v1/instance-templates/{instanceTemplateId}': {
+            function:
+                'packages/api/interfaces/api/instance-templates/get-instance-template.handler',
+        },
+        'GET /api/v1/instance-templates': {
+            function:
+                'packages/api/interfaces/api/instance-templates/list-instance-templates.handler',
+        },
+        'GET /api/v1/products': {
+            function: 'packages/api/interfaces/api/instance-templates/list-products.handler',
+        },
+        'PATCH /api/v1/instance-templates/{instanceTemplateId}': {
+            function:
+                'packages/api/interfaces/api/instance-templates/update-instance-templates.handler',
         },
     });
 

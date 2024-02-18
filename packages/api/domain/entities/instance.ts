@@ -70,20 +70,22 @@ export class Instance {
     };
 
     static restore = (props: InstanceData & { id: string }): Instance => {
-        const validation = instanceDataSchema.safeParse(props);
-        if (!validation.success || props.id === null)
-            throw Errors.internalError('Failed to restore instance');
+        const validation = instanceDataSchema.extend({ id: z.string() }).safeParse(props);
+        if (!validation.success) {
+            throw Errors.internalError(`Failed to restore Instance: ${validation.error.message}`);
+        }
         return new Instance(validation.data);
     };
 
     get id() {
         if (this.data.id === null)
-            throw Errors.internalError('Cannot get id of instance that has not been created');
+            throw Errors.internalError('Cannot get id of Instance that has not been stored.');
         return this.data.id;
     }
 
     set id(id: string) {
-        if (this.data.id !== null) throw Errors.internalError('Cannot set id of existing instance');
+        if (this.data.id !== null)
+            throw Errors.internalError('Cannot set id of Instance that has already been stored.');
         this.data.id = id;
     }
 

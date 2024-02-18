@@ -5,10 +5,11 @@ import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
 import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
-import { LaunchInstanceFromTemplate } from '../../../application/use-cases/instance/launch-instance-from-template';
+import { LaunchInstance } from '../../../application/use-cases/instance/launch-instance';
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
+import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/instance-template-repository/database-instance-template-repository';
 
 const {
     IS_LOCAL,
@@ -27,17 +28,22 @@ const configVault =
         : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+const instanceTemplateRepository = new DatabaseInstanceTemplateRepository(
+    configVault,
+    DATABASE_URL_PARAMETER_NAME,
+);
 const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
     AWS_REGION,
     API_SNS_TOPIC_ARN,
     SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
 );
-const launchInstance = new LaunchInstanceFromTemplate(
+const launchInstance = new LaunchInstance(
     logger,
     auth,
     userRepository,
     instanceRepository,
+    instanceTemplateRepository,
     virtualizationGateway,
 );
 
@@ -57,14 +63,18 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
 
         const output = await launchInstance.execute({
             principal: CognitoAuth.extractPrincipal(event),
+            ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
             templateId: body.data.templateId,
-            enableHibernation: body.data.enableHibernation,
-            instanceType: body.data.instanceType,
             name: body.data.name,
             description: body.data.description,
-            ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
+            instanceType: body.data.instanceType,
+            enableHibernation: body.data.enableHibernation,
         });
-        await Promise.allSettled([userRepository.disconnect(), instanceRepository.disconnect()]);
+        await Promise.allSettled([
+            userRepository.disconnect(),
+            instanceRepository.disconnect(),
+            instanceTemplateRepository.disconnect(),
+        ]);
 
         return {
             statusCode: 200,
