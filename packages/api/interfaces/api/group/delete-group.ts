@@ -23,7 +23,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             principal: CognitoAuth.extractPrincipal(event),
             groupId: event.pathParameters?.groupId ?? '',
         });
-        await groupRepository.disconnect();
 
         return {
             statusCode: 202,

@@ -36,11 +36,11 @@ import {
 import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
-import { Instance } from '../../services/api-protocols';
+import { Instance, InstancePlatform } from '../../services/api-protocols';
 import { InstanceCardStateTag } from './status-tag';
 import { BiHdd, BiMicrochip } from 'react-icons/bi';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import { InstanceDetailsModal } from '../instance-details-modal';
+import { InstanceDetailsModal } from './details-modal';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -69,7 +69,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
 }) => {
     const detailsModalDisclosure = useDisclosure();
 
-    const platformIconMap: Record<'LINUX' | 'WINDOWS' | 'UNKNOWN', IconType> = {
+    const platformIconMap: Record<InstancePlatform, IconType> = {
         LINUX: FaLinux,
         WINDOWS: FaWindows,
         UNKNOWN: FaQuestion,
@@ -86,17 +86,17 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {
             icon: FiCpu,
             label: 'CPU',
-            value: instance.cpuCores ? `${instance.cpuCores} vCPU` : '-',
+            value: instance.cpuCores,
         },
         {
             icon: platformIcon,
             label: 'Sistema operacional',
-            value: instance.distribution ?? '-',
+            value: instance.distribution,
         },
         {
             icon: BiHdd,
             label: 'Armazenamento',
-            value: instance.storageInGb ? `${instance.storageInGb} GB` : '-',
+            value: `${instance.storageInGb} GB`,
         },
         {
             icon: FiClock,
@@ -110,7 +110,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
         {
             icon: BiMicrochip,
             label: 'Memória',
-            value: instance.memoryInGb ? `${instance.memoryInGb} GB` : '-',
+            value: `${instance.memoryInGb} GB`,
         },
 
         {

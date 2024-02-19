@@ -70,11 +70,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             instanceType: body.data.instanceType,
             enableHibernation: body.data.enableHibernation,
         });
-        await Promise.allSettled([
-            userRepository.disconnect(),
-            instanceRepository.disconnect(),
-            instanceTemplateRepository.disconnect(),
-        ]);
 
         return {
             statusCode: 200,

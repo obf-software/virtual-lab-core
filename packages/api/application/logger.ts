@@ -1,8 +1,9 @@
-export type LoggerExtraInput = [Error | string] | Record<string, unknown>[];
+import { Logger as PowerToolsLogger } from '@aws-lambda-powertools/logger';
 
 export interface Logger {
-    debug(message: string, ...args: LoggerExtraInput): void;
-    info(message: string, ...args: LoggerExtraInput): void;
-    warn(message: string, ...args: LoggerExtraInput): void;
-    error(message: string, ...args: LoggerExtraInput): void;
+    info: PowerToolsLogger['info'];
+    error: PowerToolsLogger['error'];
+    warn: PowerToolsLogger['warn'];
+    debug: PowerToolsLogger['debug'];
+    addContext: PowerToolsLogger['addContext'];
 }

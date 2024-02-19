@@ -155,8 +155,12 @@ export class AWSEventPublisher implements EventPublisher {
 
             if (event.destination === 'CLIENT') {
                 appSyncEvent.push(event);
-            } else {
+            } else if (event.destination === 'BUS') {
                 eventBridgeEvent.push(event);
+            } else {
+                this.logger.error(
+                    `Event ${event.type} is not suposed to be published. Not publishing.`,
+                );
             }
         });
 

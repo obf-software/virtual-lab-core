@@ -10,7 +10,7 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { GroupsTableRow } from '../groups-table-row';
+import { GroupsTableRow } from './row';
 import { Group } from '../../services/api-protocols';
 
 interface GroupsTableProps {

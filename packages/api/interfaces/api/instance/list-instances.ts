@@ -8,6 +8,7 @@ import { ListInstances } from '../../../application/use-cases/instance/list-inst
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
+import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const {
     IS_LOCAL,
@@ -46,11 +47,10 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                     .enum(['creationDate', 'lastConnectionDate', 'alphabetical'])
                     .default('creationDate'),
                 order: z.enum(['asc', 'desc']).default('asc'),
-                resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
-                page: z.number({ coerce: true }).min(1).default(1),
                 ownerId: z.string().optional(),
                 textSearch: z.string().optional(),
             })
+            .extend(seekPaginationInputSchema.shape)
             .safeParse({ ...event.queryStringParameters });
         if (!query.success) throw Errors.validationError(query.error);
 
@@ -65,7 +65,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             ownerId: query.data.ownerId,
             textSearch: query.data.textSearch,
         });
-        await instanceRepository.disconnect();
 
         return {
             statusCode: 200,

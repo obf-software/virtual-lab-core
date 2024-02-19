@@ -2,7 +2,6 @@ import { ObjectId } from 'mongodb';
 
 export interface UserDbModel {
     _id: ObjectId;
-    textSearch: string;
     username: string;
     role: 'NONE' | 'PENDING' | 'USER' | 'ADMIN';
     createdAt: Date;
@@ -14,4 +13,6 @@ export interface UserDbModel {
         allowedInstanceTypes: string[];
         canLaunchInstanceWithHibernation: boolean;
     };
+
+    textSearch: string;
 }

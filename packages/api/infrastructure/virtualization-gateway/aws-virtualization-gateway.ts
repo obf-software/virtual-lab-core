@@ -3,18 +3,16 @@ import {
     DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
     DescribeInstancesCommand,
-    DescribeVolumesCommand,
     EC2Client,
     RebootInstancesCommand,
     StartInstancesCommand,
     StopInstancesCommand,
+    _InstanceType,
 } from '@aws-sdk/client-ec2';
-import createHttpError from 'http-errors';
 import { VirtualizationGateway } from '../../application/virtualization-gateway';
 import { InstanceState } from '../../domain/dtos/instance-state';
-import { VirtualInstanceSummary } from '../../domain/dtos/virtual-instance-summary';
+import { VirtualInstance } from '../../domain/dtos/virtual-instance';
 import { Errors } from '../../domain/dtos/errors';
-import { VirtualInstanceDetailedInfo } from '../../domain/dtos/virtual-instance-detailed-info';
 import { Product } from '../../domain/dtos/product';
 import {
     DescribeProductAsAdminCommand,
@@ -37,6 +35,7 @@ import { randomUUID } from 'node:crypto';
 import { VirtualInstanceStack } from '../../domain/dtos/virtual-instance-stack';
 import { instanceConnectionTypeSchema } from '../../domain/dtos/instance-connection-type';
 import { MachineImage } from '../../domain/dtos/machine-image';
+import { VirtualInstanceType } from '../../domain/dtos/virtual-instance-type';
 
 export class AwsVirtualizationGateway implements VirtualizationGateway {
     private ec2Client: EC2Client;
@@ -73,7 +72,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         return state;
     };
 
-    getInstanceSummary = async (virtualId: string): Promise<VirtualInstanceSummary> => {
+    getInstance = async (virtualId: string): Promise<VirtualInstance | undefined> => {
         const command = new DescribeInstancesCommand({ InstanceIds: [virtualId] });
         const { Reservations } = await this.ec2Client.send(command);
         const instances = Reservations?.map((r) => r.Instances ?? []).flat() ?? [];
@@ -93,49 +92,6 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         };
     };
 
-    getInstanceDetailedInfo = async (virtualId: string): Promise<VirtualInstanceDetailedInfo> => {
-        const { Reservations } = await this.ec2Client.send(
-            new DescribeInstancesCommand({ InstanceIds: [virtualId] }),
-        );
-        const instances = Reservations?.map((r) => r.Instances ?? []).flat() ?? [];
-        if (instances.length === 0) throw new createHttpError.NotFound('Instance not found');
-        const instance = instances[0];
-        const instanceType = instance.InstanceType;
-
-        if (instanceType === undefined) {
-            throw Errors.internalError('AWS Instance does not have an instance type');
-        }
-
-        const [{ InstanceTypes }, { Images }, { Volumes }] = await Promise.all([
-            this.ec2Client.send(
-                new DescribeInstanceTypesCommand({ InstanceTypes: [instanceType] }),
-            ),
-            this.ec2Client.send(new DescribeImagesCommand({ ImageIds: [instance.ImageId ?? ''] })),
-            this.ec2Client.send(
-                new DescribeVolumesCommand({
-                    VolumeIds:
-                        instance.BlockDeviceMappings?.map((bdm) => bdm.Ebs?.VolumeId ?? '') ?? [],
-                }),
-            ),
-        ]);
-
-        const memoryInMib = InstanceTypes?.[0]?.MemoryInfo?.SizeInMiB ?? 0;
-
-        const storageInGb =
-            Volumes?.map((v) => v.Size ?? 0).reduce((acc, curr) => acc + curr, 0) ?? 0;
-
-        return {
-            virtualId: instance.InstanceId ?? '',
-            state: this.mapInstanceState(instance.State?.Name),
-            cpuCores: instance.CpuOptions?.CoreCount?.toString() ?? '0',
-            platform: instance.PlatformDetails ?? 'unknown',
-            instanceType: instance.InstanceType ?? 'unknown',
-            distribution: Images?.[0]?.Description ?? 'unknown',
-            memoryInGb: memoryInMib !== 0 ? `${memoryInMib / 1024}` : '0',
-            storageInGb: `${storageInGb}`,
-        };
-    };
-
     listInstancesStates = async (virtualIds: string[]): Promise<Record<string, InstanceState>> => {
         if (virtualIds.length === 0) return {};
 
@@ -151,15 +107,6 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             );
         });
         return instanceStates;
-    };
-
-    getInstanceState = async (virtualId: string): Promise<InstanceState> => {
-        const command = new DescribeInstanceStatusCommand({
-            IncludeAllInstances: true,
-            InstanceIds: [virtualId],
-        });
-        const { InstanceStatuses } = await this.ec2Client.send(command);
-        return this.mapInstanceState(InstanceStatuses?.[0].InstanceState?.Name);
     };
 
     startInstance = async (virtualId: string): Promise<InstanceState> => {
@@ -373,15 +320,59 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 new DescribeImagesCommand({ ImageIds: [machineImageId] }),
             );
 
+            if (!Images || Images?.length === 0) return undefined;
+            const image = Images[0];
+
             const storageInGb =
-                Images?.map((i) => i.BlockDeviceMappings?.[0].Ebs?.VolumeSize ?? 0)?.reduce(
+                image.BlockDeviceMappings?.map((i) => i.Ebs?.VolumeSize ?? 0)?.reduce(
                     (acc, curr) => acc + curr,
                     0,
                 ) ?? 0;
 
+            let platform: MachineImage['platform'] = 'UNKNOWN';
+
+            if (
+                image.Platform === 'Windows' ||
+                image.PlatformDetails?.toLowerCase().includes('windows')
+            ) {
+                platform = 'WINDOWS';
+            } else if (image.PlatformDetails?.toLowerCase().includes('linux')) {
+                platform = 'LINUX';
+            }
+
             return {
                 id: machineImageId,
                 storageInGb,
+                platform,
+                distribution: image.Description ?? 'unknown',
+            };
+        } catch (error) {
+            return undefined;
+        }
+    };
+
+    getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {
+        try {
+            const { InstanceTypes } = await this.ec2Client.send(
+                new DescribeInstanceTypesCommand({
+                    InstanceTypes: [instanceType as _InstanceType],
+                }),
+            );
+
+            if (!InstanceTypes || InstanceTypes.length === 0) return undefined;
+            const { VCpuInfo } = InstanceTypes[0];
+
+            const cores = VCpuInfo?.DefaultCores ?? 0;
+            const vCores = VCpuInfo?.DefaultVCpus ?? 0;
+            const threadsPerCore = VCpuInfo?.DefaultThreadsPerCore ?? 0;
+
+            const memoryInMib = InstanceTypes[0].MemoryInfo?.SizeInMiB ?? 0;
+            const memoryInGb = memoryInMib !== 0 ? `${memoryInMib / 1024}` : '0';
+
+            return {
+                name: instanceType,
+                cpuCores: `${cores} (${vCores} vCPUs, ${threadsPerCore} threads por núcleo)`,
+                memoryInGb,
             };
         } catch (error) {
             return undefined;

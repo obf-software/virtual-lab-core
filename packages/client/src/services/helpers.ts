@@ -1,17 +1,17 @@
-import { Role, VirtualInstanceState } from './api-protocols';
+import { Role, InstanceState } from './api-protocols';
 
-export const roleToDisplayString = (role: string): string => {
+export const roleToDisplayString = (role?: Role): string => {
     const roleToDisplayMap: Record<Role, string | undefined> = {
         PENDING: 'Pendente',
         ADMIN: 'Administrador',
         USER: 'Usuário',
         NONE: 'Nenhum cargo',
     };
-    return roleToDisplayMap[role as Role] ?? 'Desconhecido';
+    return roleToDisplayMap[role ?? ('' as Role)] ?? 'Desconhecido';
 };
 
-export const instanceStateToDisplayString = (state: VirtualInstanceState): string => {
-    const stateToDisplayMap: Record<VirtualInstanceState, string | undefined> = {
+export const instanceStateToDisplayString = (state?: InstanceState): string => {
+    const stateToDisplayMap: Record<InstanceState, string | undefined> = {
         PENDING: 'Iniciando',
         RUNNING: 'Ativa',
         STOPPED: 'Desligada',
@@ -19,7 +19,7 @@ export const instanceStateToDisplayString = (state: VirtualInstanceState): strin
         SHUTTING_DOWN: 'Encerrando',
         TERMINATED: 'Encerrada',
     };
-    return stateToDisplayMap[state] ?? 'Desconhecido';
+    return stateToDisplayMap[state ?? ('' as InstanceState)] ?? 'Desconhecido';
 };
 
 export const getErrorMessage = (error: unknown): string => {

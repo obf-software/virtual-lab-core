@@ -10,7 +10,7 @@ import {
     SeekPaginated,
     UrlPath,
     User,
-    VirtualInstanceState,
+    InstanceState,
 } from './api-protocols';
 import { getErrorMessage } from './helpers';
 
@@ -178,13 +178,13 @@ export const rebootInstance = async (props: { instanceId: string }) =>
     });
 
 export const turnInstanceOff = async (props: { instanceId: string }) =>
-    executeRequest<{ state: VirtualInstanceState }>({
+    executeRequest<{ state: InstanceState }>({
         path: `/api/v1/instances/${props.instanceId}/turn-off`,
         method: 'POST',
     });
 
 export const turnInstanceOn = async (props: { instanceId: string }) =>
-    executeRequest<{ state: VirtualInstanceState }>({
+    executeRequest<{ state: InstanceState }>({
         path: `/api/v1/instances/${props.instanceId}/turn-on`,
         method: 'POST',
     });

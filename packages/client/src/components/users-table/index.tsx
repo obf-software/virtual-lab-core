@@ -10,7 +10,7 @@ import {
     Tr,
 } from '@chakra-ui/react';
 import React from 'react';
-import { UsersTableRow } from '../users-table-row';
+import { UsersTableRow } from './row';
 import { User } from '../../services/api-protocols';
 
 interface UsersTableProps {

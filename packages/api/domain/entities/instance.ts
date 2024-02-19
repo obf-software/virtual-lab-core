@@ -7,6 +7,7 @@ import {
 } from '../dtos/instance-connection-type';
 import { InstanceState, instanceStateSchema } from '../dtos/instance-state';
 import { Errors } from '../dtos/errors';
+import { InstancePlatform, instancePlatformSchema } from '../dtos/instance-platform';
 
 dayjs.extend(utc);
 
@@ -18,12 +19,12 @@ export const instanceDataSchema = z.object({
     name: z.string(),
     description: z.string(),
     connectionType: instanceConnectionTypeSchema.optional(),
-    platform: z.string().optional(),
-    distribution: z.string().optional(),
-    instanceType: z.string().optional(),
-    cpuCores: z.string().optional(),
-    memoryInGb: z.string().optional(),
-    storageInGb: z.string().optional(),
+    platform: instancePlatformSchema,
+    distribution: z.string(),
+    instanceType: z.string(),
+    cpuCores: z.string(),
+    memoryInGb: z.string(),
+    storageInGb: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
     lastConnectionAt: z.date().optional(),
@@ -42,6 +43,12 @@ export class Instance {
         launchToken: string;
         name: string;
         description: string;
+        platform: InstancePlatform;
+        distribution: string;
+        instanceType: string;
+        cpuCores: string;
+        memoryInGb: string;
+        storageInGb: string;
     }): Instance => {
         const dateNow = dayjs.utc().toDate();
         const data: InstanceData = {
@@ -52,12 +59,12 @@ export class Instance {
             name: props.name,
             description: props.description,
             connectionType: undefined,
-            platform: undefined,
-            distribution: undefined,
-            instanceType: undefined,
-            cpuCores: undefined,
-            memoryInGb: undefined,
-            storageInGb: undefined,
+            platform: props.platform,
+            distribution: props.description,
+            instanceType: props.instanceType,
+            cpuCores: props.cpuCores,
+            memoryInGb: props.memoryInGb,
+            storageInGb: props.storageInGb,
             createdAt: dateNow,
             updatedAt: dateNow,
             lastConnectionAt: undefined,
@@ -94,8 +101,6 @@ export class Instance {
         name?: string;
         description?: string;
         connectionType?: InstanceConnectionType;
-        platform?: string;
-        distribution?: string;
         instanceType?: string;
         cpuCores?: string;
         memoryInGb?: string;
@@ -108,8 +113,6 @@ export class Instance {
             name: props.name ?? this.data.name,
             description: props.description ?? this.data.description,
             connectionType: props.connectionType ?? this.data.connectionType,
-            platform: props.platform ?? this.data.platform,
-            distribution: props.distribution ?? this.data.distribution,
             instanceType: props.instanceType ?? this.data.instanceType,
             cpuCores: props.cpuCores ?? this.data.cpuCores,
             memoryInGb: props.memoryInGb ?? this.data.memoryInGb,

@@ -9,9 +9,9 @@ import { Errors } from '../../../domain/dtos/errors';
 export const updateUserQuotasInput = z
     .object({
         principal: principalSchema,
-        userId: z.string().optional(),
+        userId: z.string().min(1).optional(),
         maxInstances: z.number().positive().optional(),
-        allowedInstanceTypes: z.array(z.string()).nonempty().optional(),
+        allowedInstanceTypes: z.array(z.string().min(1)).nonempty().optional(),
         canLaunchInstanceWithHibernation: z.boolean().optional(),
     })
     .strict()

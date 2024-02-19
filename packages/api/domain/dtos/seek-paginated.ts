@@ -8,8 +8,8 @@ export interface SeekPaginated<T> {
 }
 
 export const seekPaginationInputSchema = z.object({
-    page: z.number().int().min(1).default(1),
-    resultsPerPage: z.number().int().min(1).default(10),
+    page: z.number({ coerce: true }).int().min(1).default(1),
+    resultsPerPage: z.number({ coerce: true }).int().min(1).max(60).default(10),
 });
 
 export type SeekPaginationInput = z.infer<typeof seekPaginationInputSchema>;

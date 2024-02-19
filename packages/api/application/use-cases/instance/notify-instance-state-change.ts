@@ -35,6 +35,7 @@ export class NotifyInstanceStateChange {
         const { data: validInput } = inputValidation;
 
         const instance = await this.instanceRepository.getByVirtualId(validInput.virtualId);
+
         if (!instance) {
             this.logger.info(`Instance not found, skipping instance state change notification`, {
                 virtualId: validInput.virtualId,

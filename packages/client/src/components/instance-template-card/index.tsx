@@ -14,8 +14,8 @@ import { LaunchInstanceModal } from '../launch-instance-modal';
 
 interface InstanceTemplateCardProps {
     instanceTemplate: InstanceTemplate;
-    isLoading?: boolean;
-    isDisabled?: boolean;
+    isLoading: boolean;
+    isDisabled: boolean;
 }
 
 export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({

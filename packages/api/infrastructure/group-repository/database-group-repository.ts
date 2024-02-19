@@ -31,13 +31,6 @@ export class DatabaseGroupRepository implements GroupRepository {
         return newDbClient;
     }
 
-    disconnect = async (): Promise<void> => {
-        if (this.dbClient !== undefined) {
-            await this.dbClient.close();
-            this.dbClient = undefined;
-        }
-    };
-
     static mapGroupDbModelToEntity = (model: GroupDbModel): Group => {
         return Group.restore({
             id: model._id.toJSON(),
@@ -54,12 +47,16 @@ export class DatabaseGroupRepository implements GroupRepository {
 
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
-            textSearch: [data.name, data.description].map((x) => x.toLowerCase()).join(' '),
             name: data.name,
             description: data.description,
             createdBy: new ObjectId(data.createdBy),
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
+
+            textSearch: [data.name, data.description]
+                .filter((x): x is string => typeof x === 'string')
+                .map((x) => x.toLowerCase())
+                .join(' '),
         };
     };
 

@@ -6,7 +6,7 @@ import { Errors } from '../../../domain/dtos/errors';
 
 export const signInUserInputSchema = z
     .object({
-        username: z.string(),
+        username: z.string().min(1),
     })
     .strict();
 export type SignInUserInput = z.infer<typeof signInUserInputSchema>;

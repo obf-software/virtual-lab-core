@@ -6,8 +6,8 @@ import { Errors } from '../../../domain/dtos/errors';
 
 export const signUpUserInputSchema = z
     .object({
-        username: z.string(),
-        selfRegister: z.boolean().optional(),
+        username: z.string().min(1),
+        selfRegister: z.boolean().optional().default(false),
     })
     .strict();
 export type SignUpUserInput = z.infer<typeof signUpUserInputSchema>;

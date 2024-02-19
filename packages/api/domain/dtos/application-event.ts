@@ -8,7 +8,7 @@ export type ApplicationEventDetail = z.infer<typeof applicationEventDetailSchema
 
 export abstract class ApplicationEvent<T extends ApplicationEventDetail = ApplicationEventDetail> {
     constructor(
-        public destination: 'BUS' | 'CLIENT',
+        public destination: 'BUS' | 'CLIENT' | 'NONE',
         public type: string,
         public detailSchema: z.ZodSchema,
     ) {}

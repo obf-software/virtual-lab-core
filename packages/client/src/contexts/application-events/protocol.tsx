@@ -1,4 +1,4 @@
-import { Instance, VirtualInstanceState } from '../../services/api-protocols';
+import { Instance, InstanceState } from '../../services/api-protocols';
 
 export const applicationEventSubscriptionQuery = `subscription Subscribe($name: String!) {
     subscribe(name: $name) {
@@ -25,12 +25,12 @@ export type ApplicationEventType = 'INSTANCE_LAUNCHED' | 'INSTANCE_STATE_CHANGED
 export interface ApplicationEventDetail {
     INSTANCE_LAUNCHED: {
         instance: Instance;
-        state: VirtualInstanceState;
+        state: InstanceState;
     };
 
     INSTANCE_STATE_CHANGED: {
         instance: Instance;
-        state: VirtualInstanceState;
+        state: InstanceState;
     };
 }
 

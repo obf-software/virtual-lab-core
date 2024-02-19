@@ -18,7 +18,7 @@ export type EC2InstanceStateChangeNotificationDetail = z.infer<
 export class EC2InstanceStateChangeNotification extends ApplicationEvent<EC2InstanceStateChangeNotificationDetail> {
     private constructor(public detail: EC2InstanceStateChangeNotificationDetail) {
         super(
-            'BUS',
+            'NONE',
             'EC2 Instance State-change Notification',
             ec2InstanceStateChangeNotificationSchema,
         );

@@ -1,10 +1,10 @@
 import React from 'react';
 import { ButtonGroup, IconButton, IconButtonProps, Td, Tooltip, Tr } from '@chakra-ui/react';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { User } from '../../services/api-protocols';
+import { User } from '../../../services/api-protocols';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br';
-import { roleToDisplayString } from '../../services/helpers';
+import { roleToDisplayString } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');

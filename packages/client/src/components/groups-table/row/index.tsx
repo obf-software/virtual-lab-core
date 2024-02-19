@@ -3,7 +3,7 @@ import { ButtonGroup, IconButton, IconButtonProps, Td, Tooltip, Tr } from '@chak
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/pt-br';
-import { Group } from '../../services/api-protocols';
+import { Group } from '../../../services/api-protocols';
 
 dayjs.extend(relativeTime);
 dayjs.locale('pt-br');

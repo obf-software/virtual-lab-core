@@ -7,6 +7,7 @@ import { DatabaseUserRepository } from '../../../infrastructure/user-repository/
 import { ListUsers } from '../../../application/use-cases/user/list-users';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
+import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
     process.env;
@@ -27,11 +28,10 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                     .enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'alphabetical'])
                     .default('creationDate'),
                 order: z.enum(['asc', 'desc']).default('asc'),
-                resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
-                page: z.number({ coerce: true }).min(1).default(1),
                 groupId: z.string().optional(),
                 textSearch: z.string().optional(),
             })
+            .extend(seekPaginationInputSchema.shape)
             .safeParse({ ...event.queryStringParameters });
         if (!query.success) throw Errors.validationError(query.error);
 
@@ -46,7 +46,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             groupId: query.data.groupId,
             textSearch: query.data.textSearch,
         });
-        await userRepository.disconnect();
 
         return {
             statusCode: 200,

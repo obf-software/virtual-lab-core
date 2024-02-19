@@ -30,7 +30,7 @@ export class CreateGroup {
         const { data: validInput } = inputValidation;
 
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const username = this.auth.getUsername(validInput.principal);
+        const { username } = this.auth.getClaims(validInput.principal);
 
         const group = Group.create({
             name: validInput.name,

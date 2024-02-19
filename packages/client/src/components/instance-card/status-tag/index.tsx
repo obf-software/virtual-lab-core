@@ -1,15 +1,15 @@
 import { Box, Spinner, Stack, Tag, Text } from '@chakra-ui/react';
 import React from 'react';
-import { VirtualInstanceState } from '../../../services/api-protocols';
+import { InstanceState } from '../../../services/api-protocols';
 import { instanceStateToDisplayString } from '../../../services/helpers';
 
 interface InstanceCardStateTagProps {
-    state?: VirtualInstanceState | 'PROVISIONING';
+    state?: InstanceState | 'PROVISIONING';
 }
 
 export const InstanceCardStateTag: React.FC<InstanceCardStateTagProps> = ({ state }) => {
     const stateStyleMap: Record<
-        VirtualInstanceState | 'UNKNOWN' | 'PROVISIONING',
+        InstanceState | 'UNKNOWN' | 'PROVISIONING',
         {
             label: string;
             colorScheme: string;
@@ -47,7 +47,7 @@ export const InstanceCardStateTag: React.FC<InstanceCardStateTagProps> = ({ stat
             hasSpinner: false,
         },
         UNKNOWN: {
-            label: 'Desconhecido',
+            label: instanceStateToDisplayString(),
             colorScheme: 'gray',
             hasSpinner: false,
         },

@@ -30,8 +30,6 @@ export const handler = LambdaHandlerAdapter.adaptCustom<PreTokenGenerationTrigge
             },
         };
 
-        await userRepository.disconnect();
-
         return outputEvent;
     },
     { logger },

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Instance } from '../../services/api-protocols';
+import { Instance } from '../../../services/api-protocols';
 import {
     Button,
     List,
@@ -16,7 +16,7 @@ import {
 import { IconType } from 'react-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { instanceStateToDisplayString } from '../../services/helpers';
+import { instanceStateToDisplayString } from '../../../services/helpers';
 
 dayjs.locale('pt-br');
 dayjs.extend(relativeTime);
@@ -63,27 +63,27 @@ export const InstanceDetailsModal: React.FC<InstanceDetailsModalProps> = ({
         },
         {
             label: 'Plataforma',
-            value: instance.platform ?? '-',
+            value: instance.platform,
         },
         {
             label: 'Distribuição',
-            value: instance.distribution ?? '-',
+            value: instance.distribution,
         },
         {
             label: 'Tipo de instância',
-            value: instance.instanceType ?? '-',
+            value: instance.instanceType,
         },
         {
-            label: 'Núcleos de CPU',
-            value: instance.cpuCores ?? '-',
+            label: 'CPU',
+            value: instance.cpuCores,
         },
         {
             label: 'Memória',
-            value: instance.memoryInGb ? `${instance.memoryInGb} GB` : '-',
+            value: `${instance.memoryInGb} GB`,
         },
         {
             label: 'Armazenamento',
-            value: instance.storageInGb ? `${instance.storageInGb} GB` : '-',
+            value: `${instance.storageInGb} GB`,
         },
         {
             label: 'Criado em',
@@ -101,7 +101,7 @@ export const InstanceDetailsModal: React.FC<InstanceDetailsModalProps> = ({
         },
         {
             label: 'Estado',
-            value: instance.state ? instanceStateToDisplayString(instance.state) : '-',
+            value: instanceStateToDisplayString(instance.state),
         },
     ];
 

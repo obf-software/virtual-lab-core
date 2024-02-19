@@ -9,7 +9,7 @@ import { Errors } from '../../../domain/dtos/errors';
 export const getUserInputSchema = z
     .object({
         principal: principalSchema,
-        userId: z.string().optional(),
+        userId: z.string().min(1).optional(),
     })
     .strict();
 export type GetUserInput = z.infer<typeof getUserInputSchema>;

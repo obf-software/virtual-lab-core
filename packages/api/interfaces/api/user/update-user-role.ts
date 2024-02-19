@@ -34,7 +34,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             userId: userId === 'me' ? undefined : userId,
             role: body.data.role,
         });
-        await userRepository.disconnect();
 
         return {
             statusCode: 200,

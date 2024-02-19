@@ -45,11 +45,17 @@ export class GetInstanceConnection {
             this.configVault.getParameter(this.INSTANCE_PASSWORD_PARAMETER_NAME),
             this.instanceRepository.getById(validInput.instanceId),
         ]);
-        if (!instance) throw Errors.resourceNotFound('Instance', validInput.instanceId);
-        if (!instancePassword)
+
+        if (!instance) {
+            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+        }
+
+        if (!instancePassword) {
             throw Errors.internalError(
                 `Failed to retrieve ${this.INSTANCE_PASSWORD_PARAMETER_NAME} from config vault`,
             );
+        }
+
         const { virtualId } = instance.getData();
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
@@ -60,8 +66,13 @@ export class GetInstanceConnection {
             throw Errors.businessRuleViolation('Instance has not been launched yet');
         }
 
-        const instanceSummary = await this.virtualizationGateway.getInstanceSummary(virtualId);
-        instance.onStateRetrieved(instanceSummary.state);
+        const virtualInstance = await this.virtualizationGateway.getInstance(virtualId);
+
+        if (!virtualInstance) {
+            throw Errors.resourceNotFound('Virtual instance', virtualId);
+        }
+
+        instance.onStateRetrieved(virtualInstance.state);
 
         if (!instance.isReadyToConnect()) {
             throw Errors.businessRuleViolation('Instance is not ready yet');
@@ -73,13 +84,13 @@ export class GetInstanceConnection {
         const connectionString =
             instance.getData().connectionType === 'VNC'
                 ? this.connectionEncoder.encodeVncConnection({
-                      hostname: instanceSummary.hostname,
+                      hostname: virtualInstance.hostname,
                       port: 5901,
                       cursor: 'local',
                       password: instancePassword,
                   })
                 : this.connectionEncoder.encodeRdpConnection({
-                      hostname: instanceSummary.hostname,
+                      hostname: virtualInstance.hostname,
                       port: 3389,
                       'enable-sftp': false,
                       security: 'any',

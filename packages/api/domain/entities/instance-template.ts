@@ -2,6 +2,7 @@ import { z } from 'zod';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Errors } from '../dtos/errors';
+import { InstancePlatform, instancePlatformSchema } from '../dtos/instance-platform';
 
 dayjs.extend(utc);
 
@@ -12,6 +13,8 @@ export const instanceTemplateDataSchema = z.object({
     description: z.string(),
     productId: z.string(),
     machineImageId: z.string(),
+    platform: instancePlatformSchema,
+    distribution: z.string(),
     storageInGb: z.number(),
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -30,6 +33,8 @@ export class InstanceTemplate {
         description: string;
         productId: string;
         machineImageId: string;
+        platform: InstancePlatform;
+        distribution: string;
         storageInGb: number;
     }): InstanceTemplate => {
         const dateNow = dayjs.utc().toDate();
@@ -40,6 +45,8 @@ export class InstanceTemplate {
             description: props.description,
             productId: props.productId,
             machineImageId: props.machineImageId,
+            platform: props.platform,
+            distribution: props.distribution,
             storageInGb: props.storageInGb,
             createdAt: dateNow,
             updatedAt: dateNow,

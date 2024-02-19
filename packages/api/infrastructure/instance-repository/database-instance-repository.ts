@@ -30,13 +30,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         return newDbClient;
     }
 
-    disconnect = async (): Promise<void> => {
-        if (this.dbClient !== undefined) {
-            await this.dbClient.close();
-            this.dbClient = undefined;
-        }
-    };
-
     static mapInstanceDbModelToEntity = (model: InstanceDbModel): Instance => {
         return Instance.restore({
             id: model._id.toJSON(),
@@ -55,6 +48,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
             lastConnectionAt: model.lastConnectionAt,
+            state: undefined,
         });
     };
 
@@ -63,10 +57,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
 
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
-            textSearch: [data.name, data.description]
-                .filter((x): x is string => typeof x === 'string')
-                .map((x) => x.toLowerCase())
-                .join(' '),
             virtualId: data.virtualId,
             ownerId: new ObjectId(data.ownerId),
             launchToken: data.launchToken,
@@ -82,6 +72,11 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             lastConnectionAt: data.lastConnectionAt,
+
+            textSearch: [data.name, data.description]
+                .filter((x): x is string => typeof x === 'string')
+                .map((x) => x.toLowerCase())
+                .join(' '),
         };
     };
 

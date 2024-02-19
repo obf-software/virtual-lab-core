@@ -9,7 +9,7 @@ import { VirtualizationGateway } from '../../virtualization-gateway';
 export const deleteInstanceInputSchema = z
     .object({
         principal: principalSchema,
-        instanceId: z.string(),
+        instanceId: z.string().min(1),
     })
     .strict();
 export type DeleteInstanceInput = z.infer<typeof deleteInstanceInputSchema>;
@@ -35,8 +35,10 @@ export class DeleteInstance {
         const { id } = this.auth.getClaims(validInput.principal);
 
         const instance = await this.instanceRepository.getById(validInput.instanceId);
-        if (instance === undefined)
+
+        if (instance === undefined) {
             throw Errors.resourceNotFound('Instance', validInput.instanceId);
+        }
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
             throw Errors.resourceAccessDenied('Instance', validInput.instanceId);

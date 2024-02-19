@@ -9,7 +9,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 export const updateInstanceTemplateInputSchema = z
     .object({
         principal: principalSchema,
-        instanceTemplateId: z.string(),
+        instanceTemplateId: z.string().min(1),
         name: z.string().min(1).optional(),
         description: z.string().min(1).optional(),
     })

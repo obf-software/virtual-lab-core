@@ -39,7 +39,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             allowedInstanceTypes: body.data.allowedInstanceTypes,
             canLaunchInstanceWithHibernation: body.data.canLaunchInstanceWithHibernation,
         });
-        await userRepository.disconnect();
 
         return {
             statusCode: 200,

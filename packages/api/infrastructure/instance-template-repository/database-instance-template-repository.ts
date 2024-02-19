@@ -30,13 +30,6 @@ export class DatabaseInstanceTemplateRepository implements InstanceTemplateRepos
         return newDbClient;
     }
 
-    disconnect = async (): Promise<void> => {
-        if (this.dbClient !== undefined) {
-            await this.dbClient.close();
-            this.dbClient = undefined;
-        }
-    };
-
     static mapInstanceTemplateDbModelToEntity = (
         model: InstanceTemplateDbModel,
     ): InstanceTemplate => {
@@ -47,6 +40,8 @@ export class DatabaseInstanceTemplateRepository implements InstanceTemplateRepos
             description: model.description,
             productId: model.productId,
             machineImageId: model.machineImageId,
+            platform: model.platform,
+            distribution: model.distribution,
             storageInGb: model.storageInGb,
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
@@ -60,18 +55,28 @@ export class DatabaseInstanceTemplateRepository implements InstanceTemplateRepos
 
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
-            textSearch: [data.name, data.description]
-                .filter((x): x is string => typeof x === 'string')
-                .map((x) => x.toLowerCase())
-                .join(' '),
             createdBy: new ObjectId(data.createdBy),
             name: data.name,
             description: data.description,
             productId: data.productId,
             machineImageId: data.machineImageId,
+            platform: data.platform,
+            distribution: data.distribution,
             storageInGb: data.storageInGb,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
+
+            textSearch: [
+                data.name,
+                data.description,
+                data.productId,
+                data.machineImageId,
+                data.platform,
+                data.distribution,
+            ]
+                .filter((x): x is string => typeof x === 'string')
+                .map((x) => x.toLowerCase())
+                .join(' '),
         };
     };
 

@@ -11,8 +11,8 @@ import { Errors } from '../../../domain/dtos/errors';
 export const listInstancesInputSchema = z
     .object({
         principal: principalSchema,
-        textSearch: z.string().optional(),
-        ownerId: z.string().optional(),
+        textSearch: z.string().min(1).optional(),
+        ownerId: z.string().min(1).optional(),
         orderBy: z.enum(['creationDate', 'lastConnectionDate', 'alphabetical']),
         order: z.enum(['asc', 'desc']),
         pagination: seekPaginationInputSchema,

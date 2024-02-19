@@ -23,24 +23,24 @@ export abstract class Auth {
         role: this.getRole(principal),
     });
 
-    getUsername(principal: Principal): string {
+    private getUsername = (principal: Principal): string => {
         const username = principal.claims[this.claimsKeys.username];
         if (typeof username !== 'string') throw Errors.unauthorizedPrincipal('Invalid username');
         return username;
-    }
+    };
 
-    getRole(principal: Principal): Role {
+    private getRole = (principal: Principal): Role => {
         const roleString = principal.claims[this.claimsKeys.role];
         const validation = roleSchema.default('NONE').safeParse(roleString);
         if (!validation.success) throw Errors.unauthorizedPrincipal('Invalid role');
         return validation.data;
-    }
+    };
 
-    getId(principal: Principal): string {
+    private getId = (principal: Principal): string => {
         const id = principal.claims[this.claimsKeys.id];
         if (typeof id !== 'string') throw Errors.unauthorizedPrincipal('Invalid id');
         return id;
-    }
+    };
 
     hasRoleOrAbove(principal: Principal, role: Role): boolean {
         const principalRole = this.getRole(principal);

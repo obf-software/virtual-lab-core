@@ -38,8 +38,10 @@ export class TurnInstanceOn {
         const { id } = this.auth.getClaims(validInput.principal);
 
         const instance = await this.instanceRepository.getById(validInput.instanceId);
-        if (instance === undefined)
+
+        if (!instance) {
             throw Errors.resourceNotFound('Instance', validInput.instanceId);
+        }
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
             throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
@@ -51,8 +53,13 @@ export class TurnInstanceOn {
             throw Errors.businessRuleViolation('Instance was not launched yet');
         }
 
-        const instanceSummary = await this.virtualizationGateway.getInstanceSummary(virtualId);
-        instance.onStateRetrieved(instanceSummary.state);
+        const virtualInstance = await this.virtualizationGateway.getInstance(virtualId);
+
+        if (!virtualInstance) {
+            throw Errors.resourceNotFound('VirtualInstance', virtualId);
+        }
+
+        instance.onStateRetrieved(virtualInstance.state);
 
         if (!instance.isReadyToTurnOn()) {
             throw Errors.businessRuleViolation('Instance is not ready to turn on');

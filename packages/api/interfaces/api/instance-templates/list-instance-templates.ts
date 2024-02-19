@@ -7,6 +7,7 @@ import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/inst
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { Errors } from '../../../domain/dtos/errors';
+import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
     process.env;
@@ -32,9 +33,8 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                     .enum(['creationDate', 'lastUpdateDate', 'alphabetical'])
                     .default('creationDate'),
                 order: z.enum(['asc', 'desc']).default('asc'),
-                page: z.number().default(1),
-                resultsPerPage: z.number().default(10),
             })
+            .extend(seekPaginationInputSchema.shape)
             .safeParse({ ...event.queryStringParameters });
         if (!queryValidation.success) throw Errors.validationError(queryValidation.error);
         const { data: query } = queryValidation;

@@ -23,13 +23,58 @@ export type Role = 'NONE' | 'PENDING' | 'USER' | 'ADMIN';
 
 export type InstanceConnectionType = 'RDP' | 'VNC';
 
-export type VirtualInstanceState =
+export type InstancePlatform = 'LINUX' | 'WINDOWS' | 'UNKNOWN';
+
+export type InstanceState =
     | 'PENDING'
     | 'RUNNING'
     | 'STOPPING'
     | 'STOPPED'
     | 'SHUTTING_DOWN'
     | 'TERMINATED';
+
+export interface Group {
+    id: string;
+    createdBy: string;
+    name: string;
+    description: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface InstanceTemplate {
+    id: string;
+    createdBy: string;
+    name: string;
+    description: string;
+    productId: string;
+    machineImageId: string;
+    platform: InstancePlatform;
+    distribution: string;
+    storageInGb: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface Instance {
+    id: string;
+    virtualId?: string;
+    ownerId: string;
+    launchToken: string;
+    name: string;
+    description: string;
+    connectionType?: InstanceConnectionType;
+    platform: InstancePlatform;
+    distribution: string;
+    instanceType: string;
+    cpuCores: string;
+    memoryInGb: string;
+    storageInGb: string;
+    createdAt: string;
+    updatedAt: string;
+    lastConnectionAt?: string;
+    state?: InstanceState;
+}
 
 export interface User {
     id: string;
@@ -46,49 +91,8 @@ export interface User {
     };
 }
 
-export interface Group {
-    id: string;
-    createdBy: string;
-    name: string;
-    description: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface Instance {
-    id: string;
-    virtualId?: string;
-    ownerId: string;
-    launchToken: string;
-    name: string;
-    description: string;
-    connectionType?: InstanceConnectionType;
-    platform?: string;
-    distribution?: string;
-    instanceType?: string;
-    cpuCores?: string;
-    memoryInGb?: string;
-    storageInGb?: string;
-    createdAt: string;
-    updatedAt: string;
-    lastConnectionAt?: string;
-    state?: VirtualInstanceState;
-}
-
 export interface InstanceConnection {
     connectionString: string;
-}
-
-export interface InstanceTemplate {
-    id: string;
-    createdBy: string;
-    name: string;
-    description: string;
-    productId: string;
-    machineImageId: string;
-    storageInGb: number;
-    createdAt: string;
-    updatedAt: string;
 }
 
 export interface Product {

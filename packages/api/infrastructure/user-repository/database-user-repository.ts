@@ -30,13 +30,6 @@ export class DatabaseUserRepository implements UserRepository {
         return newDbClient;
     }
 
-    disconnect = async (): Promise<void> => {
-        if (this.dbClient !== undefined) {
-            await this.dbClient.close();
-            this.dbClient = undefined;
-        }
-    };
-
     static mapUserDbModelToEntity = (model: UserDbModel): User => {
         return User.restore({
             id: model._id.toJSON(),
@@ -55,7 +48,6 @@ export class DatabaseUserRepository implements UserRepository {
 
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
-            textSearch: [data.username].join(' '),
             username: data.username,
             role: data.role,
             createdAt: data.createdAt,
@@ -63,6 +55,11 @@ export class DatabaseUserRepository implements UserRepository {
             lastLoginAt: data.lastLoginAt,
             groupIds: data.groupIds.map((id) => new ObjectId(id)),
             quotas: data.quotas,
+
+            textSearch: [data.username]
+                .filter((x): x is string => typeof x === 'string')
+                .map((x) => x.toLowerCase())
+                .join(' '),
         };
     };
 

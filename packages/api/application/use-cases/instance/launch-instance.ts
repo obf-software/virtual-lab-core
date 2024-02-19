@@ -12,7 +12,7 @@ import { InstanceTemplateRepository } from '../../instance-template-repository';
 export const launchInstanceInputSchema = z
     .object({
         principal: principalSchema,
-        ownerId: z.string().optional(),
+        ownerId: z.string().min(1).optional(),
         templateId: z.string().min(1),
         name: z.string().min(1),
         description: z.string().min(1),
@@ -45,10 +45,11 @@ export class LaunchInstance {
         const { id } = this.auth.getClaims(validInput.principal);
         const ownerId = validInput.ownerId ?? id;
 
-        const [user, userInstanceCount, instanceTemplate] = await Promise.all([
+        const [user, userInstanceCount, instanceTemplate, instanceType] = await Promise.all([
             this.userRepository.getById(ownerId),
             this.instanceRepository.count({ ownerId: ownerId }),
             this.instanceTemplateRepository.getById(validInput.templateId),
+            this.virtualizationGateway.getInstanceType(validInput.instanceType),
         ]);
 
         if (!user) {
@@ -57,6 +58,21 @@ export class LaunchInstance {
 
         if (!instanceTemplate) {
             throw Errors.resourceNotFound('InstanceTemplate', validInput.templateId);
+        }
+
+        if (!instanceType) {
+            throw Errors.resourceNotFound('InstanceType', validInput.instanceType);
+        }
+
+        const instanceMachineImage = await this.virtualizationGateway.getMachineImageById(
+            instanceTemplate.getData().machineImageId,
+        );
+
+        if (!instanceMachineImage) {
+            throw Errors.resourceNotFound(
+                'MachineImageId',
+                instanceTemplate.getData().machineImageId,
+            );
         }
 
         if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN')) {
@@ -93,12 +109,19 @@ export class LaunchInstance {
         );
 
         const instance = Instance.create({
-            name: validInput.name,
-            description: validInput.description,
             ownerId,
             launchToken,
+            name: validInput.name,
+            description: validInput.description,
+            platform: instanceMachineImage.platform,
+            distribution: instanceMachineImage.distribution,
+            instanceType: instanceType.name,
+            cpuCores: instanceType.cpuCores,
+            memoryInGb: instanceType.memoryInGb,
+            storageInGb: instanceTemplate.getData().storageInGb.toString(),
         });
         instance.id = await this.instanceRepository.save(instance);
+
         return instance;
     };
 }

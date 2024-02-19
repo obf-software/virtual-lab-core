@@ -43,7 +43,6 @@ export class ListInstanceTemplates {
             {
                 createdBy,
                 textSearch: validInput.textSearch,
-                deletedAt: null,
             },
             validInput.orderBy,
             validInput.order,

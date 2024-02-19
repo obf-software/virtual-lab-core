@@ -14,21 +14,41 @@ import {
     SlideFade,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { useInstanceTemplates } from '../../hooks/use-instance-templates';
 import { InstanceTemplateCard } from '../../components/instance-template-card';
+import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
+import { Paginator } from '../../components/paginator';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
-    const { instanceTemplatesQuery } = useInstanceTemplates();
+    const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
+        allowedOrderByValues: ['creationDate', 'lastUpdateDate', 'alphabetical'],
+        defaultOrderBy: 'creationDate',
+        allowedOrderValues: ['asc', 'desc'],
+        defaultOrder: 'desc',
+        defaultPage: 1,
+        defaultResultsPerPage: 10,
+    });
+    const { instanceTemplatesQuery } = useInstanceTemplates({
+        page,
+        resultsPerPage,
+        order,
+        orderBy,
+    });
 
-    const templates = instanceTemplatesQuery.data ?? [];
-    const numberOfTemplates = templates.length;
+    const instanceTemplates = instanceTemplatesQuery.data?.data ?? [];
+    const numberOfPages = instanceTemplatesQuery.data?.numberOfPages ?? 0;
+    const numberOfResults = instanceTemplatesQuery.data?.numberOfResults ?? 0;
 
-    useEffect(() => {
+    React.useEffect(() => {
+        if (numberOfPages > 0 && page > numberOfPages) {
+            setParams({ page: 1 });
+        }
+
         setActiveMenuItem('INSTANCES');
-    }, []);
+    }, [page, numberOfPages]);
 
     return (
         <Box>
@@ -55,10 +75,9 @@ export const NewInstancePage: React.FC = () => {
                                 fontSize='md'
                                 color='gray.600'
                             >
-                                {numberOfTemplates === 0 && 'Nenhum template disponível'}
-                                {numberOfTemplates === 1 && '1 template disponível'}
-                                {numberOfTemplates > 1 &&
-                                    `${numberOfTemplates} templates disponíveis`}
+                                {numberOfResults === 0 && 'Nenhum template encontrado'}
+                                {numberOfResults === 1 && '1 template encontrado'}
+                                {numberOfResults > 1 && `${numberOfResults} templates encontrados`}
                             </Text>
                         </VStack>
                     </SlideFade>
@@ -87,7 +106,7 @@ export const NewInstancePage: React.FC = () => {
                     </SlideFade>
                 </Stack>
 
-                {numberOfTemplates === 0 && !instanceTemplatesQuery.isLoading && (
+                {numberOfResults === 0 && !instanceTemplatesQuery.isLoading && (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -121,7 +140,7 @@ export const NewInstancePage: React.FC = () => {
                     </Box>
                 )}
 
-                {numberOfTemplates > 0 && !instanceTemplatesQuery.isLoading && (
+                {numberOfResults > 0 && !instanceTemplatesQuery.isLoading && (
                     <Box>
                         <Fade in>
                             <SimpleGrid
@@ -129,7 +148,7 @@ export const NewInstancePage: React.FC = () => {
                                 columns={{ base: 1, md: 2 }}
                                 spacing={10}
                             >
-                                {templates.map((template) => (
+                                {instanceTemplates.map((template) => (
                                     <InstanceTemplateCard
                                         key={`instance-template-${template.id}-card`}
                                         instanceTemplate={template}
@@ -138,6 +157,14 @@ export const NewInstancePage: React.FC = () => {
                                     />
                                 ))}
                             </SimpleGrid>
+
+                            <Paginator
+                                activePage={page}
+                                totalPages={numberOfPages}
+                                onPageChange={(selectedPage) => {
+                                    setParams({ page: selectedPage });
+                                }}
+                            />
                         </Fade>
                     </Box>
                 )}

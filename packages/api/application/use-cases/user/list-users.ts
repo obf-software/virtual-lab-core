@@ -10,8 +10,8 @@ import { Errors } from '../../../domain/dtos/errors';
 export const listUsersInputSchema = z
     .object({
         principal: principalSchema,
-        groupId: z.string().optional(),
-        textSearch: z.string().optional(),
+        groupId: z.string().min(1).optional(),
+        textSearch: z.string().min(1).optional(),
         orderBy: z.enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'alphabetical']),
         order: z.enum(['asc', 'desc']),
         pagination: seekPaginationInputSchema,

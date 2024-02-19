@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { instanceStateSchema } from './instance-state';
 
-export const virtualInstanceSummarySchema = z.object({
+export const virtualInstanceSchema = z.object({
     virtualId: z.string(),
     state: instanceStateSchema,
     hostname: z.string(),
 });
 
-export type VirtualInstanceSummary = z.infer<typeof virtualInstanceSummarySchema>;
+export type VirtualInstance = z.infer<typeof virtualInstanceSchema>;

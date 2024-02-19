@@ -7,6 +7,7 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
+import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
     process.env;
@@ -27,12 +28,11 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                     .enum(['creationDate', 'lastUpdateDate', 'alphabetical'])
                     .default('creationDate'),
                 order: z.enum(['asc', 'desc']).default('asc'),
-                resultsPerPage: z.number({ coerce: true }).min(1).max(60).default(10),
-                page: z.number({ coerce: true }).min(1).default(1),
                 createdBy: z.string().optional(),
                 userId: z.string().optional(),
                 textSearch: z.string().optional(),
             })
+            .extend(seekPaginationInputSchema.shape)
             .safeParse({ ...event.queryStringParameters });
         if (!query.success) throw Errors.validationError(query.error);
 
@@ -48,7 +48,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             userId: query.data.userId,
             textSearch: query.data.textSearch,
         });
-        await groupRepository.disconnect();
 
         return {
             statusCode: 200,
