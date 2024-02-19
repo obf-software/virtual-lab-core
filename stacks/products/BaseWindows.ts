@@ -2,9 +2,18 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as servicecatalog from 'aws-cdk-lib/aws-servicecatalog';
 import * as cdk from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 
 interface BaseWindowsProductProps {
+    /**
+     * Role to launch the instance with. Must be asumable by ec2.amazonaws.com
+     */
+    role: iam.Role;
+    /**
+     * The name of the instance profile to associate with the instance
+     */
+    instanceProfileName: string;
     /**
      * VPC to launch the instance in
      */
@@ -49,6 +58,11 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             assetBucket: props.assetBucket,
             serverSideEncryption: props.serverSideEncryption,
             serverSideEncryptionAwsKmsKeyId: props.serverSideEncryptionAwsKmsKeyId,
+        });
+
+        const idempotencyTokenParam = new cdk.CfnParameter(this, `${id}-IdempotencyTokenParam`, {
+            type: 'String',
+            description: 'idempotencyToken',
         });
 
         const machineImageIdParam = new cdk.CfnParameter(this, `${id}-MachineImageIdParam`, {
@@ -146,6 +160,7 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
         });
 
         const instance = new ec2.Instance(this, `${id}-Instance`, {
+            role: props.role,
             vpc: props.vpc,
             instanceType: new ec2.InstanceType(instanceTypeParam.valueAsString),
             machineImage: ec2.MachineImage.genericWindows({
@@ -171,11 +186,27 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             ssmSessionPermissions: true,
         });
 
-        const instanceAsL1 = instance.node.defaultChild as ec2.CfnInstance;
-        instanceAsL1.addPropertyOverride(
+        const launchTemplateName = `${cdk.Names.uniqueResourceName(this, {
+            maxLength: 92,
+        })}${idempotencyTokenParam.valueAsString}`.slice(0, 128);
+
+        instance.node.tryRemoveChild('LaunchTemplate');
+        const launchTemplate = new ec2.LaunchTemplate(this, `${id}-LaunchTemplate`, {
+            launchTemplateName,
+            httpTokens: ec2.LaunchTemplateHttpTokens.REQUIRED,
+        });
+        instance.instance.launchTemplate = {
+            launchTemplateName: launchTemplateName,
+            version: launchTemplate.latestVersionNumber,
+        };
+
+        instance.instance.addPropertyOverride(
             'HibernationOptions.Configured',
             enableHibernationParam.valueAsString === 'true',
         );
+
+        instance.node.tryRemoveChild('InstanceProfile');
+        instance.instance.iamInstanceProfile = props.instanceProfileName;
 
         new cdk.CfnOutput(this, `${id}-OutputInstanceId`, {
             value: instance.instanceId,

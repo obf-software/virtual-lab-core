@@ -63,7 +63,7 @@ export class Instance {
             connectionType: undefined,
             canHibernate: props.canHibernate,
             platform: props.platform,
-            distribution: props.description,
+            distribution: props.distribution,
             instanceType: props.instanceType,
             cpuCores: props.cpuCores,
             memoryInGb: props.memoryInGb,

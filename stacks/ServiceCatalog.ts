@@ -9,6 +9,7 @@ import { Api } from './Api';
 import { AppSyncApi } from './AppSyncApi';
 import { BaseWindowsProduct } from './products/BaseWindows';
 import { BaseLinuxProduct } from './products/BaseLinux';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { ssmParameters, vpc } = sst.use(Config);
@@ -68,6 +69,16 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         keyName: `service-catalog-${stack.stage}`,
     });
 
+    const productInstanceRole = new iam.Role(stack, 'ServiceCatalogProductInstanceRole', {
+        assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+    });
+
+    const productInstanceRoleInstanceProfile = new iam.InstanceProfile(
+        stack,
+        'ServiceCatalogProductInstanceRoleInstanceProfile',
+        { role: productInstanceRole },
+    );
+
     const baseLinuxProduct = new serviceCatalog.CloudFormationProduct(stack, 'BaseLinuxProduct', {
         owner: 'SST',
         productName: 'Base Linux Product',
@@ -77,6 +88,8 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                 validateTemplate: true,
                 cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
                     new BaseLinuxProduct(stack, 'BaseLinuxProductVersion', {
+                        role: productInstanceRole,
+                        instanceProfileName: productInstanceRoleInstanceProfile.instanceProfileName,
                         vpc,
                         region: stack.region,
                         userDataS3FileKey: 'base-linux-user-data.sh',
@@ -103,6 +116,9 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                     validateTemplate: true,
                     cloudFormationTemplate: serviceCatalog.CloudFormationTemplate.fromProductStack(
                         new BaseWindowsProduct(stack, 'BaseWindowsProductVersion', {
+                            role: productInstanceRole,
+                            instanceProfileName:
+                                productInstanceRoleInstanceProfile.instanceProfileName,
                             vpc,
                             region: stack.region,
                             userDataS3FileKey: 'base-windows-user-data.ps1',

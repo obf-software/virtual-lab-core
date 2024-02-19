@@ -187,7 +187,13 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         );
 
         const provisioningParameters = ProvisioningArtifactParameters?.map((p) => {
-            if (p.ParameterKey === 'machineImageId') {
+            if (p.Description === 'idempotencyToken') {
+                return {
+                    Key: p.ParameterKey,
+                    Value: randomId,
+                };
+            }
+            if (p.Description === 'machineImageId') {
                 return {
                     Key: p.ParameterKey,
                     Value: parameters.machineImageId,
