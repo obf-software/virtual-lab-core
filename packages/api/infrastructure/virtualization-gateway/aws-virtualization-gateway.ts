@@ -208,7 +208,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             if (p.Description === 'enableHibernation') {
                 return {
                     Key: p.ParameterKey,
-                    Value: parameters.enableHibernation ? 'true' : 'false',
+                    Value: parameters.canHibernate ? 'true' : 'false',
                 };
             }
             return {

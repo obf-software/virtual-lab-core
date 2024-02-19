@@ -19,6 +19,7 @@ export const instanceDataSchema = z.object({
     name: z.string(),
     description: z.string(),
     connectionType: instanceConnectionTypeSchema.optional(),
+    canHibernate: z.boolean(),
     platform: instancePlatformSchema,
     distribution: z.string(),
     instanceType: z.string(),
@@ -43,6 +44,7 @@ export class Instance {
         launchToken: string;
         name: string;
         description: string;
+        canHibernate: boolean;
         platform: InstancePlatform;
         distribution: string;
         instanceType: string;
@@ -59,6 +61,7 @@ export class Instance {
             name: props.name,
             description: props.description,
             connectionType: undefined,
+            canHibernate: props.canHibernate,
             platform: props.platform,
             distribution: props.description,
             instanceType: props.instanceType,
@@ -101,6 +104,7 @@ export class Instance {
         name?: string;
         description?: string;
         connectionType?: InstanceConnectionType;
+        canHibernate?: boolean;
         instanceType?: string;
         cpuCores?: string;
         memoryInGb?: string;
@@ -113,6 +117,7 @@ export class Instance {
             name: props.name ?? this.data.name,
             description: props.description ?? this.data.description,
             connectionType: props.connectionType ?? this.data.connectionType,
+            canHibernate: props.canHibernate ?? this.data.canHibernate,
             instanceType: props.instanceType ?? this.data.instanceType,
             cpuCores: props.cpuCores ?? this.data.cpuCores,
             memoryInGb: props.memoryInGb ?? this.data.memoryInGb,
@@ -144,4 +149,6 @@ export class Instance {
     isReadyToReboot = () => this.data.state === 'RUNNING';
 
     isOwnedBy = (userId: string) => this.data.ownerId === userId;
+
+    canHibernate = () => this.data.canHibernate;
 }

@@ -17,7 +17,7 @@ export const launchInstanceInputSchema = z
         name: z.string().min(1),
         description: z.string().min(1),
         instanceType: z.string().min(1),
-        enableHibernation: z.boolean(),
+        canHibernate: z.boolean(),
     })
     .strict();
 export type LaunchInstanceInput = z.infer<typeof launchInstanceInputSchema>;
@@ -93,7 +93,7 @@ export class LaunchInstance {
                 );
             }
 
-            if (!canLaunchInstanceWithHibernation && validInput.enableHibernation) {
+            if (!canLaunchInstanceWithHibernation && validInput.canHibernate) {
                 throw Errors.businessRuleViolation('Hibernation not allowed');
             }
         }
@@ -102,7 +102,7 @@ export class LaunchInstance {
             instanceTemplate.getData().productId,
             {
                 instanceType: validInput.instanceType,
-                enableHibernation: validInput.enableHibernation,
+                canHibernate: validInput.canHibernate,
                 machineImageId: instanceTemplate.getData().machineImageId,
                 storageInGb: instanceTemplate.getData().storageInGb,
             },
@@ -113,6 +113,7 @@ export class LaunchInstance {
             launchToken,
             name: validInput.name,
             description: validInput.description,
+            canHibernate: validInput.canHibernate,
             platform: instanceMachineImage.platform,
             distribution: instanceMachineImage.distribution,
             instanceType: instanceType.name,

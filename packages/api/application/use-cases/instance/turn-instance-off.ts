@@ -67,7 +67,7 @@ export class TurnInstanceOff {
 
         const state = await this.virtualizationGateway.stopInstance(
             virtualId,
-            false, // @todo try getting from instance data if the instance has support to it
+            instance.canHibernate(),
             false,
         );
 

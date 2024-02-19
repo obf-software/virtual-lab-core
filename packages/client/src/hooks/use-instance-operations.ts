@@ -92,7 +92,7 @@ export const useInstanceOperations = () => {
             templateId: string;
             instanceType: string;
             description: string;
-            enableHibernation: boolean;
+            canHibernate: boolean;
             name: string;
         }) => {
             const response = await api.launchInstance({
@@ -100,7 +100,7 @@ export const useInstanceOperations = () => {
                 templateId: mut.templateId,
                 instanceType: mut.instanceType,
                 description: mut.description,
-                enableHibernation: mut.enableHibernation,
+                canHibernate: mut.canHibernate,
                 name: mut.name,
             });
             if (!response.success) throw new Error(response.error);

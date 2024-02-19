@@ -56,7 +56,7 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                 description: z.string(),
                 templateId: z.string(),
                 instanceType: z.string(),
-                enableHibernation: z.boolean(),
+                canHibernate: z.boolean(),
             })
             .safeParse(JSON.parse(event.body ?? '{}'));
         if (!body.success) throw Errors.validationError(body.error);
@@ -68,7 +68,7 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
             name: body.data.name,
             description: body.data.description,
             instanceType: body.data.instanceType,
-            enableHibernation: body.data.enableHibernation,
+            canHibernate: body.data.canHibernate,
         });
 
         return {

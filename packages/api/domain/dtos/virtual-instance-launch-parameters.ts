@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const virtualInstanceLaunchParametersSchema = z.object({
     instanceType: z.string(),
-    enableHibernation: z.boolean(),
+    canHibernate: z.boolean(),
     machineImageId: z.string(),
     storageInGb: z.number(),
 });

@@ -62,6 +62,10 @@ export const InstanceDetailsModal: React.FC<InstanceDetailsModalProps> = ({
             value: instance.connectionType ?? '-',
         },
         {
+            label: 'Hibernação',
+            value: instance.canHibernate ? 'Habilitada' : 'Desabilitada',
+        },
+        {
             label: 'Plataforma',
             value: instance.platform,
         },

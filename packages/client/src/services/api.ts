@@ -147,7 +147,7 @@ export const launchInstance = async (props: {
     templateId: string;
     name: string;
     description: string;
-    enableHibernation: boolean;
+    canHibernate: boolean;
     instanceType: string;
     ownerId: string;
 }) =>

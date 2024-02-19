@@ -23,10 +23,10 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { InstanceTemplate } from '../../services/api-protocols';
+import { InstanceTemplate } from '../../../services/api-protocols';
 import { BiRocket } from 'react-icons/bi';
-import { useUser } from '../../hooks/use-user';
-import { useInstanceOperations } from '../../hooks/use-instance-operations';
+import { useUser } from '../../../hooks/use-user';
+import { useInstanceOperations } from '../../../hooks/use-instance-operations';
 
 export interface LaunchInstanceModalProps {
     instanceTemplate: InstanceTemplate;
@@ -37,7 +37,7 @@ export interface LaunchInstanceModalProps {
 interface LaunchInstanceForm {
     name: string;
     description: string;
-    enableHibernation: boolean;
+    canHibernate: boolean;
     instanceType: string;
 }
 
@@ -54,12 +54,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
         defaultValues: {
             name: instanceTemplate.name,
             description: instanceTemplate.description,
-            enableHibernation: false,
+            canHibernate: false,
         },
     });
 
     const submitHandler: SubmitHandler<LaunchInstanceForm> = ({
-        enableHibernation,
+        canHibernate,
         description,
         name,
         instanceType,
@@ -70,7 +70,7 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                 templateId: instanceTemplate.id,
                 name,
                 description,
-                enableHibernation,
+                canHibernate,
                 instanceType,
             },
             {
@@ -269,16 +269,14 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
 
                             <FormControl
                                 isRequired
-                                isInvalid={
-                                    formMethods.formState.errors.enableHibernation !== undefined
-                                }
+                                isInvalid={formMethods.formState.errors.canHibernate !== undefined}
                                 mt={'5%'}
                             >
-                                <FormLabel id='enableHibernation'>Hibernação</FormLabel>
+                                <FormLabel id='canHibernate'>Hibernação</FormLabel>
 
                                 <Switch
-                                    id='enableHibernation'
-                                    {...formMethods.register('enableHibernation', {
+                                    id='canHibernate'
+                                    {...formMethods.register('canHibernate', {
                                         validate: {
                                             invalidUser: () => {
                                                 if (!userQuery.data || userQuery.isError) {
@@ -299,9 +297,9 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                     colorScheme='blue'
                                 />
 
-                                {formMethods.formState.errors.enableHibernation !== undefined ? (
+                                {formMethods.formState.errors.canHibernate !== undefined ? (
                                     <FormErrorMessage>
-                                        {formMethods.formState.errors.enableHibernation.message}
+                                        {formMethods.formState.errors.canHibernate.message}
                                     </FormErrorMessage>
                                 ) : (
                                     <FormHelperText>

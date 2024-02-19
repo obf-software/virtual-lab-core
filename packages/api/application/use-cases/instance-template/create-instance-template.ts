@@ -61,10 +61,12 @@ export class CreateInstanceTemplate {
 
         const instanceTemplate = InstanceTemplate.create({
             createdBy: id,
-            productId: product.id,
-            machineImageId: machineImage.id,
             name: validInput.name,
             description: validInput.description,
+            productId: product.id,
+            machineImageId: machineImage.id,
+            platform: machineImage.platform,
+            distribution: machineImage.distribution,
             storageInGb,
         });
         instanceTemplate.id = await this.instanceTemplateRepository.save(instanceTemplate);

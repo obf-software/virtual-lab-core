@@ -10,7 +10,7 @@ import {
 import React from 'react';
 import { FiPlus } from 'react-icons/fi';
 import { InstanceTemplate } from '../../services/api-protocols';
-import { LaunchInstanceModal } from '../launch-instance-modal';
+import { LaunchInstanceModal } from './launch-instance-modal';
 
 interface InstanceTemplateCardProps {
     instanceTemplate: InstanceTemplate;

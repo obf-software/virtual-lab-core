@@ -64,6 +64,7 @@ export interface Instance {
     name: string;
     description: string;
     connectionType?: InstanceConnectionType;
+    canHibernate: boolean;
     platform: InstancePlatform;
     distribution: string;
     instanceType: string;
