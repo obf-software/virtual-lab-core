@@ -1,6 +1,7 @@
 import { FetchUserAttributesOutput, fetchAuthSession, fetchUserAttributes } from 'aws-amplify/auth';
 import { useEffect, useState } from 'react';
 import { roleToDisplayString } from '../services/helpers';
+import { Role } from '../services/api-protocols';
 
 type AuthSessionData = {
     username: string;
@@ -20,14 +21,14 @@ export const useAuthSessionData = () => {
 
         const username = payload?.['cognito:username']?.toString();
         const role = payload?.['custom:role']?.toString();
-        const userId = payload?.['custom:userId']?.toString();
+        const id = payload?.['custom:id']?.toString();
 
         return {
             username: username ?? '',
             role: role ?? '',
-            userId: userId ?? '',
+            userId: id ?? '',
             displayName: userAttributes.name ?? userAttributes.preferred_username ?? username ?? '',
-            displayRole: roleToDisplayString(role ?? ''),
+            displayRole: roleToDisplayString(role as Role | undefined),
             ...userAttributes,
         };
     };

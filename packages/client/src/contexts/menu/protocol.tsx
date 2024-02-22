@@ -7,7 +7,7 @@ export enum MenuItems {
     INSTANCES = 'INSTANCES',
 
     // MY_GROUPS = 'MY_GROUPS',
-    ADMIN_INSTANCE_TEMPLATES = 'ADMIN_INSTANCE_TEMPLATES',
+    ADMIN_TEMPLATES = 'ADMIN_TEMPLATES',
     // ADMIN_USERS = 'ADMIN_USERS',
     // ADMIN_GROUPS = 'ADMIN_GROUPS',
 }
@@ -41,10 +41,10 @@ export const menuItemsMap: {
     //     href: '/user-groups',
     //     adminOnly: false,
     // },
-    ADMIN_INSTANCE_TEMPLATES: {
+    ADMIN_TEMPLATES: {
         icon: BiBookBookmark,
         label: 'Templates',
-        href: '/admin/instance-templates',
+        href: '/admin/templates',
         adminOnly: true,
     },
 

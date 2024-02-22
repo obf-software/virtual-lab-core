@@ -20,12 +20,11 @@ import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { useInstanceTemplates } from '../../hooks/use-instance-templates';
-import { useInstanceTemplateOperations } from '../../hooks/use-instance-template-operations';
-import { InstanceTemplateCard } from '../../components/instance-template-card';
 import { SearchBar } from '../../components/search-bar';
 import { FilterButton } from '../../components/filter-button';
+import { TemplatesPageCard } from './card';
 
-export const InstanceTemplatesPage: React.FC = () => {
+export const TemplatesPage: React.FC = () => {
     const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
         allowedOrderByValues: ['creationDate', 'lastUpdateDate', 'alphabetical'],
         defaultOrderBy: 'creationDate',
@@ -35,16 +34,15 @@ export const InstanceTemplatesPage: React.FC = () => {
         defaultResultsPerPage: 10,
     });
     const [textSearch, setTextSearch] = React.useState<string>();
+    const [createdBy, setCreatedBy] = React.useState<string>();
     const { instanceTemplatesQuery } = useInstanceTemplates({
-        createdBy: undefined,
+        createdBy,
         textSearch,
         resultsPerPage,
         orderBy,
         order,
         page,
     });
-    const { createInstanceTemplate, deleteInstanceTemplate, updateInstanceTemplate } =
-        useInstanceTemplateOperations();
     const { setActiveMenuItem } = useMenuContext();
 
     const instanceTemplates = instanceTemplatesQuery.data?.data ?? [];
@@ -56,7 +54,7 @@ export const InstanceTemplatesPage: React.FC = () => {
             setParams({ page: 1 });
         }
 
-        setActiveMenuItem('ADMIN_INSTANCE_TEMPLATES');
+        setActiveMenuItem('ADMIN_TEMPLATES');
     }, [page, numberOfPages]);
 
     return (
@@ -136,6 +134,20 @@ export const InstanceTemplatesPage: React.FC = () => {
                                             },
                                         ],
                                     },
+                                    createdBy: {
+                                        label: 'Criado por',
+                                        selectedValue: createdBy ?? '',
+                                        values: [
+                                            {
+                                                label: 'Todos',
+                                                value: '',
+                                            },
+                                            {
+                                                label: 'Mim',
+                                                value: 'me',
+                                            },
+                                        ],
+                                    },
                                 }}
                                 onFiltersChange={(filters) => {
                                     setParams({
@@ -145,6 +157,10 @@ export const InstanceTemplatesPage: React.FC = () => {
                                             filters.resultsPerPage.selectedValue,
                                         ),
                                     });
+
+                                    setCreatedBy(
+                                        filters.createdBy.selectedValue === 'me' ? 'me' : undefined,
+                                    );
                                 }}
                             />
 
@@ -230,18 +246,13 @@ export const InstanceTemplatesPage: React.FC = () => {
                         <Fade in>
                             <SimpleGrid
                                 pb={10}
-                                columns={{ base: 1, md: 3 }}
+                                columns={{ base: 1, md: 1 }}
                                 spacing={6}
                             >
                                 {instanceTemplates.map((instanceTemplate) => (
-                                    <InstanceTemplateCard
-                                        key={`list-templates-instance-template-${instanceTemplate.id}-card`}
+                                    <TemplatesPageCard
+                                        key={`templates-page-instance-template-${instanceTemplate.id}-card`}
                                         instanceTemplate={instanceTemplate}
-                                        isLoading={
-                                            createInstanceTemplate.isPending ||
-                                            deleteInstanceTemplate.isPending ||
-                                            updateInstanceTemplate.isPending
-                                        }
                                         isDisabled={instanceTemplatesQuery.isFetching}
                                     />
                                 ))}
