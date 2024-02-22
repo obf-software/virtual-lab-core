@@ -34,7 +34,9 @@ export const MainLayout: React.FC = () => {
 
             <Box
                 ml={{ base: 0, md: 60 }}
-                p={4}
+                pt={10}
+                px={{ md: 8 }}
+                pb={16}
             >
                 <Outlet />
             </Box>

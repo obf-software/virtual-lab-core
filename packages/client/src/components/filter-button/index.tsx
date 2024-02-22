@@ -3,7 +3,9 @@ import {
     Heading,
     IconButton,
     Popover,
+    PopoverArrow,
     PopoverBody,
+    PopoverCloseButton,
     PopoverContent,
     PopoverFooter,
     PopoverHeader,
@@ -61,11 +63,15 @@ export const FilterButton: React.FC<FilterButtonProps> = ({ hidden, filters, onF
             </PopoverTrigger>
 
             <PopoverContent
-                p={4}
+                px={4}
+                py={2}
                 w={'auto'}
             >
+                <PopoverCloseButton size={'lg'} />
+                <PopoverArrow />
+
                 <PopoverHeader>
-                    <Heading>Filtros</Heading>
+                    <Heading size={'md'}>Filtros</Heading>
                 </PopoverHeader>
 
                 <PopoverBody>
