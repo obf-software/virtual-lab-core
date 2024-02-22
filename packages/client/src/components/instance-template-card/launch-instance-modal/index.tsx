@@ -102,7 +102,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
 
             <ModalContent py={4}>
                 <ModalHeader>
-                    <Heading size={'lg'}>{instanceTemplate.name}</Heading>
+                    <Heading
+                        size={'lg'}
+                        noOfLines={2}
+                    >
+                        {instanceTemplate.name}
+                    </Heading>
                 </ModalHeader>
 
                 <ModalCloseButton isDisabled={launchInstance.isPending} />
@@ -127,8 +132,9 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                 {!userQuery.isLoading && userQuery.isError && (
                     <ModalBody>
                         <Text
+                            size={'lg'}
                             color={'gray.600'}
-                            fontWeight={'bold'}
+                            noOfLines={3}
                             textAlign={'center'}
                         >
                             Não foi possível verificar as permissões do usuário
@@ -142,7 +148,6 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                             <Text
                                 mb={'5%'}
                                 color={'gray.600'}
-                                fontWeight={'bold'}
                             >
                                 {instanceTemplate.description}
                             </Text>
@@ -153,7 +158,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 isRequired
                                 isInvalid={formMethods.formState.errors.name !== undefined}
                             >
-                                <FormLabel id='name'>Nome</FormLabel>
+                                <FormLabel
+                                    id='name'
+                                    fontWeight={'semibold'}
+                                >
+                                    Nome da instância
+                                </FormLabel>
 
                                 <Input
                                     id='name'
@@ -169,13 +179,9 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                         },
                                     })}
                                 />
-                                {formMethods.formState.errors.name !== undefined ? (
-                                    <FormErrorMessage>
-                                        {formMethods.formState.errors.name?.message}
-                                    </FormErrorMessage>
-                                ) : (
-                                    <FormHelperText>Nome da instância</FormHelperText>
-                                )}
+                                <FormErrorMessage>
+                                    {formMethods.formState.errors.name?.message}
+                                </FormErrorMessage>
                             </FormControl>
 
                             <FormControl
@@ -183,7 +189,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 isInvalid={formMethods.formState.errors.description !== undefined}
                                 mt={'5%'}
                             >
-                                <FormLabel id='description'>Descrição</FormLabel>
+                                <FormLabel
+                                    id='description'
+                                    fontWeight={'semibold'}
+                                >
+                                    Descrição
+                                </FormLabel>
 
                                 <Textarea
                                     id='description'
@@ -201,13 +212,9 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                     })}
                                 />
 
-                                {formMethods.formState.errors.description !== undefined ? (
-                                    <FormErrorMessage>
-                                        {formMethods.formState.errors.description.message}
-                                    </FormErrorMessage>
-                                ) : (
-                                    <FormHelperText>Descrição da instância</FormHelperText>
-                                )}
+                                <FormErrorMessage>
+                                    {formMethods.formState.errors.description?.message}
+                                </FormErrorMessage>
                             </FormControl>
 
                             <FormControl
@@ -215,7 +222,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 isInvalid={formMethods.formState.errors.instanceType !== undefined}
                                 mt={'5%'}
                             >
-                                <FormLabel id='instanceType'>Tipo de instância</FormLabel>
+                                <FormLabel
+                                    id='instanceType'
+                                    fontWeight={'semibold'}
+                                >
+                                    Tipo de instância
+                                </FormLabel>
 
                                 <Select
                                     id='instanceType'
@@ -258,13 +270,9 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                     )}
                                 </Select>
 
-                                {formMethods.formState.errors.instanceType !== undefined ? (
-                                    <FormErrorMessage>
-                                        {formMethods.formState.errors.instanceType.message}
-                                    </FormErrorMessage>
-                                ) : (
-                                    <FormHelperText>Selecione o tipo de instância</FormHelperText>
-                                )}
+                                <FormErrorMessage>
+                                    {formMethods.formState.errors.instanceType?.message}
+                                </FormErrorMessage>
                             </FormControl>
 
                             <FormControl
@@ -272,7 +280,12 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
                                 isInvalid={formMethods.formState.errors.canHibernate !== undefined}
                                 mt={'5%'}
                             >
-                                <FormLabel id='canHibernate'>Hibernação</FormLabel>
+                                <FormLabel
+                                    id='canHibernate'
+                                    fontWeight={'semibold'}
+                                >
+                                    Hibernação
+                                </FormLabel>
 
                                 <Switch
                                     id='canHibernate'

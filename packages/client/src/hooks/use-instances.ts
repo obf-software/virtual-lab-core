@@ -13,6 +13,7 @@ export const useInstances = (props: {
         queryKey: [
             'instances',
             props.ownerId,
+            props.textSearch,
             props.orderBy,
             props.order,
             props.page,

@@ -33,14 +33,14 @@ import {
     FiRefreshCw,
     FiTrash,
 } from 'react-icons/fi';
-import { FaLinux, FaQuestion, FaWindows } from 'react-icons/fa';
 import { IconType } from 'react-icons';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
-import { Instance, InstancePlatform } from '../../services/api-protocols';
+import { Instance } from '../../services/api-protocols';
 import { InstanceCardStateTag } from './status-tag';
 import { BiHdd, BiMicrochip } from 'react-icons/bi';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { InstanceDetailsModal } from './details-modal';
+import { getInstancePlatformIcon } from '../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -69,19 +69,6 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
 }) => {
     const detailsModalDisclosure = useDisclosure();
 
-    const platformIconMap: Record<InstancePlatform, IconType> = {
-        LINUX: FaLinux,
-        WINDOWS: FaWindows,
-        UNKNOWN: FaQuestion,
-    };
-
-    let platformIcon = platformIconMap.UNKNOWN;
-    if (instance.platform?.toLocaleLowerCase().includes('linux')) {
-        platformIcon = platformIconMap.LINUX;
-    } else if (instance.platform?.toLocaleLowerCase().includes('windows')) {
-        platformIcon = platformIconMap.WINDOWS;
-    }
-
     const gridItems: { icon: IconType; label: string; value: string }[] = [
         {
             icon: FiCpu,
@@ -89,7 +76,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             value: instance.cpuCores,
         },
         {
-            icon: platformIcon,
+            icon: getInstancePlatformIcon(instance.platform),
             label: 'Sistema operacional',
             value: instance.distribution,
         },
@@ -138,7 +125,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 </Heading>
 
                 <Text
-                    size='md'
+                    size='lg'
                     color='gray.600'
                     mt={5}
                     noOfLines={3}
@@ -161,7 +148,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                 </Stack>
 
                 <SimpleGrid
-                    columns={2}
+                    columns={{ base: 1, md: 2 }}
                     mt={6}
                     spacing={4}
                 >

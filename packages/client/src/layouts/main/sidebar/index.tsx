@@ -5,6 +5,7 @@ import {
     CloseButton,
     Flex,
     Icon,
+    SlideFade,
     Text,
     useColorModeValue,
 } from '@chakra-ui/react';
@@ -60,55 +61,60 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
             {menuItems
                 .filter(([, item]) => (authSessionData?.role === 'ADMIN' ? true : !item.adminOnly))
                 .map(([id, item], index) => (
-                    <Link
+                    <SlideFade
+                        offsetX={'-20'}
+                        offsetY={'0'}
+                        in
                         key={`nav-item-${item.label}`}
-                        to={item.href}
-                        style={{ textDecoration: 'none' }}
-                        // _focus={{ boxShadow: 'none' }}
-                        onClick={() => {
-                            setActiveMenuItem(id as keyof typeof menuItemsMap);
-                        }}
                     >
-                        <Flex
-                            align='center'
-                            p='4'
-                            mx='4'
-                            borderRadius='lg'
-                            role='group'
-                            cursor='pointer'
-                            _hover={{
-                                bg: 'blue.400',
-                                color: 'white',
+                        <Link
+                            to={item.href}
+                            style={{ textDecoration: 'none' }}
+                            onClick={() => {
+                                setActiveMenuItem(id as keyof typeof menuItemsMap);
                             }}
-                            color={activeIndex === index ? 'blue.400' : undefined}
                         >
-                            <Icon
-                                mr='4'
-                                fontSize='16'
-                                _groupHover={{
+                            <Flex
+                                align='center'
+                                p='4'
+                                mx='4'
+                                borderRadius='lg'
+                                role='group'
+                                cursor='pointer'
+                                _hover={{
+                                    bg: 'blue.400',
                                     color: 'white',
                                 }}
-                                as={item.icon}
-                            />
-
-                            <Text>{item.label}</Text>
-
-                            {item.adminOnly && (
-                                <Badge
-                                    ml='4'
-                                    colorScheme='blue'
-                                    variant={'solid'}
+                                color={activeIndex === index ? 'blue.400' : undefined}
+                            >
+                                <Icon
+                                    mr='4'
+                                    fontSize='16'
                                     _groupHover={{
-                                        colorScheme: 'whiteAlpha',
-                                        color: 'blue.500',
-                                        bgColor: 'white',
+                                        color: 'white',
                                     }}
-                                >
-                                    ADM
-                                </Badge>
-                            )}
-                        </Flex>
-                    </Link>
+                                    as={item.icon}
+                                />
+
+                                <Text>{item.label}</Text>
+
+                                {item.adminOnly && (
+                                    <Badge
+                                        ml='4'
+                                        colorScheme='blue'
+                                        variant={'solid'}
+                                        _groupHover={{
+                                            colorScheme: 'whiteAlpha',
+                                            color: 'blue.500',
+                                            bgColor: 'white',
+                                        }}
+                                    >
+                                        ADM
+                                    </Badge>
+                                )}
+                            </Flex>
+                        </Link>
+                    </SlideFade>
                 ))}
         </Box>
     );

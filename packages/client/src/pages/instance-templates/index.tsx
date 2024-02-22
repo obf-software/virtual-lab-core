@@ -16,22 +16,18 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
-import { InstanceCard } from '../../components/instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
-import { useInstances } from '../../hooks/use-instances';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
-import { useNavigate } from 'react-router-dom';
-import { useInstanceOperations } from '../../hooks/use-instance-operations';
-import { useApplicationEventsContext } from '../../contexts/application-events/hook';
-import { queryClient } from '../../services/query-client';
-import { Instance, SeekPaginated } from '../../services/api-protocols';
-import { FilterButton } from '../../components/filter-button';
+import { useInstanceTemplates } from '../../hooks/use-instance-templates';
+import { useInstanceTemplateOperations } from '../../hooks/use-instance-template-operations';
+import { InstanceTemplateCard } from '../../components/instance-template-card';
 import { SearchBar } from '../../components/search-bar';
+import { FilterButton } from '../../components/filter-button';
 
-export const InstancesPage: React.FC = () => {
+export const InstanceTemplatesPage: React.FC = () => {
     const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
-        allowedOrderByValues: ['creationDate', 'lastConnectionDate', 'alphabetical'],
+        allowedOrderByValues: ['creationDate', 'lastUpdateDate', 'alphabetical'],
         defaultOrderBy: 'creationDate',
         allowedOrderValues: ['asc', 'desc'],
         defaultOrder: 'desc',
@@ -39,88 +35,29 @@ export const InstancesPage: React.FC = () => {
         defaultResultsPerPage: 10,
     });
     const [textSearch, setTextSearch] = React.useState<string>();
-    const { instancesQuery } = useInstances({
-        ownerId: 'me',
+    const { instanceTemplatesQuery } = useInstanceTemplates({
+        createdBy: undefined,
         textSearch,
         resultsPerPage,
         orderBy,
         order,
         page,
     });
-    const { turnInstanceOn, deleteInstance, rebootInstance, turnInstanceOff } =
-        useInstanceOperations();
-    const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
+    const { createInstanceTemplate, deleteInstanceTemplate, updateInstanceTemplate } =
+        useInstanceTemplateOperations();
     const { setActiveMenuItem } = useMenuContext();
-    const navigate = useNavigate();
 
-    const instances = instancesQuery.data?.data ?? [];
-    const numberOfInstances = instancesQuery.data?.numberOfResults ?? 0;
-    const numberOfPages = instancesQuery.data?.numberOfPages ?? 0;
+    const instanceTemplates = instanceTemplatesQuery.data?.data ?? [];
+    const numberOfInstanceTemplates = instanceTemplatesQuery.data?.numberOfResults ?? 0;
+    const numberOfPages = instanceTemplatesQuery.data?.numberOfPages ?? 0;
 
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
             setParams({ page: 1 });
         }
 
-        setActiveMenuItem('INSTANCES');
+        setActiveMenuItem('ADMIN_INSTANCE_TEMPLATES');
     }, [page, numberOfPages]);
-
-    React.useEffect(() => {
-        const instanceStateChangedHandlerId = registerHandler(
-            'INSTANCE_STATE_CHANGED',
-            (detail) => {
-                queryClient.setQueriesData<SeekPaginated<Instance>>(
-                    { queryKey: ['instances'] },
-                    (currentData) => {
-                        if (!currentData) return currentData;
-
-                        return {
-                            ...currentData,
-                            data: currentData.data.map((instance) => {
-                                if (instance.id === detail.instance.id) {
-                                    console.log('Updating instance state', detail.state);
-                                    return {
-                                        ...instance,
-                                        state: detail.state,
-                                    };
-                                }
-                                return instance;
-                            }),
-                        };
-                    },
-                );
-            },
-        );
-
-        const instanceLaunchedHandlerId = registerHandler('INSTANCE_LAUNCHED', (detail) => {
-            queryClient.setQueriesData<SeekPaginated<Instance>>(
-                { queryKey: ['instances'] },
-                (currentData) => {
-                    if (!currentData) return currentData;
-
-                    return {
-                        ...currentData,
-                        data: currentData.data.map((instance) => {
-                            if (instance.id === detail.instance.id) {
-                                console.log('Updating instance state', detail.state);
-                                return {
-                                    ...instance,
-                                    ...detail.instance,
-                                    state: detail.state,
-                                };
-                            }
-                            return instance;
-                        }),
-                    };
-                },
-            );
-        });
-
-        return () => {
-            unregisterHandlerById(instanceStateChangedHandlerId);
-            unregisterHandlerById(instanceLaunchedHandlerId);
-        };
-    }, []);
 
     return (
         <Box>
@@ -142,14 +79,16 @@ export const InstancesPage: React.FC = () => {
                             spacing={0}
                             align={{ base: 'center', md: 'initial' }}
                         >
-                            <Heading color='gray.800'>Instâncias</Heading>
+                            <Heading color='gray.800'>Templates</Heading>
                             <Text
                                 fontSize='md'
                                 color='gray.600'
                             >
-                                {numberOfInstances === 0 ? 'Nenhum resultado' : null}
-                                {numberOfInstances === 1 ? `${numberOfInstances} resultado` : null}
-                                {numberOfInstances > 1 ? `${numberOfInstances} resultados` : null}
+                                {numberOfInstanceTemplates === 0 && 'Nenhum resultado'}
+                                {numberOfInstanceTemplates === 1 &&
+                                    `${numberOfInstanceTemplates} resultado`}
+                                {numberOfInstanceTemplates > 1 &&
+                                    `${numberOfInstanceTemplates} resultados`}
                             </Text>
                         </VStack>
                     </SlideFade>
@@ -161,7 +100,7 @@ export const InstancesPage: React.FC = () => {
                     >
                         <ButtonGroup>
                             <FilterButton
-                                hidden={instancesQuery.isLoading}
+                                hidden={instanceTemplatesQuery.isLoading}
                                 filters={{
                                     orderBy: {
                                         label: 'Ordenar por',
@@ -169,8 +108,8 @@ export const InstancesPage: React.FC = () => {
                                         values: [
                                             { label: 'Data de criação', value: 'creationDate' },
                                             {
-                                                label: 'Última conexão',
-                                                value: 'lastConnectionDate',
+                                                label: 'Data de atualização',
+                                                value: 'lastUpdateDate',
                                             },
                                             { label: 'Alfabético', value: 'alphabetical' },
                                         ],
@@ -187,9 +126,14 @@ export const InstancesPage: React.FC = () => {
                                         label: 'Resultados por página',
                                         selectedValue: resultsPerPage.toString(),
                                         values: [
-                                            { label: '10', value: '10' },
-                                            { label: '20', value: '20' },
-                                            { label: '30', value: '30' },
+                                            {
+                                                label: '10',
+                                                value: '10',
+                                            },
+                                            {
+                                                label: '20',
+                                                value: '20',
+                                            },
                                         ],
                                     },
                                 }}
@@ -206,9 +150,12 @@ export const InstancesPage: React.FC = () => {
 
                             <SearchBar
                                 debounceMilliseconds={500}
-                                isHidden={instancesQuery.isLoading}
-                                isLoading={instancesQuery.isFetching}
+                                isHidden={instanceTemplatesQuery.isLoading}
+                                isLoading={instanceTemplatesQuery.isFetching}
                                 onTextChange={(text) => {
+                                    /**
+                                     * Avoid setting the textSearch to an empty string
+                                     */
                                     setTextSearch(text || undefined);
                                 }}
                             />
@@ -218,10 +165,10 @@ export const InstancesPage: React.FC = () => {
                                     aria-label='Recarregar'
                                     variant={'outline'}
                                     colorScheme='blue'
-                                    hidden={instancesQuery.isLoading}
-                                    isLoading={instancesQuery.isFetching}
+                                    hidden={instanceTemplatesQuery.isLoading}
+                                    isLoading={instanceTemplatesQuery.isFetching}
                                     onClick={() => {
-                                        instancesQuery.refetch().catch(console.error);
+                                        instanceTemplatesQuery.refetch().catch(console.error);
                                     }}
                                 >
                                     <FiRefreshCw />
@@ -235,16 +182,16 @@ export const InstancesPage: React.FC = () => {
                                 colorScheme='blue'
                                 leftIcon={<FiPlus />}
                                 onClick={() => {
-                                    navigate('/instances/new');
+                                    console.log('Novo template');
                                 }}
                             >
-                                Nova instância
+                                Novo template
                             </Button>
                         </ButtonGroup>
                     </SlideFade>
                 </Stack>
 
-                {instances.length === 0 && !instancesQuery.isLoading ? (
+                {instanceTemplates.length === 0 && !instanceTemplatesQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -256,12 +203,12 @@ export const InstancesPage: React.FC = () => {
                             fontSize='xl'
                             color='gray.600'
                         >
-                            Nenhuma instância encontrada
+                            Nenhum template encontrado
                         </Text>
                     </Box>
                 ) : null}
 
-                {instancesQuery.isLoading ? (
+                {instanceTemplatesQuery.isLoading ? (
                     <Box
                         height={'50vh'}
                         display={'flex'}
@@ -278,40 +225,24 @@ export const InstancesPage: React.FC = () => {
                     </Box>
                 ) : null}
 
-                {instances.length > 0 && !instancesQuery.isLoading && (
+                {instanceTemplates.length > 0 && !instanceTemplatesQuery.isLoading && (
                     <Box>
                         <Fade in>
                             <SimpleGrid
                                 pb={10}
-                                columns={{ base: 1, md: 2 }}
-                                spacing={10}
+                                columns={{ base: 1, md: 3 }}
+                                spacing={6}
                             >
-                                {instances.map((instance) => (
-                                    <InstanceCard
-                                        key={`instance-${instance.id}-card`}
-                                        instance={instance}
+                                {instanceTemplates.map((instanceTemplate) => (
+                                    <InstanceTemplateCard
+                                        key={`list-templates-instance-template-${instanceTemplate.id}-card`}
+                                        instanceTemplate={instanceTemplate}
                                         isLoading={
-                                            turnInstanceOff.isPending ||
-                                            turnInstanceOn.isPending ||
-                                            deleteInstance.isPending ||
-                                            rebootInstance.isPending
+                                            createInstanceTemplate.isPending ||
+                                            deleteInstanceTemplate.isPending ||
+                                            updateInstanceTemplate.isPending
                                         }
-                                        isDisabled={instancesQuery.isFetching}
-                                        onConnect={() => {
-                                            console.log('Connect');
-                                        }}
-                                        onPowerOff={() => {
-                                            turnInstanceOff.mutate({ instanceId: instance.id });
-                                        }}
-                                        onDelete={() => {
-                                            deleteInstance.mutate({ instanceId: instance.id });
-                                        }}
-                                        onPowerOn={() => {
-                                            turnInstanceOn.mutate({ instanceId: instance.id });
-                                        }}
-                                        onReboot={() => {
-                                            rebootInstance.mutate({ instanceId: instance.id });
-                                        }}
+                                        isDisabled={instanceTemplatesQuery.isFetching}
                                     />
                                 ))}
                             </SimpleGrid>

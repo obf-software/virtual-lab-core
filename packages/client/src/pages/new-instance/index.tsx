@@ -12,6 +12,9 @@ import {
     Fade,
     SimpleGrid,
     SlideFade,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -20,6 +23,8 @@ import { useInstanceTemplates } from '../../hooks/use-instance-templates';
 import { InstanceTemplateCard } from '../../components/instance-template-card';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { Paginator } from '../../components/paginator';
+import { SearchBar } from '../../components/search-bar';
+import { FilterButton } from '../../components/filter-button';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -31,11 +36,13 @@ export const NewInstancePage: React.FC = () => {
         defaultPage: 1,
         defaultResultsPerPage: 10,
     });
+    const [textSearch, setTextSearch] = React.useState<string>();
     const { instanceTemplatesQuery } = useInstanceTemplates({
         page,
         resultsPerPage,
         order,
         orderBy,
+        textSearch,
     });
 
     const instanceTemplates = instanceTemplatesQuery.data?.data ?? [];
@@ -70,14 +77,27 @@ export const NewInstancePage: React.FC = () => {
                             spacing={0}
                             align={{ base: 'center', md: 'initial' }}
                         >
-                            <Heading color='gray.800'>Nova Instância</Heading>
+                            <Breadcrumb separator={<Heading>/</Heading>}>
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink href='/instances'>
+                                        <Heading color='gray.800'>Instâncias</Heading>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+
+                                <BreadcrumbItem>
+                                    <BreadcrumbLink isCurrentPage>
+                                        <Heading color='gray.800'>Nova</Heading>
+                                    </BreadcrumbLink>
+                                </BreadcrumbItem>
+                            </Breadcrumb>
+
                             <Text
                                 fontSize='md'
                                 color='gray.600'
                             >
-                                {numberOfResults === 0 && 'Nenhum template encontrado'}
-                                {numberOfResults === 1 && '1 template encontrado'}
-                                {numberOfResults > 1 && `${numberOfResults} templates encontrados`}
+                                {numberOfResults === 0 && 'Nenhum resultado'}
+                                {numberOfResults === 1 && '1 resultado'}
+                                {numberOfResults > 1 && `${numberOfResults} resultados`}
                             </Text>
                         </VStack>
                     </SlideFade>
@@ -88,6 +108,64 @@ export const NewInstancePage: React.FC = () => {
                         offsetY={0}
                     >
                         <ButtonGroup>
+                            <FilterButton
+                                hidden={instanceTemplatesQuery.isLoading}
+                                filters={{
+                                    orderBy: {
+                                        label: 'Ordenar por',
+                                        selectedValue: orderBy ?? 'creationDate',
+                                        values: [
+                                            { label: 'Data de criação', value: 'creationDate' },
+                                            {
+                                                label: 'Data de atualização',
+                                                value: 'lastUpdateDate',
+                                            },
+                                            { label: 'Alfabético', value: 'alphabetical' },
+                                        ],
+                                    },
+                                    order: {
+                                        label: 'Ordem',
+                                        selectedValue: order ?? 'desc',
+                                        values: [
+                                            { label: 'Crescente', value: 'asc' },
+                                            { label: 'Decrescente', value: 'desc' },
+                                        ],
+                                    },
+                                    resultsPerPage: {
+                                        label: 'Resultados por página',
+                                        selectedValue: resultsPerPage.toString(),
+                                        values: [
+                                            {
+                                                label: '10',
+                                                value: '10',
+                                            },
+                                            {
+                                                label: '20',
+                                                value: '20',
+                                            },
+                                        ],
+                                    },
+                                }}
+                                onFiltersChange={(filters) => {
+                                    setParams({
+                                        orderBy: filters.orderBy.selectedValue as 'creationDate',
+                                        order: filters.order.selectedValue as 'asc',
+                                        resultsPerPage: parseInt(
+                                            filters.resultsPerPage.selectedValue,
+                                        ),
+                                    });
+                                }}
+                            />
+
+                            <SearchBar
+                                debounceMilliseconds={500}
+                                isHidden={instanceTemplatesQuery.isLoading}
+                                isLoading={instanceTemplatesQuery.isFetching}
+                                onTextChange={(text) => {
+                                    setTextSearch(text || undefined);
+                                }}
+                            />
+
                             <Tooltip label='Recarregar'>
                                 <IconButton
                                     aria-label='Recarregar'
@@ -145,8 +223,8 @@ export const NewInstancePage: React.FC = () => {
                         <Fade in>
                             <SimpleGrid
                                 pb={10}
-                                columns={{ base: 1, md: 2 }}
-                                spacing={10}
+                                columns={{ base: 1, md: 3 }}
+                                spacing={6}
                             >
                                 {instanceTemplates.map((template) => (
                                     <InstanceTemplateCard
