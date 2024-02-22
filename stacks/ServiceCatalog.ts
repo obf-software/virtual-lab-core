@@ -71,6 +71,16 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
 
     const productInstanceRole = new iam.Role(stack, 'ServiceCatalogProductInstanceRole', {
         assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+        inlinePolicies: {
+            accessToScriptsBucket: new iam.PolicyDocument({
+                statements: [
+                    new iam.PolicyStatement({
+                        actions: ['s3:GetObject', 's3:HeadObject'],
+                        resources: [scriptsBucket.bucketArn + '/*'],
+                    }),
+                ],
+            }),
+        },
     });
 
     const productInstanceRoleInstanceProfile = new iam.InstanceProfile(

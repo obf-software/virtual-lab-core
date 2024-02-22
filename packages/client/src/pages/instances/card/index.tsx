@@ -20,6 +20,7 @@ import {
     Tooltip,
     useBreakpointValue,
     useDisclosure,
+    useToast,
 } from '@chakra-ui/react';
 import dayjs from 'dayjs';
 import React from 'react';
@@ -44,8 +45,9 @@ import { getInstancePlatformIcon } from '../../../services/helpers';
 import { InstanceStateTag } from '../../../components/instance-state-tag';
 import { useInstanceOperations } from '../../../hooks/use-instance-operations';
 import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
-import { useUser } from '../../../hooks/use-user';
 import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
+import { useInstanceConnectionData } from '../../../hooks/use-instance-connection-data';
+import { useNavigate } from 'react-router-dom';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -62,12 +64,16 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
     const confirmDeletionDisclosure = useDisclosure();
     const { deleteInstance, rebootInstance, turnInstanceOn, turnInstanceOff } =
         useInstanceOperations();
+    const { getInstanceConnection } = useInstanceConnectionData({ instanceId: instance.id });
+    const navigate = useNavigate();
+    const toast = useToast();
 
     const isPending =
         deleteInstance.isPending ||
         rebootInstance.isPending ||
         turnInstanceOn.isPending ||
-        turnInstanceOff.isPending;
+        turnInstanceOff.isPending ||
+        getInstanceConnection.isLoading;
 
     const gridItems: { icon: IconType; label: string; value: string }[] = [
         {
@@ -203,7 +209,36 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                         colorScheme='green'
                         hidden={instance.state !== 'RUNNING'}
                         isDisabled={isDisabled || isPending}
-                        // onClick={onConnect}
+                        isLoading={
+                            getInstanceConnection.isLoading || getInstanceConnection.isFetching
+                        }
+                        onClick={() => {
+                            getInstanceConnection
+                                .refetch()
+                                .then((data) => {
+                                    const connectionString = data.data?.connectionString;
+                                    if (!connectionString) {
+                                        throw new Error('Connection string not found');
+                                    }
+
+                                    const encodedConnectionString =
+                                        encodeURIComponent(connectionString);
+
+                                    navigate(
+                                        `/connection?connectionString=${encodedConnectionString}`,
+                                    );
+                                })
+                                .catch(() => {
+                                    toast({
+                                        title: 'Erro ao obter dados de conexão',
+                                        description:
+                                            'Ocorreu um erro ao obter os dados de conexão da instância. Tente novamente mais tarde.',
+                                        status: 'error',
+                                        duration: 5000,
+                                        isClosable: true,
+                                    });
+                                });
+                        }}
                     >
                         Conectar
                     </Button>
