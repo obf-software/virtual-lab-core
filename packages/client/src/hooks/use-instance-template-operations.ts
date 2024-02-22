@@ -22,6 +22,13 @@ export const useInstanceTemplateOperations = () => {
             if (!response.success) throw new Error(response.error);
             return response.data;
         },
+        onSuccess: () => {
+            queryClient
+                .invalidateQueries({
+                    queryKey: ['instance-templates'],
+                })
+                .catch(console.error);
+        },
     });
 
     const deleteInstanceTemplate = useMutation({

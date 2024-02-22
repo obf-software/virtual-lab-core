@@ -22,6 +22,7 @@ import React from 'react';
 import {
     FiCalendar,
     FiClock,
+    FiCopy,
     FiEdit,
     FiFilm,
     FiSave,
@@ -53,11 +54,13 @@ interface EditFormProps {
 interface TemplatesPageCardProps {
     instanceTemplate: InstanceTemplate;
     isDisabled: boolean;
+    onCopy: () => void;
 }
 
 export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
     instanceTemplate,
     isDisabled,
+    onCopy,
 }) => {
     const [editableName, setEditableName] = React.useState(instanceTemplate.name);
     const [editableDescription, setEditableDescription] = React.useState(
@@ -301,6 +304,16 @@ export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
                                     onClick={editDisclosure.onOpen}
                                 >
                                     Editar
+                                </Button>
+
+                                <Button
+                                    leftIcon={<FiCopy />}
+                                    colorScheme='blue'
+                                    variant={'outline'}
+                                    isDisabled={isDisabled}
+                                    onClick={onCopy}
+                                >
+                                    Copiar
                                 </Button>
 
                                 <Button

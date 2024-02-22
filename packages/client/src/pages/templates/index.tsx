@@ -13,6 +13,7 @@ import {
     SimpleGrid,
     Fade,
     SlideFade,
+    useDisclosure,
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -23,6 +24,8 @@ import { useInstanceTemplates } from '../../hooks/use-instance-templates';
 import { SearchBar } from '../../components/search-bar';
 import { FilterButton } from '../../components/filter-button';
 import { TemplatesPageCard } from './card';
+import { TemplatesPageCreateModal } from './create-modal';
+import { InstanceTemplate } from '../../services/api-protocols';
 
 export const TemplatesPage: React.FC = () => {
     const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
@@ -49,6 +52,9 @@ export const TemplatesPage: React.FC = () => {
     const numberOfInstanceTemplates = instanceTemplatesQuery.data?.numberOfResults ?? 0;
     const numberOfPages = instanceTemplatesQuery.data?.numberOfPages ?? 0;
 
+    const createTemplateDisclosure = useDisclosure();
+    const [copyFrom, setCopyFrom] = React.useState<InstanceTemplate>();
+
     React.useEffect(() => {
         if (numberOfPages > 0 && page > numberOfPages) {
             setParams({ page: 1 });
@@ -59,6 +65,12 @@ export const TemplatesPage: React.FC = () => {
 
     return (
         <Box>
+            <TemplatesPageCreateModal
+                copyFrom={copyFrom}
+                isOpen={createTemplateDisclosure.isOpen}
+                onClose={createTemplateDisclosure.onClose}
+            />
+
             <Container maxW={'6xl'}>
                 <Stack
                     pb={10}
@@ -198,7 +210,8 @@ export const TemplatesPage: React.FC = () => {
                                 colorScheme='blue'
                                 leftIcon={<FiPlus />}
                                 onClick={() => {
-                                    console.log('Novo template');
+                                    setCopyFrom(undefined);
+                                    createTemplateDisclosure.onOpen();
                                 }}
                             >
                                 Novo template
@@ -254,6 +267,10 @@ export const TemplatesPage: React.FC = () => {
                                         key={`templates-page-instance-template-${instanceTemplate.id}-card`}
                                         instanceTemplate={instanceTemplate}
                                         isDisabled={instanceTemplatesQuery.isFetching}
+                                        onCopy={() => {
+                                            setCopyFrom(instanceTemplate);
+                                            createTemplateDisclosure.onOpen();
+                                        }}
                                     />
                                 ))}
                             </SimpleGrid>
