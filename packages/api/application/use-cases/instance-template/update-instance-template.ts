@@ -46,7 +46,7 @@ export class UpdateInstanceTemplate {
             throw Errors.resourceNotFound('InstanceTemplate', validInput.instanceTemplateId);
         }
 
-        if (instanceTemplate.wasCreatedBy(id)) {
+        if (!instanceTemplate.wasCreatedBy(id)) {
             throw Errors.resourceAccessDenied('InstanceTemplate', validInput.instanceTemplateId);
         }
 

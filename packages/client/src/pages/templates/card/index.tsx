@@ -17,6 +17,7 @@ import {
     Textarea,
     Tooltip,
     useDisclosure,
+    useToast,
 } from '@chakra-ui/react';
 import React from 'react';
 import {
@@ -75,6 +76,7 @@ export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
             description: editableDescription,
         },
     });
+    const toast = useToast();
 
     const submitEditForm: SubmitHandler<EditFormProps> = (data) => {
         updateInstanceTemplate.mutate(
@@ -92,6 +94,14 @@ export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
                         description: data.description,
                     });
                     editDisclosure.onClose();
+                },
+                onError: (error) => {
+                    toast({
+                        title: 'Erro ao atualizar template',
+                        description: error.message,
+                        status: 'error',
+                        isClosable: true,
+                    });
                 },
             },
         );
