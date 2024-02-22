@@ -1,5 +1,4 @@
 import React from 'react';
-import { Instance } from '../../../services/api-protocols';
 import {
     Button,
     List,
@@ -16,18 +15,19 @@ import {
 import { IconType } from 'react-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import { instanceStateToDisplayString } from '../../../services/helpers';
+import { Instance } from '../../../../services/api-protocols';
+import { instanceStateToDisplayString } from '../../../../services/helpers';
 
 dayjs.locale('pt-br');
 dayjs.extend(relativeTime);
 
-interface InstanceDetailsModalProps {
+interface InstancesPageCardDetailsModalProps {
     instance: Instance;
     isOpen: boolean;
     onClose: () => void;
 }
 
-export const InstanceDetailsModal: React.FC<InstanceDetailsModalProps> = ({
+export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsModalProps> = ({
     instance,
     isOpen,
     onClose,

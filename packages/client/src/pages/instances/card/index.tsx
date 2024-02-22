@@ -14,6 +14,7 @@ import {
     MenuItem,
     MenuList,
     SimpleGrid,
+    Spinner,
     Stack,
     Text,
     Tooltip,
@@ -35,39 +36,38 @@ import {
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
-import { Instance } from '../../services/api-protocols';
-import { InstanceCardStateTag } from './status-tag';
-import { BiHdd, BiMicrochip } from 'react-icons/bi';
+import { BiBookBookmark, BiHdd, BiMicrochip } from 'react-icons/bi';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import { InstanceDetailsModal } from './details-modal';
-import { getInstancePlatformIcon } from '../../services/helpers';
+import { InstancesPageCardDetailsModal } from './details-modal';
+import { Instance } from '../../../services/api-protocols';
+import { getInstancePlatformIcon } from '../../../services/helpers';
+import { InstanceStateTag } from '../../../components/instance-state-tag';
+import { useInstanceOperations } from '../../../hooks/use-instance-operations';
+import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
+import { useUser } from '../../../hooks/use-user';
+import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.locale('pt-br');
 
-interface InstanceCardProps {
+interface InstancesPageCardProps {
     instance: Instance;
-    isLoading: boolean;
     isDisabled: boolean;
-    onConnect?: () => void;
-    onPowerOff?: () => void;
-    onPowerOn?: () => void;
-    onReboot?: () => void;
-    onDelete?: () => void;
 }
 
-export const InstanceCard: React.FC<InstanceCardProps> = ({
-    instance,
-    isLoading,
-    isDisabled,
-    onConnect,
-    onPowerOff,
-    onPowerOn,
-    onReboot,
-    onDelete,
-}) => {
+export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, isDisabled }) => {
+    const authSessionData = useAuthSessionData();
     const detailsModalDisclosure = useDisclosure();
+    const confirmDeletionDisclosure = useDisclosure();
+    const { deleteInstance, rebootInstance, turnInstanceOn, turnInstanceOff } =
+        useInstanceOperations();
+
+    const isPending =
+        deleteInstance.isPending ||
+        rebootInstance.isPending ||
+        turnInstanceOn.isPending ||
+        turnInstanceOff.isPending;
 
     const gridItems: { icon: IconType; label: string; value: string }[] = [
         {
@@ -116,6 +116,21 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
             p={4}
             margin='auto'
         >
+            <ConfirmDeletionAlertDialog
+                title={`Excluir instância "${instance.name}"`}
+                text={`Você tem certeza que deseja excluir a instância? Esta ação não poderá ser desfeita.`}
+                isLoading={deleteInstance.isPending}
+                isOpen={confirmDeletionDisclosure.isOpen}
+                onClose={confirmDeletionDisclosure.onClose}
+                onConfirm={() => deleteInstance.mutate({ instanceId: instance.id })}
+            />
+
+            <InstancesPageCardDetailsModal
+                instance={instance}
+                isOpen={detailsModalDisclosure.isOpen}
+                onClose={detailsModalDisclosure.onClose}
+            />
+
             <CardHeader textAlign='center'>
                 <Heading
                     size='lg'
@@ -141,7 +156,7 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                     spacing={4}
                 >
                     <Divider orientation='horizontal' />
-                    <InstanceCardStateTag
+                    <InstanceStateTag
                         state={!instance.virtualId ? 'PROVISIONING' : instance.state}
                     />
                     <Divider orientation='horizontal' />
@@ -187,9 +202,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                         size={'lg'}
                         colorScheme='green'
                         hidden={instance.state !== 'RUNNING'}
-                        isLoading={isLoading}
-                        isDisabled={isDisabled}
-                        onClick={onConnect}
+                        isDisabled={isDisabled || isPending}
+                        // onClick={onConnect}
                     >
                         Conectar
                     </Button>
@@ -200,9 +214,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             size={'lg'}
                             colorScheme='red'
                             hidden={instance.state !== 'RUNNING'}
-                            isLoading={isLoading}
-                            isDisabled={isDisabled}
-                            onClick={onPowerOff}
+                            isLoading={turnInstanceOff.isPending}
+                            isDisabled={isDisabled || isPending}
+                            onClick={() => turnInstanceOff.mutate({ instanceId: instance.id })}
                         />
                     ) : (
                         <Button
@@ -210,9 +224,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             size={'lg'}
                             colorScheme='red'
                             hidden={instance.state !== 'RUNNING'}
-                            isLoading={isLoading}
-                            isDisabled={isDisabled}
-                            onClick={onPowerOff}
+                            isLoading={turnInstanceOff.isPending}
+                            isDisabled={isDisabled || isPending}
+                            onClick={() => turnInstanceOff.mutate({ instanceId: instance.id })}
                         >
                             Desligar
                         </Button>
@@ -223,9 +237,9 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                         size={'lg'}
                         colorScheme='green'
                         hidden={instance.state !== 'STOPPED'}
-                        isLoading={isLoading}
-                        isDisabled={isDisabled}
-                        onClick={onPowerOn}
+                        isLoading={turnInstanceOn.isPending}
+                        isDisabled={isDisabled || isPending}
+                        onClick={() => turnInstanceOn.mutate({ instanceId: instance.id })}
                     >
                         Ligar
                     </Button>
@@ -243,20 +257,43 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             <MenuItem
                                 icon={<FiInfo />}
                                 onClick={detailsModalDisclosure.onOpen}
-                                isDisabled={isLoading || isDisabled}
+                                isDisabled={isDisabled}
                             >
                                 Detalhes
-                                <InstanceDetailsModal
-                                    instance={instance}
-                                    isOpen={detailsModalDisclosure.isOpen}
-                                    onClose={detailsModalDisclosure.onClose}
-                                />
                             </MenuItem>
 
+                            {authSessionData?.role === 'ADMIN' && (
+                                <Tooltip
+                                    label={
+                                        (instance.state !== 'STOPPED' || isDisabled || isPending) &&
+                                        'A instância precisa estar desligada para criar um template'
+                                    }
+                                >
+                                    <MenuItem
+                                        icon={<BiBookBookmark />}
+                                        isDisabled={
+                                            instance.state !== 'STOPPED' || isDisabled || isPending
+                                        }
+                                        // onClick={confirmDeletionDisclosure.onOpen}
+                                    >
+                                        Criar template
+                                    </MenuItem>
+                                </Tooltip>
+                            )}
+
                             <MenuItem
-                                isDisabled={instance.state !== 'RUNNING' || isLoading || isDisabled}
-                                icon={<FiRefreshCw />}
-                                onClick={onReboot}
+                                icon={
+                                    rebootInstance.isPending ? (
+                                        <Spinner
+                                            size={'sm'}
+                                            color={'gray'}
+                                        />
+                                    ) : (
+                                        <FiRefreshCw />
+                                    )
+                                }
+                                isDisabled={instance.state !== 'RUNNING' || isDisabled || isPending}
+                                onClick={() => rebootInstance.mutate({ instanceId: instance.id })}
                             >
                                 Reiniciar
                             </MenuItem>
@@ -264,8 +301,8 @@ export const InstanceCard: React.FC<InstanceCardProps> = ({
                             <MenuItem
                                 icon={<FiTrash />}
                                 textColor={'red.400'}
-                                isDisabled={isLoading || isDisabled}
-                                onClick={onDelete}
+                                isDisabled={isDisabled || isPending}
+                                onClick={confirmDeletionDisclosure.onOpen}
                             >
                                 Excluir
                             </MenuItem>

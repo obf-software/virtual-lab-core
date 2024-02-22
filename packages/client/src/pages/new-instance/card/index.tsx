@@ -14,44 +14,31 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { FiCalendar, FiClock, FiPlus } from 'react-icons/fi';
-import { InstanceTemplate } from '../../services/api-protocols';
-import { LaunchInstanceModal } from './launch-instance-modal';
-import { getInstancePlatformIcon } from '../../services/helpers';
+import { NewInstancePageCardLaunchModal } from './launch-modal';
 import { BiHdd } from 'react-icons/bi';
 import dayjs from 'dayjs';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { IconType } from 'react-icons';
+import { InstanceTemplate } from '../../../services/api-protocols';
+import { getInstancePlatformIcon } from '../../../services/helpers';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
 dayjs.locale('pt-br');
 
-interface InstanceTemplateCardProps {
+interface NewInstancePageCardProps {
     instanceTemplate: InstanceTemplate;
     isLoading: boolean;
     isDisabled: boolean;
 }
 
-export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({
+export const NewInstancePageCard: React.FC<NewInstancePageCardProps> = ({
     instanceTemplate,
     isLoading,
     isDisabled,
 }) => {
     const launchInstanceModalDisclosure = useDisclosure();
-
-    // id: string;
-    // createdBy: string;
-    // name: string;
-    // description: string;
-    // productId: string;
-    // machineImageId: string;
-    // platform: InstancePlatform;
-    // distribution: string;
-    // storageInGb: number;
-    // createdAt: string;
-    // updatedAt: string;
-
     const gridItems: { icon: IconType; label: string; value: string }[] = [
         {
             icon: getInstancePlatformIcon(instanceTemplate.platform),
@@ -85,6 +72,12 @@ export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({
             p={4}
             margin='auto'
         >
+            <NewInstancePageCardLaunchModal
+                instanceTemplate={instanceTemplate}
+                isOpen={launchInstanceModalDisclosure.isOpen}
+                onClose={launchInstanceModalDisclosure.onClose}
+            />
+
             <CardHeader textAlign='center'>
                 <Heading
                     size='lg'
@@ -146,11 +139,6 @@ export const InstanceTemplateCard: React.FC<InstanceTemplateCardProps> = ({
                     onClick={launchInstanceModalDisclosure.onOpen}
                 >
                     Criar a partir deste template
-                    <LaunchInstanceModal
-                        instanceTemplate={instanceTemplate}
-                        isOpen={launchInstanceModalDisclosure.isOpen}
-                        onClose={launchInstanceModalDisclosure.onClose}
-                    />
                 </Button>
             </CardFooter>
         </Card>

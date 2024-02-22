@@ -16,18 +16,17 @@ import {
 } from '@chakra-ui/react';
 import { FiPlus, FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
-import { InstanceCard } from '../../components/instance-card';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
 import { useInstances } from '../../hooks/use-instances';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { useNavigate } from 'react-router-dom';
-import { useInstanceOperations } from '../../hooks/use-instance-operations';
 import { useApplicationEventsContext } from '../../contexts/application-events/hook';
 import { queryClient } from '../../services/query-client';
 import { Instance, SeekPaginated } from '../../services/api-protocols';
 import { FilterButton } from '../../components/filter-button';
 import { SearchBar } from '../../components/search-bar';
+import { InstancesPageCard } from './card';
 
 export const InstancesPage: React.FC = () => {
     const { page, resultsPerPage, order, orderBy, setParams } = usePaginationSearchParam({
@@ -47,8 +46,6 @@ export const InstancesPage: React.FC = () => {
         order,
         page,
     });
-    const { turnInstanceOn, deleteInstance, rebootInstance, turnInstanceOff } =
-        useInstanceOperations();
     const { registerHandler, unregisterHandlerById } = useApplicationEventsContext();
     const { setActiveMenuItem } = useMenuContext();
     const navigate = useNavigate();
@@ -287,31 +284,10 @@ export const InstancesPage: React.FC = () => {
                                 spacing={10}
                             >
                                 {instances.map((instance) => (
-                                    <InstanceCard
-                                        key={`instance-${instance.id}-card`}
+                                    <InstancesPageCard
+                                        key={`instances-page-instance-${instance.id}-card`}
                                         instance={instance}
-                                        isLoading={
-                                            turnInstanceOff.isPending ||
-                                            turnInstanceOn.isPending ||
-                                            deleteInstance.isPending ||
-                                            rebootInstance.isPending
-                                        }
                                         isDisabled={instancesQuery.isFetching}
-                                        onConnect={() => {
-                                            console.log('Connect');
-                                        }}
-                                        onPowerOff={() => {
-                                            turnInstanceOff.mutate({ instanceId: instance.id });
-                                        }}
-                                        onDelete={() => {
-                                            deleteInstance.mutate({ instanceId: instance.id });
-                                        }}
-                                        onPowerOn={() => {
-                                            turnInstanceOn.mutate({ instanceId: instance.id });
-                                        }}
-                                        onReboot={() => {
-                                            rebootInstance.mutate({ instanceId: instance.id });
-                                        }}
                                     />
                                 ))}
                             </SimpleGrid>

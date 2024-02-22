@@ -23,25 +23,25 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { InstanceTemplate } from '../../../services/api-protocols';
 import { BiRocket } from 'react-icons/bi';
-import { useUser } from '../../../hooks/use-user';
-import { useInstanceOperations } from '../../../hooks/use-instance-operations';
+import { useUser } from '../../../../hooks/use-user';
+import { useInstanceOperations } from '../../../../hooks/use-instance-operations';
+import { InstanceTemplate } from '../../../../services/api-protocols';
 
-export interface LaunchInstanceModalProps {
+export interface NewInstancePageCardLaunchModalProps {
     instanceTemplate: InstanceTemplate;
     isOpen: boolean;
     onClose: () => void;
 }
 
-interface LaunchInstanceForm {
+interface LaunchForm {
     name: string;
     description: string;
     canHibernate: boolean;
     instanceType: string;
 }
 
-export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
+export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchModalProps> = ({
     instanceTemplate,
     isOpen,
     onClose,
@@ -50,7 +50,7 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
     const { launchInstance } = useInstanceOperations();
     const toast = useToast();
 
-    const formMethods = useForm<LaunchInstanceForm>({
+    const formMethods = useForm<LaunchForm>({
         defaultValues: {
             name: instanceTemplate.name,
             description: instanceTemplate.description,
@@ -58,7 +58,7 @@ export const LaunchInstanceModal: React.FC<LaunchInstanceModalProps> = ({
         },
     });
 
-    const submitHandler: SubmitHandler<LaunchInstanceForm> = ({
+    const submitHandler: SubmitHandler<LaunchForm> = ({
         canHibernate,
         description,
         name,

@@ -1,13 +1,13 @@
 import { Box, Spinner, Stack, Tag, Text } from '@chakra-ui/react';
 import React from 'react';
-import { InstanceState } from '../../../services/api-protocols';
-import { instanceStateToDisplayString } from '../../../services/helpers';
+import { InstanceState } from '../../services/api-protocols';
+import { instanceStateToDisplayString } from '../../services/helpers';
 
-interface InstanceCardStateTagProps {
+interface InstanceStateTagProps {
     state?: InstanceState | 'PROVISIONING';
 }
 
-export const InstanceCardStateTag: React.FC<InstanceCardStateTagProps> = ({ state }) => {
+export const InstanceStateTag: React.FC<InstanceStateTagProps> = ({ state }) => {
     const stateStyleMap: Record<
         InstanceState | 'UNKNOWN' | 'PROVISIONING',
         {

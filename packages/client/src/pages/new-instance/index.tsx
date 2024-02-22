@@ -20,11 +20,12 @@ import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { useInstanceTemplates } from '../../hooks/use-instance-templates';
-import { InstanceTemplateCard } from '../../components/instance-template-card';
+// import { InstanceTemplateCard } from '../../components/instance-template-card';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { Paginator } from '../../components/paginator';
 import { SearchBar } from '../../components/search-bar';
 import { FilterButton } from '../../components/filter-button';
+import { NewInstancePageCard } from './card';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -227,7 +228,7 @@ export const NewInstancePage: React.FC = () => {
                                 spacing={6}
                             >
                                 {instanceTemplates.map((template) => (
-                                    <InstanceTemplateCard
+                                    <NewInstancePageCard
                                         key={`instance-template-${template.id}-card`}
                                         instanceTemplate={template}
                                         isLoading={false}
