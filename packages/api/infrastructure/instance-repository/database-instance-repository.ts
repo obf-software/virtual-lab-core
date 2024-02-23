@@ -34,6 +34,8 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         return Instance.restore({
             id: model._id.toJSON(),
             virtualId: model.virtualId,
+            productId: model.productId,
+            machineImageId: model.machineImageId,
             ownerId: model.ownerId.toJSON(),
             launchToken: model.launchToken,
             name: model.name,
@@ -59,6 +61,8 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
             virtualId: data.virtualId,
+            productId: data.productId,
+            machineImageId: data.machineImageId,
             ownerId: new ObjectId(data.ownerId),
             launchToken: data.launchToken,
             name: data.name,

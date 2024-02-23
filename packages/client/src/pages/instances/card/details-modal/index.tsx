@@ -42,6 +42,14 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
             value: instance.virtualId ?? '-',
         },
         {
+            label: 'ID do produto',
+            value: instance.productId,
+        },
+        {
+            label: 'ID da imagem da máquina',
+            value: instance.machineImageId,
+        },
+        {
             label: 'ID do dono',
             value: instance.ownerId,
         },

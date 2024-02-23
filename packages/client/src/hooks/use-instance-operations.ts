@@ -112,11 +112,33 @@ export const useInstanceOperations = () => {
         },
     });
 
+    const createTemplate = useMutation({
+        mutationFn: async (mut: {
+            instanceId: string;
+            name: string;
+            description: string;
+            storageInGb?: number;
+        }) => {
+            const response = await api.createInstanceTemplateFromInstance({
+                instanceId: mut.instanceId,
+                name: mut.name,
+                description: mut.description,
+                storageInGb: mut.storageInGb,
+            });
+            if (!response.success) throw new Error(response.error);
+            return response.data;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['instance-templates'] });
+        },
+    });
+
     return {
         turnInstanceOn,
         turnInstanceOff,
         rebootInstance,
         deleteInstance,
         launchInstance,
+        createTemplate,
     };
 };

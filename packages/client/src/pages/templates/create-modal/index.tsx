@@ -296,7 +296,7 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                                         },
                                     })}
                                 />
-                                <InputRightElement>
+                                <InputRightElement pointerEvents='none'>
                                     <Text textColor={'gray'}>GB</Text>
                                 </InputRightElement>
                             </InputGroup>
@@ -307,8 +307,8 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                                 </FormErrorMessage>
                             ) : (
                                 <FormHelperText>
-                                    Caso não seja preenchido, será utilizado o armazenamento padrão
-                                    da imagem da máquina
+                                    Opcional. Caso não informado, será utilizado o armazenamento da
+                                    imagem da máquina
                                 </FormHelperText>
                             )}
                         </FormControl>

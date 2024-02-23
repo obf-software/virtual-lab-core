@@ -138,6 +138,10 @@ export const Api = ({ stack }: sst.StackContext) => {
      * Instance template module
      */
     api.addRoutes(stack, {
+        'POST /api/v1/instances/{instanceId}/create-instance-template': {
+            function:
+                'packages/api/interfaces/api/instance-templates/create-instance-template-from-instance.handler',
+        },
         'POST /api/v1/instance-templates': {
             function:
                 'packages/api/interfaces/api/instance-templates/create-instance-template.handler',

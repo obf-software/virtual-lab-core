@@ -3,6 +3,8 @@ import { ObjectId } from 'mongodb';
 export interface InstanceDbModel {
     _id: ObjectId;
     virtualId?: string;
+    productId: string;
+    machineImageId: string;
     ownerId: ObjectId;
     launchToken: string;
     name: string;

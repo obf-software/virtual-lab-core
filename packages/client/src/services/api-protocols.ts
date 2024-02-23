@@ -59,6 +59,8 @@ export interface InstanceTemplate {
 export interface Instance {
     id: string;
     virtualId?: string;
+    productId: string;
+    machineImageId: string;
     ownerId: string;
     launchToken: string;
     name: string;

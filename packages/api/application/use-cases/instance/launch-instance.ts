@@ -109,6 +109,8 @@ export class LaunchInstance {
         );
 
         const instance = Instance.create({
+            productId: instanceTemplate.getData().productId,
+            machineImageId: instanceTemplate.getData().machineImageId,
             ownerId,
             launchToken,
             name: validInput.name,

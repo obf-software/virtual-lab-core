@@ -48,6 +48,7 @@ import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion
 import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 import { useInstanceConnectionData } from '../../../hooks/use-instance-connection-data';
 import { useNavigate } from 'react-router-dom';
+import { InstancesPageCardCreateTemplateModal } from './create-template-modal';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -61,6 +62,7 @@ interface InstancesPageCardProps {
 export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, isDisabled }) => {
     const authSessionData = useAuthSessionData();
     const detailsModalDisclosure = useDisclosure();
+    const createTemplateModalDisclosure = useDisclosure();
     const confirmDeletionDisclosure = useDisclosure();
     const { deleteInstance, rebootInstance, turnInstanceOn, turnInstanceOff } =
         useInstanceOperations();
@@ -129,6 +131,12 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                 isOpen={confirmDeletionDisclosure.isOpen}
                 onClose={confirmDeletionDisclosure.onClose}
                 onConfirm={() => deleteInstance.mutate({ instanceId: instance.id })}
+            />
+
+            <InstancesPageCardCreateTemplateModal
+                instance={instance}
+                isOpen={createTemplateModalDisclosure.isOpen}
+                onClose={createTemplateModalDisclosure.onClose}
             />
 
             <InstancesPageCardDetailsModal
@@ -309,7 +317,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                                         isDisabled={
                                             instance.state !== 'STOPPED' || isDisabled || isPending
                                         }
-                                        // onClick={confirmDeletionDisclosure.onOpen}
+                                        onClick={createTemplateModalDisclosure.onOpen}
                                     >
                                         Criar template
                                     </MenuItem>

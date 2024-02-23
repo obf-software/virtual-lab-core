@@ -191,6 +191,18 @@ export const turnInstanceOn = async (props: { instanceId: string }) =>
 
 // INSTANCE TEMPLATE MODULE
 
+export const createInstanceTemplateFromInstance = async (props: {
+    instanceId: string;
+    name: string;
+    description: string;
+    storageInGb?: number;
+}) =>
+    executeRequest<InstanceTemplate>({
+        path: `/api/v1/instances/${props.instanceId}/create-instance-template`,
+        method: 'POST',
+        body: props,
+    });
+
 export const createInstanceTemplate = async (props: {
     name: string;
     description: string;

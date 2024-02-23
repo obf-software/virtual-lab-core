@@ -18,5 +18,6 @@ export interface VirtualizationGateway {
     listProducts(): Promise<Product[]>;
     getProductById(productId: string): Promise<Product | undefined>;
     getMachineImageById(machineImageId: string): Promise<MachineImage | undefined>;
+    createMachineImage(virtualId: string, storageInGb: number): Promise<string>;
     getInstanceType(instanceType: string): Promise<VirtualInstanceType | undefined>;
 }

@@ -14,6 +14,8 @@ dayjs.extend(utc);
 export const instanceDataSchema = z.object({
     id: z.string().nullable(),
     virtualId: z.string().optional(),
+    productId: z.string(),
+    machineImageId: z.string(),
     ownerId: z.string(),
     launchToken: z.string(),
     name: z.string(),
@@ -40,6 +42,8 @@ export class Instance {
     getData = () => this.data;
 
     static create = (props: {
+        productId: string;
+        machineImageId: string;
         ownerId: string;
         launchToken: string;
         name: string;
@@ -56,6 +60,8 @@ export class Instance {
         const data: InstanceData = {
             id: null,
             virtualId: undefined,
+            productId: props.productId,
+            machineImageId: props.machineImageId,
             ownerId: props.ownerId,
             launchToken: props.launchToken,
             name: props.name,

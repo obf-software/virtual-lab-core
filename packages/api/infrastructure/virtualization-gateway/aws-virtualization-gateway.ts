@@ -1,4 +1,5 @@
 import {
+    CreateImageCommand,
     DescribeImagesCommand,
     DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
@@ -355,6 +356,46 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         } catch (error) {
             return undefined;
         }
+    };
+
+    createMachineImage = async (virtualId: string, storageInGb: number): Promise<string> => {
+        const imageName = `virtual-lab-${randomUUID()}`;
+
+        const instanceBlockDeviceMappings = await this.ec2Client.send(
+            new DescribeInstancesCommand({
+                InstanceIds: [virtualId],
+            }),
+        );
+
+        const instance = instanceBlockDeviceMappings.Reservations?.[0].Instances?.[0];
+
+        if (!instance) {
+            throw Errors.internalError('Instance not found');
+        }
+
+        const blockDeviceMappings = instance.BlockDeviceMappings?.map((mapping) => ({
+            ...mapping,
+            Ebs: {
+                ...mapping.Ebs,
+                VolumeSize: storageInGb,
+            },
+        }));
+
+        const { ImageId } = await this.ec2Client.send(
+            new CreateImageCommand({
+                InstanceId: virtualId,
+                Name: imageName,
+                Description: `Machine image from virtual lab instance ${virtualId}`,
+                NoReboot: false,
+                BlockDeviceMappings: blockDeviceMappings,
+            }),
+        );
+
+        if (!ImageId) {
+            throw Errors.internalError('Failed to create machine image');
+        }
+
+        return ImageId;
     };
 
     getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {
