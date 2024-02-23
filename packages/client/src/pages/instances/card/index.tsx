@@ -70,6 +70,8 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
     const navigate = useNavigate();
     const toast = useToast();
 
+    const [state, setState] = React.useState<Instance['state']>('PENDING');
+
     const isPending =
         deleteInstance.isPending ||
         rebootInstance.isPending ||
@@ -114,6 +116,10 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
             value: dayjs(instance.createdAt).format('DD/MM/YYYY'),
         },
     ];
+
+    React.useEffect(() => {
+        setState(instance.state);
+    }, [instance.state]);
 
     return (
         <Card
@@ -170,9 +176,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                     spacing={4}
                 >
                     <Divider orientation='horizontal' />
-                    <InstanceStateTag
-                        state={!instance.virtualId ? 'PROVISIONING' : instance.state}
-                    />
+                    <InstanceStateTag state={state ?? 'PROVISIONING'} />
                     <Divider orientation='horizontal' />
                 </Stack>
 
@@ -215,7 +219,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                         leftIcon={<FiPlay />}
                         size={'lg'}
                         colorScheme='green'
-                        hidden={instance.state !== 'RUNNING'}
+                        hidden={state !== 'RUNNING'}
                         isDisabled={isDisabled || isPending}
                         isLoading={
                             getInstanceConnection.isLoading || getInstanceConnection.isFetching
@@ -256,20 +260,38 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                             aria-label='Desligar'
                             size={'lg'}
                             colorScheme='red'
-                            hidden={instance.state !== 'RUNNING'}
+                            hidden={state !== 'RUNNING'}
                             isLoading={turnInstanceOff.isPending}
                             isDisabled={isDisabled || isPending}
-                            onClick={() => turnInstanceOff.mutate({ instanceId: instance.id })}
+                            onClick={() => {
+                                turnInstanceOff.mutate(
+                                    { instanceId: instance.id },
+                                    {
+                                        onSuccess(data) {
+                                            setState(data?.state);
+                                        },
+                                    },
+                                );
+                            }}
                         />
                     ) : (
                         <Button
                             leftIcon={<FiPower />}
                             size={'lg'}
                             colorScheme='red'
-                            hidden={instance.state !== 'RUNNING'}
+                            hidden={state !== 'RUNNING'}
                             isLoading={turnInstanceOff.isPending}
                             isDisabled={isDisabled || isPending}
-                            onClick={() => turnInstanceOff.mutate({ instanceId: instance.id })}
+                            onClick={() => {
+                                turnInstanceOff.mutate(
+                                    { instanceId: instance.id },
+                                    {
+                                        onSuccess(data) {
+                                            setState(data?.state);
+                                        },
+                                    },
+                                );
+                            }}
                         >
                             Desligar
                         </Button>
@@ -279,10 +301,19 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                         leftIcon={<FiPower />}
                         size={'lg'}
                         colorScheme='green'
-                        hidden={instance.state !== 'STOPPED'}
+                        hidden={state !== 'STOPPED'}
                         isLoading={turnInstanceOn.isPending}
                         isDisabled={isDisabled || isPending}
-                        onClick={() => turnInstanceOn.mutate({ instanceId: instance.id })}
+                        onClick={() =>
+                            turnInstanceOn.mutate(
+                                { instanceId: instance.id },
+                                {
+                                    onSuccess(data) {
+                                        setState(data?.state);
+                                    },
+                                },
+                            )
+                        }
                     >
                         Ligar
                     </Button>
@@ -308,15 +339,13 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                             {authSessionData?.role === 'ADMIN' && (
                                 <Tooltip
                                     label={
-                                        (instance.state !== 'STOPPED' || isDisabled || isPending) &&
+                                        (state !== 'STOPPED' || isDisabled || isPending) &&
                                         'A instância precisa estar desligada para criar um template'
                                     }
                                 >
                                     <MenuItem
                                         icon={<BiBookBookmark />}
-                                        isDisabled={
-                                            instance.state !== 'STOPPED' || isDisabled || isPending
-                                        }
+                                        isDisabled={state !== 'STOPPED' || isDisabled || isPending}
                                         onClick={createTemplateModalDisclosure.onOpen}
                                     >
                                         Criar template
@@ -335,7 +364,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                                         <FiRefreshCw />
                                     )
                                 }
-                                isDisabled={instance.state !== 'RUNNING' || isDisabled || isPending}
+                                isDisabled={state !== 'RUNNING' || isDisabled || isPending}
                                 onClick={() => rebootInstance.mutate({ instanceId: instance.id })}
                             >
                                 Reiniciar

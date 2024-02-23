@@ -15,6 +15,7 @@ import {
     Stack,
     Text,
     Tooltip,
+    keyframes,
     useColorModeValue,
 } from '@chakra-ui/react';
 import React from 'react';
@@ -91,6 +92,15 @@ export const NavbarNotificationsButton: React.FC = () => {
         };
     }, []);
 
+    const newNotificationAnimation = keyframes`
+    0% { transform: rotate(0deg); }
+    5% { transform: rotate(-20deg); }
+    10% { transform: rotate(20deg); }
+    15% { transform: rotate(-10deg); }
+    20% { transform: rotate(0deg); }
+    100% { transform: rotate(0deg); }
+    `;
+
     return (
         <Popover
             placement='bottom-start'
@@ -99,6 +109,7 @@ export const NavbarNotificationsButton: React.FC = () => {
             <Box position='relative'>
                 <PopoverTrigger>
                     <IconButton
+                        animation={`${newNotificationAnimation} 2s ${numberOfUnreadNotifications > 0 ? 'infinite' : 'none'} 1s`}
                         rounded={'full'}
                         size='lg'
                         variant='ghost'
@@ -117,6 +128,7 @@ export const NavbarNotificationsButton: React.FC = () => {
                 {numberOfUnreadNotifications > 0 ? (
                     <Badge
                         borderRadius={'50%'}
+                        justifyContent={'center'}
                         variant='solid'
                         pos={'absolute'}
                         colorScheme='red'

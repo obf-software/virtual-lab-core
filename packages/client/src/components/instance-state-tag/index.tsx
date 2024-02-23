@@ -66,6 +66,7 @@ export const InstanceStateTag: React.FC<InstanceStateTagProps> = ({ state }) => 
                 colorScheme={stateStyle.colorScheme}
                 size={'lg'}
                 variant={'subtle'}
+                transition='all .5s ease-in-out'
             >
                 <Stack
                     direction='row'
