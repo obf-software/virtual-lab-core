@@ -72,6 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                             style={{ textDecoration: 'none' }}
                             onClick={() => {
                                 setActiveMenuItem(id as keyof typeof menuItemsMap);
+                                onClose();
                             }}
                         >
                             <Flex
