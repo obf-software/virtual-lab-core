@@ -188,6 +188,12 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
         getCoreRowModel: getCoreRowModel(),
     });
 
+    React.useEffect(() => {
+        if (!!isLoading || !!isDisabled) {
+            setRowSelection({});
+        }
+    }, [isLoading, isDisabled]);
+
     return (
         <TableContainer
             bgColor={'white'}

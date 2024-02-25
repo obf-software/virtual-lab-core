@@ -9,6 +9,7 @@ import {
     Tooltip,
     SlideFade,
     ButtonGroup,
+    Fade,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
@@ -164,22 +165,24 @@ export const UsersPage: React.FC = () => {
                     </SlideFade>
                 </Stack>
 
-                <Stack spacing={6}>
-                    <UsersPageTable
-                        users={users}
-                        error={usersQuery.error?.message}
-                        isLoading={usersQuery.isLoading}
-                        isDisabled={usersQuery.isFetching}
-                    />
+                <Fade in>
+                    <Stack spacing={6}>
+                        <UsersPageTable
+                            users={users}
+                            error={usersQuery.error?.message}
+                            isLoading={usersQuery.isLoading}
+                            isDisabled={usersQuery.isFetching}
+                        />
 
-                    <Paginator
-                        activePage={page}
-                        totalPages={numberOfPages}
-                        onPageChange={(selectedPage) => {
-                            setParams({ page: selectedPage });
-                        }}
-                    />
-                </Stack>
+                        <Paginator
+                            activePage={page}
+                            totalPages={numberOfPages}
+                            onPageChange={(selectedPage) => {
+                                setParams({ page: selectedPage });
+                            }}
+                        />
+                    </Stack>
+                </Fade>
             </Container>
         </Box>
     );
