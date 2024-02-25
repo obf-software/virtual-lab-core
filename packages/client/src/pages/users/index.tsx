@@ -5,35 +5,39 @@ import {
     VStack,
     Text,
     Stack,
-    InputGroup,
-    Input,
-    InputLeftElement,
-    InputRightElement,
     IconButton,
-    useDisclosure,
     Tooltip,
+    SlideFade,
+    ButtonGroup,
 } from '@chakra-ui/react';
-import { FiRefreshCw, FiSearch, FiX } from 'react-icons/fi';
+import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { Paginator } from '../../components/paginator';
 import { useUsers } from '../../hooks/use-users';
-import { User } from '../../services/api-protocols';
-import { UserDetailsModal } from '../../components/user-details-modal';
-import { UsersTable } from '../../components/users-table';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
+import { FilterButton } from '../../components/filter-button';
+import { SearchBar } from '../../components/search-bar';
+import { UsersPageTable } from './table';
 
 export const UsersPage: React.FC = () => {
-    const { page, setParams } = usePaginationSearchParam();
-    const { usersQuery } = useUsers({
-        resultsPerPage: 20,
-        page,
-        orderBy: 'lastSignInDate',
-        order: 'desc',
+    const { page, orderBy, order, resultsPerPage, setParams } = usePaginationSearchParam({
+        allowedOrderByValues: ['creationDate', 'alphabetical', 'lastUpdateDate', 'lastLoginDate'],
+        defaultOrderBy: 'creationDate',
+        allowedOrderValues: ['asc', 'desc'],
+        defaultOrder: 'desc',
+        defaultPage: 1,
+        defaultResultsPerPage: 30,
     });
-    const { setActiveMenuItem } = useMenuContext(); // TODO: Convert context to zustand hook.
-    const [selectedUser, setSelectedUser] = React.useState<User>();
-    const userDetailsModalDisclosure = useDisclosure();
+    const [textSearch, setTextSearch] = React.useState<string>();
+    const { usersQuery } = useUsers({
+        textSearch,
+        resultsPerPage,
+        page,
+        orderBy,
+        order,
+    });
+    const { setActiveMenuItem } = useMenuContext();
 
     const users = usersQuery.data?.data ?? [];
     const numberOfUsers = usersQuery.data?.numberOfResults ?? 0;
@@ -49,15 +53,6 @@ export const UsersPage: React.FC = () => {
 
     return (
         <Box>
-            <UserDetailsModal
-                user={selectedUser ?? ({} as User)}
-                isOpen={userDetailsModalDisclosure.isOpen}
-                onClose={() => {
-                    userDetailsModalDisclosure.onClose();
-                    setSelectedUser(undefined);
-                }}
-            />
-
             <Container maxW={'6xl'}>
                 <Stack
                     pb={10}
@@ -67,66 +62,114 @@ export const UsersPage: React.FC = () => {
                     align={{ base: 'center', md: 'center' }}
                     spacing={{ base: 5, md: 10 }}
                 >
-                    <VStack
-                        spacing={0}
-                        align={{ base: 'center', md: 'initial' }}
+                    <SlideFade
+                        in
+                        offsetX={'-20px'}
+                        offsetY={0}
                     >
-                        <Heading color='gray.800'>Usuários</Heading>
-                        <Text
-                            fontSize='md'
-                            color='gray.600'
+                        <VStack
+                            spacing={0}
+                            align={{ base: 'center', md: 'initial' }}
                         >
-                            {numberOfUsers === 0 ? 'Nenhum usuário encontrado' : null}
-                            {numberOfUsers === 1 ? `${numberOfUsers} usuário encontrado` : null}
-                            {numberOfUsers > 1 ? `${numberOfUsers} usuários encontrados` : null}
-                        </Text>
-                    </VStack>
+                            <Heading color='gray.800'>Usuários</Heading>
+                            <Text
+                                fontSize='md'
+                                color='gray.600'
+                            >
+                                {numberOfUsers === 0 && 'Nenhum resultado'}
+                                {numberOfUsers === 1 && `${numberOfUsers} resultado`}
+                                {numberOfUsers > 1 && `${numberOfUsers} resultados`}
+                            </Text>
+                        </VStack>
+                    </SlideFade>
 
-                    <Tooltip label='Recarregar'>
-                        <IconButton
-                            aria-label='Recarregar'
-                            variant={'outline'}
-                            colorScheme='blue'
-                            hidden={usersQuery.isLoading}
-                            isLoading={usersQuery.isFetching}
-                            onClick={() => {
-                                usersQuery.refetch().catch(console.error);
-                            }}
-                        >
-                            <FiRefreshCw />
-                        </IconButton>
-                    </Tooltip>
+                    <SlideFade
+                        in
+                        offsetX={'20px'}
+                        offsetY={0}
+                    >
+                        <ButtonGroup>
+                            <FilterButton
+                                hidden={usersQuery.isLoading}
+                                filters={{
+                                    orderBy: {
+                                        label: 'Ordenar por',
+                                        selectedValue: orderBy ?? 'creationDate',
+                                        values: [
+                                            { label: 'Data de criação', value: 'creationDate' },
+                                            {
+                                                label: 'Data de atualização',
+                                                value: 'lastUpdateDate',
+                                            },
+                                            {
+                                                label: 'Data de último login',
+                                                value: 'lastLoginDate',
+                                            },
+                                            { label: 'Alfabético', value: 'alphabetical' },
+                                        ],
+                                    },
+                                    order: {
+                                        label: 'Ordem',
+                                        selectedValue: order ?? 'desc',
+                                        values: [
+                                            { label: 'Crescente', value: 'asc' },
+                                            { label: 'Decrescente', value: 'desc' },
+                                        ],
+                                    },
+                                    resultsPerPage: {
+                                        label: 'Resultados por página',
+                                        selectedValue: resultsPerPage.toString(),
+                                        values: [
+                                            { label: '10', value: '10' },
+                                            { label: '30', value: '30' },
+                                            { label: '60', value: '60' },
+                                        ],
+                                    },
+                                }}
+                                onFiltersChange={(filters) => {
+                                    setParams({
+                                        orderBy: filters.orderBy.selectedValue as 'creationDate',
+                                        order: filters.order.selectedValue as 'asc',
+                                        resultsPerPage: parseInt(
+                                            filters.resultsPerPage.selectedValue,
+                                        ),
+                                    });
+                                }}
+                            />
+
+                            <SearchBar
+                                debounceMilliseconds={500}
+                                isHidden={usersQuery.isLoading}
+                                isLoading={usersQuery.isFetching}
+                                onTextChange={(text) => {
+                                    setTextSearch(text || undefined);
+                                }}
+                            />
+
+                            <Tooltip label='Recarregar'>
+                                <IconButton
+                                    aria-label='Recarregar'
+                                    variant={'outline'}
+                                    colorScheme='blue'
+                                    hidden={usersQuery.isLoading}
+                                    isLoading={usersQuery.isFetching}
+                                    onClick={() => {
+                                        usersQuery.refetch().catch(console.error);
+                                    }}
+                                >
+                                    <FiRefreshCw />
+                                </IconButton>
+                            </Tooltip>
+                        </ButtonGroup>
+                    </SlideFade>
                 </Stack>
 
                 <Stack spacing={6}>
-                    <InputGroup boxShadow={'sm'}>
-                        <InputLeftElement pointerEvents='none'>
-                            <FiSearch color='gray.300' />
-                        </InputLeftElement>
-                        <Input
-                            type='text'
-                            placeholder='Pesquisar'
-                            bgColor={'white'}
-                            disabled
-                        />
-                        <InputRightElement>
-                            <IconButton
-                                aria-label='Limpar pesquisa'
-                                variant={'ghost'}
-                                size={'sm'}
-                                icon={<FiX />}
-                                isDisabled
-                            />
-                        </InputRightElement>
-                    </InputGroup>
-
-                    <UsersTable
+                    <UsersPageTable
                         users={users}
+                        error={usersQuery.error?.message}
                         isLoading={usersQuery.isLoading}
-                        onSelect={(user) => {
-                            setSelectedUser(user);
-                            userDetailsModalDisclosure.onOpen();
-                        }}
+                        isDisabled={usersQuery.isFetching}
                     />
 
                     <Paginator

@@ -16,6 +16,7 @@ import React from 'react';
 import { FiChevronDown, FiLogOut, FiUser } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import { useAuthSessionData } from '../../../../hooks/use-auth-session-data';
+import { queryClient } from '../../../../services/query-client';
 
 export const NavbarMenu: React.FC = () => {
     const { signOut } = useAuthenticator((context) => [context.user]);
@@ -71,7 +72,10 @@ export const NavbarMenu: React.FC = () => {
                 <MenuDivider />
                 <MenuItem
                     icon={<FiLogOut />}
-                    onClick={signOut}
+                    onClick={() => {
+                        queryClient.clear();
+                        signOut();
+                    }}
                     textColor={'red.400'}
                 >
                     Sair

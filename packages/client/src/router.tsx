@@ -6,10 +6,10 @@ import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
 import { ProfilePage } from './pages/profile';
 import { ConnectionPage } from './pages/connection';
-// import { NewInstancePage } from './pages/new-instance';
 import { UserGroupsPage } from './pages/user-groups';
 import { NewInstancePage } from './pages/new-instance';
 import { TemplatesPage } from './pages/templates';
+import { RoleSelectionContainer } from './components/role-selection-container';
 
 export const router = createBrowserRouter([
     {
@@ -22,15 +22,35 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'instances',
-                element: <InstancesPage />,
+                element: (
+                    <RoleSelectionContainer allowedRoles={['USER', 'ADMIN']}>
+                        <InstancesPage />,
+                    </RoleSelectionContainer>
+                ),
             },
             {
                 path: 'instances/new',
-                element: <NewInstancePage />,
+                element: (
+                    <RoleSelectionContainer allowedRoles={['USER', 'ADMIN']}>
+                        <NewInstancePage />
+                    </RoleSelectionContainer>
+                ),
             },
             {
                 path: 'admin/templates',
-                element: <TemplatesPage />,
+                element: (
+                    <RoleSelectionContainer allowedRoles={['ADMIN']}>
+                        <TemplatesPage />
+                    </RoleSelectionContainer>
+                ),
+            },
+            {
+                path: 'admin/users',
+                element: (
+                    <RoleSelectionContainer allowedRoles={['ADMIN']}>
+                        <UsersPage />
+                    </RoleSelectionContainer>
+                ),
             },
             // {
             //     path: 'user-groups',
@@ -39,11 +59,6 @@ export const router = createBrowserRouter([
             // {
             //     path: 'profile',
             //     element: <ProfilePage />,
-            // },
-
-            // {
-            //     path: 'admin/users',
-            //     element: <UsersPage />,
             // },
             // {
             //     path: 'admin/groups',

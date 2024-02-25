@@ -3,8 +3,8 @@ import { listUsers } from '../services/api';
 
 export const useUsers = (props: {
     groupId?: string;
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical';
-    order: 'asc' | 'desc';
+    orderBy?: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical';
+    order?: 'asc' | 'desc';
     textSearch?: string;
     page: number;
     resultsPerPage: number;
@@ -22,8 +22,8 @@ export const useUsers = (props: {
         queryFn: async () => {
             const response = await listUsers({
                 groupId: props.groupId,
-                orderBy: props.orderBy,
-                order: props.order,
+                orderBy: props.orderBy ?? 'creationDate',
+                order: props.order ?? 'desc',
                 textSearch: props.textSearch,
                 page: props.page,
                 resultsPerPage: props.resultsPerPage,

@@ -8,7 +8,7 @@ export enum MenuItems {
 
     // MY_GROUPS = 'MY_GROUPS',
     ADMIN_TEMPLATES = 'ADMIN_TEMPLATES',
-    // ADMIN_USERS = 'ADMIN_USERS',
+    ADMIN_USERS = 'ADMIN_USERS',
     // ADMIN_GROUPS = 'ADMIN_GROUPS',
 }
 
@@ -28,7 +28,6 @@ export const menuItemsMap: {
         href: '/',
         adminOnly: false,
     },
-
     INSTANCES: {
         icon: FiMonitor,
         label: 'Instâncias',
@@ -41,23 +40,19 @@ export const menuItemsMap: {
     //     href: '/user-groups',
     //     adminOnly: false,
     // },
+
     ADMIN_TEMPLATES: {
         icon: BiBookBookmark,
         label: 'Templates',
         href: '/admin/templates',
         adminOnly: true,
     },
-
-    /**
-     * Admin menu items
-     */
-
-    // ADMIN_USERS: {
-    //     icon: FiUser,
-    //     label: 'Usuários',
-    //     href: '/admin/users',
-    //     adminOnly: true,
-    // },
+    ADMIN_USERS: {
+        icon: FiUser,
+        label: 'Usuários',
+        href: '/admin/users',
+        adminOnly: true,
+    },
     // ADMIN_GROUPS: {
     //     icon: FiUsers,
     //     label: 'Grupos',
