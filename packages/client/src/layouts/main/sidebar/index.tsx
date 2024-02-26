@@ -21,7 +21,7 @@ interface SidebarProps extends BoxProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
     const { getActiveMenuItem, setActiveMenuItem } = useMenuContext();
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
 
     const menuItems = [...Object.entries(menuItemsMap)];
 

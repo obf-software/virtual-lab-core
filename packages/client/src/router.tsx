@@ -6,7 +6,6 @@ import { UsersPage } from './pages/users';
 import { GroupsPage } from './pages/groups';
 import { ProfilePage } from './pages/profile';
 import { ConnectionPage } from './pages/connection';
-import { UserGroupsPage } from './pages/user-groups';
 import { NewInstancePage } from './pages/new-instance';
 import { TemplatesPage } from './pages/templates';
 import { RoleSelectionContainer } from './components/role-selection-container';
@@ -19,6 +18,14 @@ export const router = createBrowserRouter([
             {
                 index: true,
                 element: <HomePage />,
+            },
+            {
+                path: 'profile',
+                element: (
+                    <RoleSelectionContainer allowedRoles={['PENDING', 'USER', 'ADMIN']}>
+                        <ProfilePage />
+                    </RoleSelectionContainer>
+                ),
             },
             {
                 path: 'instances',
@@ -52,14 +59,6 @@ export const router = createBrowserRouter([
                     </RoleSelectionContainer>
                 ),
             },
-            // {
-            //     path: 'user-groups',
-            //     element: <UserGroupsPage />,
-            // },
-            // {
-            //     path: 'profile',
-            //     element: <ProfilePage />,
-            // },
             // {
             //     path: 'admin/groups',
             //     element: <GroupsPage />,

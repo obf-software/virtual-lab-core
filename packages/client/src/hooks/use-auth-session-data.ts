@@ -33,6 +33,11 @@ export const useAuthSessionData = () => {
         };
     };
 
+    const refetchAuthSessionData = async () => {
+        const sessionData = await getAuthSessionData();
+        setAuthSession(sessionData);
+    };
+
     useEffect(() => {
         getAuthSessionData()
             .then((sessionData) => setAuthSession(sessionData))
@@ -41,5 +46,8 @@ export const useAuthSessionData = () => {
             });
     }, []);
 
-    return authSession;
+    return {
+        authSessionData: authSession,
+        refetchAuthSessionData,
+    };
 };

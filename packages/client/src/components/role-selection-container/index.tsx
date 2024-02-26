@@ -12,7 +12,7 @@ export const RoleSelectionContainer: React.FC<RoleSelectionContainerProps> = ({
     children,
     allowedRoles,
 }) => {
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
 
     if (!authSessionData) {
         return (

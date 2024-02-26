@@ -29,7 +29,7 @@ interface UserDetailsModalInfoTabPanelProps {
 export const UserDetailsModalInfoTabPanel: React.FC<UserDetailsModalInfoTabPanelProps> = ({
     user,
 }) => {
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
     const toast = useToast();
     const updateUserRoleMutation = useMutation({
         mutationFn: async (mut: { userId: string | 'me'; role: Role }) => {

@@ -60,7 +60,7 @@ interface InstancesPageCardProps {
 }
 
 export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, isDisabled }) => {
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
     const detailsModalDisclosure = useDisclosure();
     const createTemplateModalDisclosure = useDisclosure();
     const confirmDeletionDisclosure = useDisclosure();

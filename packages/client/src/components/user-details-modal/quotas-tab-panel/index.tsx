@@ -25,7 +25,7 @@ interface UserDetailsModalQuotasTabPanelProps {
 export const UserDetailsModalQuotasTabPanel: React.FC<UserDetailsModalQuotasTabPanelProps> = ({
     user,
 }) => {
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
     const toast = useToast();
     const [maxInstances, setMaxInstances] = React.useState(user.quotas.maxInstances);
     const [maxInstancesDebounce, setMaxInstancesDebounce] = React.useState(

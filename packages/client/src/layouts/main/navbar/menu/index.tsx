@@ -20,7 +20,7 @@ import { queryClient } from '../../../../services/query-client';
 
 export const NavbarMenu: React.FC = () => {
     const { signOut } = useAuthenticator((context) => [context.user]);
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
 
     return (
         <Menu>

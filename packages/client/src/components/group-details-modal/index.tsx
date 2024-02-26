@@ -24,7 +24,7 @@ interface GroupDetailsModalProps {
 }
 
 export const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({ group, isOpen, onClose }) => {
-    const authSessionData = useAuthSessionData();
+    const { authSessionData } = useAuthSessionData();
     const isAdmin = authSessionData?.role === 'ADMIN';
 
     return (
