@@ -14,7 +14,7 @@ import {
     VStack,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
-import { ProfileQuotaCard } from './quota-card';
+import { ProfilePageQuotaCard } from './quota-card';
 import { ProfilePageInfoCard } from './info-card';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -91,7 +91,7 @@ export const ProfilePage: React.FC = () => {
                     spacing={6}
                 >
                     <ProfilePageInfoCard />
-                    <ProfileQuotaCard />
+                    <ProfilePageQuotaCard />
                 </Stack>
             </Container>
         </Box>

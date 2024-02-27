@@ -14,6 +14,7 @@ import {
     InputRightElement,
     PinInput,
     PinInputField,
+    Spinner,
     Tooltip,
     VStack,
     useToast,
@@ -21,14 +22,27 @@ import {
 import React from 'react';
 import { FiCheck, FiClock } from 'react-icons/fi';
 import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
-import { confirmUserAttribute, sendUserAttributeVerificationCode } from 'aws-amplify/auth';
+import {
+    confirmUserAttribute,
+    sendUserAttributeVerificationCode,
+    updateUserAttribute,
+} from 'aws-amplify/auth';
 import { getErrorMessage } from '../../../services/helpers';
 
 export const ProfilePageInfoCard: React.FC = () => {
     const { authSessionData, refetchAuthSessionData } = useAuthSessionData();
+
     const [isWaitingForVerificationCode, setIsWaitingForVerificationCode] = React.useState(false);
     const [isVerificationButtonLoading, setIsVerificationButtonLoading] = React.useState(false);
     const [verificationCode, setVerificationCode] = React.useState<string>();
+
+    const [inputName, setInputName] = React.useState<string>(authSessionData?.name ?? '');
+    const [isUpdatingName, setIsUpdatingName] = React.useState(false);
+
+    React.useEffect(() => {
+        setInputName(authSessionData?.name ?? '');
+    }, [authSessionData]);
+
     const toast = useToast();
 
     return (
@@ -37,7 +51,7 @@ export const ProfilePageInfoCard: React.FC = () => {
             align={'start'}
         >
             <Heading
-                size={'xl'}
+                size={'lg'}
                 color='gray.800'
             >
                 Informações
@@ -52,7 +66,10 @@ export const ProfilePageInfoCard: React.FC = () => {
                 boxShadow={'md'}
             >
                 <Flex>
-                    <FormControl mr='2%'>
+                    <FormControl
+                        mr='2%'
+                        isReadOnly
+                    >
                         <FormLabel
                             id='username'
                             fontWeight={'bold'}
@@ -64,11 +81,10 @@ export const ProfilePageInfoCard: React.FC = () => {
                             id='username'
                             type='text'
                             value={authSessionData?.username}
-                            isReadOnly
                         />
                     </FormControl>
 
-                    <FormControl>
+                    <FormControl isReadOnly>
                         <FormLabel
                             id='role'
                             fontWeight={'bold'}
@@ -79,7 +95,6 @@ export const ProfilePageInfoCard: React.FC = () => {
                             id='role'
                             type='text'
                             value={authSessionData?.displayRole}
-                            isReadOnly
                         />
                     </FormControl>
                 </Flex>
@@ -91,15 +106,63 @@ export const ProfilePageInfoCard: React.FC = () => {
                     >
                         Nome
                     </FormLabel>
-                    <Input
-                        id='name'
-                        type='text'
-                        placeholder='Insira seu nome'
-                        value={'currentName'}
-                    />
+                    <InputGroup>
+                        <Input
+                            id='name'
+                            type='text'
+                            placeholder='Insira seu nome'
+                            value={inputName}
+                            onChange={(event) => {
+                                setInputName(event.target.value);
+                            }}
+                            onBlur={() => {
+                                if (inputName !== authSessionData?.name) {
+                                    setIsUpdatingName(true);
+                                    updateUserAttribute({
+                                        userAttribute: {
+                                            attributeKey: 'name',
+                                            value: inputName,
+                                        },
+                                    })
+                                        .then(() => {
+                                            setIsUpdatingName(false);
+                                            toast({
+                                                title: 'Nome atualizado',
+                                                description: 'Seu nome foi atualizado com sucesso',
+                                                status: 'success',
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        })
+                                        .catch((error) => {
+                                            setIsUpdatingName(false);
+                                            setInputName(authSessionData?.name ?? '');
+                                            toast({
+                                                title: 'Erro ao atualizar nome',
+                                                description: getErrorMessage(error),
+                                                status: 'error',
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        });
+                                }
+                            }}
+                        />
+                        <InputRightElement>
+                            {isUpdatingName && (
+                                <Spinner
+                                    size='sm'
+                                    hidden={!isUpdatingName}
+                                />
+                            )}
+                        </InputRightElement>
+                    </InputGroup>
                 </FormControl>
 
-                <FormControl mt={'2%'}>
+                <FormControl
+                    mt={'2%'}
+                    isReadOnly
+                >
                     <FormLabel
                         id='email'
                         fontWeight={'bold'}
@@ -111,7 +174,6 @@ export const ProfilePageInfoCard: React.FC = () => {
                             id='email'
                             type='email'
                             value={authSessionData?.email}
-                            isReadOnly
                         />
                         <Tooltip
                             label={
