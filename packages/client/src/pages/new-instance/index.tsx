@@ -20,7 +20,6 @@ import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import { useInstanceTemplates } from '../../hooks/use-instance-templates';
-// import { InstanceTemplateCard } from '../../components/instance-template-card';
 import { usePaginationSearchParam } from '../../hooks/use-pagination-search-param';
 import { Paginator } from '../../components/paginator';
 import { SearchBar } from '../../components/search-bar';

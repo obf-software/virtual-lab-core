@@ -8,6 +8,7 @@ import {
     MenuDivider,
     MenuItem,
     MenuList,
+    SkeletonText,
     Text,
     VStack,
     useColorModeValue,
@@ -37,7 +38,7 @@ export const NavbarMenu: React.FC = () => {
                         borderWidth={2}
                         name={authSessionData?.displayName}
                         size={'sm'}
-                        src={undefined}
+                        src={authSessionData?.picture}
                     />
                     <VStack
                         display={{ base: 'none', md: 'flex' }}
@@ -45,17 +46,28 @@ export const NavbarMenu: React.FC = () => {
                         spacing='1px'
                         ml='2'
                     >
-                        <Text fontSize='sm'>
-                            {(authSessionData?.displayName ?? '').length <= 30
-                                ? authSessionData?.displayName
-                                : `${authSessionData?.displayName.slice(0, 30)}...`}
-                        </Text>
-                        <Text
-                            fontSize='xs'
-                            color='gray.600'
-                        >
-                            {authSessionData?.displayRole}
-                        </Text>
+                        {authSessionData === undefined ? (
+                            <>
+                                <SkeletonText
+                                    noOfLines={2}
+                                    w='100px'
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <Text fontSize='sm'>
+                                    {(authSessionData?.displayName ?? '').length <= 30
+                                        ? authSessionData?.displayName
+                                        : `${authSessionData?.displayName.slice(0, 30)}...`}
+                                </Text>
+                                <Text
+                                    fontSize='xs'
+                                    color='gray.600'
+                                >
+                                    {authSessionData?.displayRole}
+                                </Text>
+                            </>
+                        )}
                     </VStack>
                     <Box display={{ base: 'none', md: 'flex' }}>
                         <FiChevronDown />

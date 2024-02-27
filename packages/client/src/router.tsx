@@ -3,12 +3,12 @@ import { MainLayout } from './layouts/main';
 import { HomePage } from './pages/home';
 import { InstancesPage } from './pages/instances';
 import { UsersPage } from './pages/users';
-import { GroupsPage } from './pages/groups';
 import { ProfilePage } from './pages/profile';
 import { ConnectionPage } from './pages/connection';
 import { NewInstancePage } from './pages/new-instance';
 import { TemplatesPage } from './pages/templates';
 import { RoleSelectionContainer } from './components/role-selection-container';
+import { UserPage } from './pages/user';
 
 export const router = createBrowserRouter([
     {
@@ -59,12 +59,15 @@ export const router = createBrowserRouter([
                     </RoleSelectionContainer>
                 ),
             },
-            // {
-            //     path: 'admin/groups',
-            //     element: <GroupsPage />,
-            // },
+            {
+                path: 'admin/user/:userId',
+                element: (
+                    <RoleSelectionContainer allowedRoles={['ADMIN']}>
+                        <UserPage />
+                    </RoleSelectionContainer>
+                ),
+            },
         ],
-        // errorElement: <div>error</div>,
     },
     {
         path: 'connection',

@@ -29,6 +29,7 @@ import { Role, User } from '../../../services/api-protocols';
 import { roleToDisplayString } from '../../../services/helpers';
 import dayjs from 'dayjs';
 import { FiCpu, FiExternalLink, FiMonitor, FiMoon } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 
 interface UsersPageTableProps {
     users: User[];
@@ -63,27 +64,28 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
     isDisabled,
 }) => {
     const columnHelper = createColumnHelper<User>();
+    const navigate = useNavigate();
 
     const columns = [
-        columnHelper.display({
-            id: 'select',
+        // columnHelper.display({
+        //     id: 'select',
 
-            header: ({ table }) => (
-                <Checkbox
-                    isChecked={table.getIsAllRowsSelected()}
-                    isIndeterminate={table.getIsSomeRowsSelected()}
-                    onChange={table.getToggleAllRowsSelectedHandler()}
-                />
-            ),
-            cell: ({ row }) => (
-                <Checkbox
-                    isChecked={row.getIsSelected()}
-                    isDisabled={!row.getCanSelect()}
-                    isIndeterminate={row.getIsSomeSelected()}
-                    onChange={row.getToggleSelectedHandler()}
-                />
-            ),
-        }),
+        //     header: ({ table }) => (
+        //         <Checkbox
+        //             isChecked={table.getIsAllRowsSelected()}
+        //             isIndeterminate={table.getIsSomeRowsSelected()}
+        //             onChange={table.getToggleAllRowsSelectedHandler()}
+        //         />
+        //     ),
+        //     cell: ({ row }) => (
+        //         <Checkbox
+        //             isChecked={row.getIsSelected()}
+        //             isDisabled={!row.getCanSelect()}
+        //             isIndeterminate={row.getIsSomeSelected()}
+        //             onChange={row.getToggleSelectedHandler()}
+        //         />
+        //     ),
+        // }),
         columnHelper.accessor('username', {
             id: 'username',
             header: 'Usuário',
@@ -158,7 +160,7 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
         columnHelper.display({
             id: 'actions',
             header: 'Açoẽs',
-            cell: (row) => (
+            cell: ({ row }) => (
                 <Tooltip label='Abrir usuário'>
                     <IconButton
                         isDisabled={isDisabled}
@@ -166,7 +168,7 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
                         icon={<FiExternalLink />}
                         colorScheme='blue'
                         onClick={() => {
-                            console.log('Open user', row);
+                            navigate(`/admin/user/${row.original.id}`);
                         }}
                     />
                 </Tooltip>
