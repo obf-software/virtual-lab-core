@@ -1,6 +1,6 @@
 import { Authenticator } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
-import { Box, Button, Heading } from '@chakra-ui/react';
+import { Box, Button, Heading, Image } from '@chakra-ui/react';
 import { signInWithRedirect } from 'aws-amplify/auth';
 
 export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
@@ -11,6 +11,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
             initialState='signIn'
             loginMechanisms={['username', 'email']}
             variation='modal'
+            hideSignUp
             components={{
                 Header: () => {
                     return (
@@ -43,8 +44,15 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                             <Box
                                 h={'42px'}
                                 px={8}
+                                mt={8}
                             >
                                 <Button
+                                    leftIcon={
+                                        <Image
+                                            src={'logo-utfpr.png'}
+                                            h={4}
+                                        />
+                                    }
                                     fontWeight={'normal'}
                                     variant={'outline'}
                                     borderColor={'black'}
