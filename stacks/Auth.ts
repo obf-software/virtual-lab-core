@@ -96,6 +96,17 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 identifiers: ['oidc'],
                 name: 'oidc',
                 scopes: ['openid', 'email', 'profile'],
+                attributeMapping: {
+                    fullname: {
+                        attributeName: 'name',
+                    },
+                    preferredUsername: {
+                        attributeName: 'preferred_username',
+                    },
+                    email: {
+                        attributeName: 'email',
+                    },
+                },
             },
         );
     }
