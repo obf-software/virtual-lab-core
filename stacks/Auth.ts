@@ -95,7 +95,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 attributeRequestMethod: cognito.OidcAttributeRequestMethod.GET,
                 identifiers: ['oidc'],
                 name: 'oidc',
-                scopes: ['openid', 'email', 'profile', 'aws.cognito.signin.user.admin'],
+                scopes: ['openid', 'email', 'profile'],
             },
         );
     }
@@ -134,6 +134,9 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
     stack.addOutputs({
         userPoolId: cognitoAuth.userPoolId,
         userPoolClientId: cognitoAuth.userPoolClientId,
+        identityProviderRedirectUri: cognitoAuth.cognitoIdentityPoolId
+            ? `${userPoolDomain.baseUrl()}/oauth2/idpresponse`
+            : undefined,
         userPoolDomainBaseUrl: userPoolDomain.baseUrl(),
     });
 
