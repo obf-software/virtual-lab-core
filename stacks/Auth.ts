@@ -74,6 +74,32 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         },
     });
 
+    let userPoolIdentityProvider: cognito.UserPoolIdentityProviderOidc | undefined;
+    if (process.env.ENABLE_IDENTITY_PROVIDER === 'true') {
+        const clientId = process.env.IDENTITY_PROVIDER_CLIENT_ID;
+        const clientSecret = process.env.IDENTITY_PROVIDER_CLIENT_SECRET;
+        const issuerUrl = process.env.IDENTITY_PROVIDER_ISSUER_URL;
+
+        if (!clientId || !clientSecret || !issuerUrl) {
+            throw new Error('Invalid Auth stack identity provider configuration');
+        }
+
+        userPoolIdentityProvider = new cognito.UserPoolIdentityProviderOidc(
+            stack,
+            'UserPoolIdentityProvider',
+            {
+                userPool,
+                clientId,
+                clientSecret,
+                issuerUrl,
+                attributeRequestMethod: cognito.OidcAttributeRequestMethod.GET,
+                identifiers: ['oidc'],
+                name: 'oidc',
+                scopes: ['openid', 'email', 'profile', 'aws.cognito.signin.user.admin'],
+            },
+        );
+    }
+
     const userPoolClient = new cognito.UserPoolClient(stack, 'UserPoolClient', {
         userPool,
         authFlows: {
@@ -87,23 +113,17 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 cognito.OAuthScope.OPENID,
                 cognito.OAuthScope.EMAIL,
                 cognito.OAuthScope.PROFILE,
+                cognito.OAuthScope.COGNITO_ADMIN,
             ],
             flows: {
                 authorizationCodeGrant: true,
-                implicitCodeGrant: true,
             },
-
             /**
-             * @todo Update this to the client's actual URL with deployment script
+             * Those URLs are updated in the client stack
              */
-            callbackUrls: ['http://localhost:3000'],
-            logoutUrls: ['http://localhost:3000'],
+            callbackUrls: ['http://localhost:5173'],
+            logoutUrls: ['http://localhost:5173'],
         },
-        writeAttributes: new cognito.ClientAttributes().withStandardAttributes({
-            preferredUsername: true,
-            fullname: true,
-            email: true,
-        }),
     });
 
     const cognitoAuth = new sst.Cognito(stack, 'cognito', {
@@ -119,6 +139,8 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
 
     return {
         userPool,
+        userPoolIdentityProvider,
+        identityPoolId: cognitoAuth.cognitoIdentityPoolId,
         userPoolClient,
         userPoolDomain,
     };

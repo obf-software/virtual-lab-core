@@ -1,8 +1,11 @@
 import { Authenticator } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
-import { Box, Heading } from '@chakra-ui/react';
+import { Box, Button, Heading } from '@chakra-ui/react';
+import { signInWithRedirect } from 'aws-amplify/auth';
 
 export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
+    const enableIdentityProvider = import.meta.env.VITE_APP_ENABLE_IDENTITY_PROVIDER === 'true';
+
     return (
         <Authenticator
             initialState='signIn'
@@ -29,6 +32,47 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                             </Heading>
                         </Box>
                     );
+                },
+                SignIn: {
+                    Header: () => {
+                        if (!enableIdentityProvider) {
+                            return null;
+                        }
+
+                        return (
+                            <Box
+                                h={'42px'}
+                                px={8}
+                            >
+                                <Button
+                                    fontWeight={'normal'}
+                                    variant={'outline'}
+                                    borderColor={'black'}
+                                    w={'100%'}
+                                    h={'100%'}
+                                    _hover={{
+                                        borderColor: '#047d95',
+                                        bgColor: '#e9f9fc',
+                                    }}
+                                    onClick={() => {
+                                        signInWithRedirect({
+                                            provider: {
+                                                custom: import.meta.env
+                                                    .VITE_APP_AWS_IDENTITY_PROVIDER_NAME,
+                                            },
+                                        }).catch((error) => {
+                                            console.error(
+                                                'Error signing in with custom provider',
+                                                error,
+                                            );
+                                        });
+                                    }}
+                                >
+                                    Entrar com a UTFPR
+                                </Button>
+                            </Box>
+                        );
+                    },
                 },
                 Footer: () => {
                     return (

@@ -30,6 +30,29 @@ Amplify.configure({
         Cognito: {
             userPoolId: import.meta.env.VITE_APP_AWS_USER_POOL_ID,
             userPoolClientId: import.meta.env.VITE_APP_AWS_USER_POOL_CLIENT_ID,
+            identityPoolId: import.meta.env.VITE_APP_AWS_IDENTITY_POOL_ID,
+            loginWith:
+                import.meta.env.VITE_APP_ENABLE_IDENTITY_PROVIDER === 'true'
+                    ? {
+                          oauth: {
+                              domain: import.meta.env.VITE_APP_AWS_USER_POOL_DOMAIN,
+                              redirectSignIn: [window.location.origin],
+                              redirectSignOut: [window.location.origin],
+                              responseType: 'code',
+                              scopes: [
+                                  'openid',
+                                  'email',
+                                  'profile',
+                                  'aws.cognito.signin.user.admin',
+                              ],
+                              providers: [
+                                  {
+                                      custom: import.meta.env.VITE_APP_AWS_IDENTITY_PROVIDER_NAME,
+                                  },
+                              ],
+                          },
+                      }
+                    : undefined,
         },
     },
 });
