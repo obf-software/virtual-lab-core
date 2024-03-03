@@ -79,7 +79,19 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             updatedAt: data.updatedAt,
             lastConnectionAt: data.lastConnectionAt,
 
-            textSearch: [data.name, data.description]
+            textSearch: [
+                data.name,
+                data.description,
+                data.virtualId,
+                data.productId,
+                data.machineImageId,
+                data.ownerId,
+                data.launchToken,
+                data.connectionType,
+                data.platform,
+                data.distribution,
+                data.instanceType,
+            ]
                 .filter((x): x is string => typeof x === 'string')
                 .map((x) => x.toLowerCase())
                 .join(' '),

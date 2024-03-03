@@ -62,7 +62,7 @@ export const RoleSelectionContainer: React.FC<RoleSelectionContainerProps> = ({
                         <Fade in>
                             <Text>
                                 As permissões necessárias são:{' '}
-                                {allowedRoles.map(roleToDisplayString).join('ou ')}
+                                {allowedRoles.map(roleToDisplayString).join(' ou ')}
                             </Text>
                         </Fade>
                     </Stack>

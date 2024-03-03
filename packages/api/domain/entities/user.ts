@@ -9,6 +9,8 @@ dayjs.extend(utc);
 const userDataSchema = z.object({
     id: z.string().nullable(),
     username: z.string(),
+    name: z.string().optional(),
+    preferredUsername: z.string().optional(),
     role: roleSchema,
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -28,11 +30,18 @@ export class User {
     toJSON = () => this.data;
     getData = () => this.data;
 
-    static create(props: { username: string; role: 'PENDING' | 'USER' }): User {
+    static create(props: {
+        username: string;
+        name?: string;
+        preferredUsername?: string;
+        role: 'PENDING' | 'USER';
+    }): User {
         const dateNow = dayjs.utc().toDate();
         const data: UserData = {
             id: null,
             username: props.username,
+            name: props.name,
+            preferredUsername: props.preferredUsername,
             role: props.role,
             createdAt: dateNow,
             updatedAt: dateNow,
@@ -71,6 +80,8 @@ export class User {
     }
 
     update = (props: {
+        name?: string;
+        preferredUsername?: string;
         role?: Role;
         maxInstances?: number;
         allowedInstanceTypes?: string[];
@@ -80,6 +91,8 @@ export class User {
     }) => {
         const updatedData: UserData = {
             ...this.data,
+            name: props.name ?? this.data.name,
+            preferredUsername: props.preferredUsername ?? this.data.preferredUsername,
             role: props.role ?? this.data.role,
             quotas: {
                 maxInstances: props.maxInstances ?? this.data.quotas.maxInstances,

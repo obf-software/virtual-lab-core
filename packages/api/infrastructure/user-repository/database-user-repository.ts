@@ -34,6 +34,8 @@ export class DatabaseUserRepository implements UserRepository {
         return User.restore({
             id: model._id.toJSON(),
             username: model.username,
+            name: model.name,
+            preferredUsername: model.preferredUsername,
             role: model.role,
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
@@ -49,6 +51,8 @@ export class DatabaseUserRepository implements UserRepository {
         return {
             _id: data.id ? new ObjectId(data.id) : new ObjectId(),
             username: data.username,
+            name: data.name,
+            preferredUsername: data.preferredUsername,
             role: data.role,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
@@ -56,7 +60,7 @@ export class DatabaseUserRepository implements UserRepository {
             groupIds: data.groupIds.map((id) => new ObjectId(id)),
             quotas: data.quotas,
 
-            textSearch: [data.username]
+            textSearch: [data.name, data.preferredUsername, data.username, data.role]
                 .filter((x): x is string => typeof x === 'string')
                 .map((x) => x.toLowerCase())
                 .join(' '),

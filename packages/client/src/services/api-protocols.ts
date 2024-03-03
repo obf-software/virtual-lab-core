@@ -82,6 +82,8 @@ export interface Instance {
 export interface User {
     id: string;
     username: string;
+    name?: string;
+    preferredUsername?: string;
     role: Role;
     createdAt: string;
     updatedAt: string;

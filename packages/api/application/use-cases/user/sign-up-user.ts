@@ -7,7 +7,9 @@ import { Errors } from '../../../domain/dtos/errors';
 export const signUpUserInputSchema = z
     .object({
         username: z.string().min(1),
-        selfRegister: z.boolean().optional().default(false),
+        name: z.string().optional(),
+        preferredUsername: z.string().optional(),
+        isExternalProvider: z.boolean(),
     })
     .strict();
 export type SignUpUserInput = z.infer<typeof signUpUserInputSchema>;
@@ -28,13 +30,26 @@ export class SignUpUser {
         const { data: validInput } = inputValidation;
 
         const existingUser = await this.userRepository.getByUsername(validInput.username);
-        if (existingUser) return existingUser;
+
+        if (existingUser) {
+            existingUser.update({
+                name: validInput.name,
+                preferredUsername: validInput.preferredUsername,
+                role: validInput.isExternalProvider ? 'USER' : 'PENDING',
+            });
+
+            await this.userRepository.update(existingUser);
+            return existingUser;
+        }
 
         const newUser = User.create({
             username: validInput.username,
-            role: validInput.selfRegister ? 'PENDING' : 'USER',
+            name: validInput.name,
+            preferredUsername: validInput.preferredUsername,
+            role: validInput.isExternalProvider ? 'USER' : 'PENDING',
         });
         newUser.id = await this.userRepository.save(newUser);
+
         return newUser;
     };
 }

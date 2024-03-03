@@ -3,6 +3,8 @@ import { ObjectId } from 'mongodb';
 export interface UserDbModel {
     _id: ObjectId;
     username: string;
+    name?: string;
+    preferredUsername?: string;
     role: 'NONE' | 'PENDING' | 'USER' | 'ADMIN';
     createdAt: Date;
     updatedAt: Date;

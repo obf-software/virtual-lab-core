@@ -17,6 +17,15 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         permissions: ['ssm:*', 'secretsmanager:*'],
     });
 
+    const preSignUpTrigger = new sst.Function(stack, 'preSignUpTrigger', {
+        handler: 'packages/api/interfaces/events/on-pre-sign-up-trigger.handler',
+        environment: {
+            SHARED_SECRET_NAME: 'not-used-yet',
+            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+        },
+        permissions: ['ssm:*', 'secretsmanager:*'],
+    });
+
     const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
         handler: 'packages/api/interfaces/events/on-post-confirmation-trigger.handler',
         environment: {
@@ -40,6 +49,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         selfSignUpEnabled: true,
         lambdaTriggers: {
             preTokenGeneration: preTokenGenerationTrigger,
+            preSignUp: preSignUpTrigger,
             postConfirmation: postConfirmationTrigger,
         },
         passwordPolicy: {

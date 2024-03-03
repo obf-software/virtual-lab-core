@@ -7,6 +7,7 @@ import { Errors } from '../../../domain/dtos/errors';
 export const signInUserInputSchema = z
     .object({
         username: z.string().min(1),
+        shouldUpdateLastLoginAt: z.boolean(),
     })
     .strict();
 export type SignInUserInput = z.infer<typeof signInUserInputSchema>;
@@ -28,8 +29,12 @@ export class SignInUser {
 
         const user = await this.userRepository.getByUsername(validInput.username);
         if (!user) throw Errors.resourceNotFound('User', validInput.username);
-        user.onSignIn();
-        await this.userRepository.update(user);
+
+        if (validInput.shouldUpdateLastLoginAt) {
+            user.onSignIn();
+            await this.userRepository.update(user);
+        }
+
         return user;
     };
 }

@@ -1,4 +1,4 @@
-import { PostConfirmationTriggerHandler } from 'aws-lambda';
+import { PreSignUpTriggerHandler } from 'aws-lambda';
 import { SignUpUser } from '../../application/use-cases/user/sign-up-user';
 import { AWSConfigVault } from '../../infrastructure/config-vault/aws-config-vault';
 import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lambaLayerConfigVault';
@@ -16,16 +16,13 @@ const configVault =
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const signUpUser = new SignUpUser(logger, userRepository);
 
-export const handler = LambdaHandlerAdapter.adaptCustom<PostConfirmationTriggerHandler>(
+export const handler = LambdaHandlerAdapter.adaptCustom<PreSignUpTriggerHandler>(
     async (event) => {
-        const isExternalProvider =
-            event.request.userAttributes['cognito:user_status'] === 'EXTERNAL_PROVIDER';
-
         await signUpUser.execute({
             username: event.userName,
             name: event.request.userAttributes.name,
             preferredUsername: event.request.userAttributes.preferred_username,
-            isExternalProvider,
+            isExternalProvider: false,
         });
 
         return event;
