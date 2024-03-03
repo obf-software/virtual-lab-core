@@ -22,26 +22,18 @@ import {
 import React from 'react';
 import { FiCheck, FiClock } from 'react-icons/fi';
 import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
-import {
-    confirmUserAttribute,
-    sendUserAttributeVerificationCode,
-    updateUserAttribute,
-} from 'aws-amplify/auth';
-import { getErrorMessage } from '../../../services/helpers';
+import { confirmUserAttribute, sendUserAttributeVerificationCode } from 'aws-amplify/auth';
+import { getErrorMessage, roleToDisplayString } from '../../../services/helpers';
+import { useUser } from '../../../hooks/use-user';
 
 export const ProfilePageInfoCard: React.FC = () => {
+    const { userQuery } = useUser({ userId: 'me' });
     const { authSessionData, refetchAuthSessionData } = useAuthSessionData();
 
     const [isWaitingForVerificationCode, setIsWaitingForVerificationCode] = React.useState(false);
     const [isVerificationButtonLoading, setIsVerificationButtonLoading] = React.useState(false);
     const [verificationCode, setVerificationCode] = React.useState<string>();
-
-    const [inputName, setInputName] = React.useState<string>(authSessionData?.name ?? '');
-    const [isUpdatingName, setIsUpdatingName] = React.useState(false);
-
-    React.useEffect(() => {
-        setInputName(authSessionData?.name ?? '');
-    }, [authSessionData]);
+    const isEmailVerified = authSessionData?.email_verified === 'true';
 
     const toast = useToast();
 
@@ -69,6 +61,7 @@ export const ProfilePageInfoCard: React.FC = () => {
                     <FormControl
                         mr='2%'
                         isReadOnly
+                        isDisabled={userQuery.isLoading}
                     >
                         <FormLabel
                             id='username'
@@ -77,29 +70,58 @@ export const ProfilePageInfoCard: React.FC = () => {
                             Usuário
                         </FormLabel>
 
-                        <Input
-                            id='username'
-                            type='text'
-                            value={authSessionData?.username}
-                        />
+                        <InputGroup>
+                            <Input
+                                id='username'
+                                type='text'
+                                value={
+                                    userQuery.data?.preferredUsername ?? userQuery.data?.username
+                                }
+                            />
+                            <InputRightElement>
+                                {userQuery.isLoading && (
+                                    <Spinner
+                                        size='sm'
+                                        color='gray.500'
+                                    />
+                                )}
+                            </InputRightElement>
+                        </InputGroup>
                     </FormControl>
 
-                    <FormControl isReadOnly>
+                    <FormControl
+                        isReadOnly
+                        isDisabled={userQuery.isLoading}
+                    >
                         <FormLabel
                             id='role'
                             fontWeight={'bold'}
                         >
                             Cargo
                         </FormLabel>
-                        <Input
-                            id='role'
-                            type='text'
-                            value={authSessionData?.displayRole}
-                        />
+                        <InputGroup>
+                            <Input
+                                id='role'
+                                type='text'
+                                value={roleToDisplayString(userQuery.data?.role)}
+                            />
+                            <InputRightElement>
+                                {userQuery.isLoading && (
+                                    <Spinner
+                                        size='sm'
+                                        color='gray.500'
+                                    />
+                                )}
+                            </InputRightElement>
+                        </InputGroup>
                     </FormControl>
                 </Flex>
 
-                <FormControl mt={'2%'}>
+                <FormControl
+                    mt={'2%'}
+                    isReadOnly
+                    isDisabled={userQuery.isLoading}
+                >
                     <FormLabel
                         id='name'
                         fontWeight={'bold'}
@@ -110,49 +132,13 @@ export const ProfilePageInfoCard: React.FC = () => {
                         <Input
                             id='name'
                             type='text'
-                            placeholder='Insira seu nome'
-                            value={inputName}
-                            onChange={(event) => {
-                                setInputName(event.target.value);
-                            }}
-                            onBlur={() => {
-                                if (inputName !== authSessionData?.name) {
-                                    setIsUpdatingName(true);
-                                    updateUserAttribute({
-                                        userAttribute: {
-                                            attributeKey: 'name',
-                                            value: inputName,
-                                        },
-                                    })
-                                        .then(() => {
-                                            setIsUpdatingName(false);
-                                            toast({
-                                                title: 'Nome atualizado',
-                                                description: 'Seu nome foi atualizado com sucesso',
-                                                status: 'success',
-                                                duration: 5000,
-                                                isClosable: true,
-                                            });
-                                        })
-                                        .catch((error) => {
-                                            setIsUpdatingName(false);
-                                            setInputName(authSessionData?.name ?? '');
-                                            toast({
-                                                title: 'Erro ao atualizar nome',
-                                                description: getErrorMessage(error),
-                                                status: 'error',
-                                                duration: 5000,
-                                                isClosable: true,
-                                            });
-                                        });
-                                }
-                            }}
+                            value={userQuery.data?.name ?? '-'}
                         />
                         <InputRightElement>
-                            {isUpdatingName && (
+                            {userQuery.isLoading && (
                                 <Spinner
                                     size='sm'
-                                    hidden={!isUpdatingName}
+                                    color='gray.500'
                                 />
                             )}
                         </InputRightElement>
@@ -176,25 +162,20 @@ export const ProfilePageInfoCard: React.FC = () => {
                             value={authSessionData?.email}
                         />
                         <Tooltip
-                            label={
-                                authSessionData?.email_verified === 'true'
-                                    ? 'Email verificado'
-                                    : 'Email não verificado'
-                            }
+                            label={isEmailVerified ? 'Email verificado' : 'Email não verificado'}
                         >
                             <InputRightElement>
-                                <Icon
-                                    as={
-                                        authSessionData?.email_verified === 'true'
-                                            ? FiCheck
-                                            : FiClock
-                                    }
-                                    color={
-                                        authSessionData?.email_verified === 'true'
-                                            ? 'green.500'
-                                            : 'yellow.500'
-                                    }
-                                />
+                                {authSessionData === undefined ? (
+                                    <Spinner
+                                        size='sm'
+                                        color='gray.500'
+                                    />
+                                ) : (
+                                    <Icon
+                                        as={isEmailVerified ? FiCheck : FiClock}
+                                        color={isEmailVerified ? 'green.500' : 'yellow.500'}
+                                    />
+                                )}
                             </InputRightElement>
                         </Tooltip>
                     </InputGroup>
@@ -203,50 +184,101 @@ export const ProfilePageInfoCard: React.FC = () => {
                     </FormHelperText>
                 </FormControl>
 
-                <Fade in={authSessionData !== undefined}>
-                    {authSessionData !== undefined &&
-                        authSessionData?.email_verified !== 'true' && (
-                            <Flex mt={'2%'}>
-                                <Button
-                                    colorScheme={'blue'}
-                                    variant={'outline'}
-                                    isLoading={isVerificationButtonLoading}
-                                    onClick={() => {
-                                        setIsVerificationButtonLoading(true);
+                <Fade in={isEmailVerified !== true}>
+                    {isEmailVerified !== true && (
+                        <Flex mt={'2%'}>
+                            <Button
+                                colorScheme={'blue'}
+                                variant={'outline'}
+                                isLoading={isVerificationButtonLoading}
+                                onClick={() => {
+                                    setIsVerificationButtonLoading(true);
 
-                                        sendUserAttributeVerificationCode({
-                                            userAttributeKey: 'email',
+                                    sendUserAttributeVerificationCode({
+                                        userAttributeKey: 'email',
+                                    })
+                                        .then((output) => {
+                                            const deliveryMediumMap: Record<string, string> = {
+                                                EMAIL: output.destination
+                                                    ? `Um código de verificação foi enviado para ${output.destination}`
+                                                    : 'Um código de verificação foi enviado para o seu email',
+                                                PHONE: output.destination
+                                                    ? `Um código de verificação foi enviado para ${output.destination}`
+                                                    : 'Um código de verificação foi enviado para o seu telefone',
+                                                SMS: output.destination
+                                                    ? `Um código de verificação foi enviado para ${output.destination}`
+                                                    : 'Um código de verificação foi enviado para o seu telefone',
+                                                UNKNOWN:
+                                                    'Um código de verificação foi enviado para algum de seus dispositivos',
+                                            };
+
+                                            toast({
+                                                title: 'Código de verificação enviado',
+                                                description: `${deliveryMediumMap[output.deliveryMedium ?? 'UNKNOWN']}. Copie e cole o código no campo a seguir.`,
+                                                status: 'success',
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+
+                                            setIsWaitingForVerificationCode(true);
+                                            setIsVerificationButtonLoading(false);
                                         })
-                                            .then((output) => {
-                                                const deliveryMediumMap: Record<string, string> = {
-                                                    EMAIL: output.destination
-                                                        ? `Um código de verificação foi enviado para ${output.destination}`
-                                                        : 'Um código de verificação foi enviado para o seu email',
-                                                    PHONE: output.destination
-                                                        ? `Um código de verificação foi enviado para ${output.destination}`
-                                                        : 'Um código de verificação foi enviado para o seu telefone',
-                                                    SMS: output.destination
-                                                        ? `Um código de verificação foi enviado para ${output.destination}`
-                                                        : 'Um código de verificação foi enviado para o seu telefone',
-                                                    UNKNOWN:
-                                                        'Um código de verificação foi enviado para algum de seus dispositivos',
-                                                };
+                                        .catch((error) => {
+                                            setIsVerificationButtonLoading(false);
+                                            toast({
+                                                title: 'Erro ao enviar código de verificação',
+                                                description: getErrorMessage(error),
+                                                status: 'error',
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        });
+                                }}
+                            >
+                                {isWaitingForVerificationCode
+                                    ? 'Reenviar código'
+                                    : 'Verificar email'}
+                            </Button>
+
+                            <HStack
+                                ml={'2%'}
+                                hidden={!isWaitingForVerificationCode}
+                            >
+                                <PinInput
+                                    type='number'
+                                    isDisabled={isVerificationButtonLoading}
+                                    value={verificationCode}
+                                    onChange={(value) => {
+                                        setVerificationCode(value);
+                                    }}
+                                    onComplete={(code) => {
+                                        setIsVerificationButtonLoading(true);
+                                        confirmUserAttribute({
+                                            userAttributeKey: 'email',
+                                            confirmationCode: code,
+                                        })
+                                            .then(() => {
+                                                setIsVerificationButtonLoading(false);
+                                                setIsWaitingForVerificationCode(false);
+                                                setVerificationCode(undefined);
 
                                                 toast({
-                                                    title: 'Código de verificação enviado',
-                                                    description: `${deliveryMediumMap[output.deliveryMedium ?? 'UNKNOWN']}. Copie e cole o código no campo a seguir.`,
+                                                    title: 'Email verificado',
+                                                    description:
+                                                        'Seu email foi verificado com sucesso',
                                                     status: 'success',
                                                     duration: 5000,
                                                     isClosable: true,
                                                 });
 
-                                                setIsWaitingForVerificationCode(true);
-                                                setIsVerificationButtonLoading(false);
+                                                refetchAuthSessionData().catch(console.error);
                                             })
                                             .catch((error) => {
                                                 setIsVerificationButtonLoading(false);
+                                                setVerificationCode('');
+
                                                 toast({
-                                                    title: 'Erro ao enviar código de verificação',
+                                                    title: 'Erro ao verificar email',
                                                     description: getErrorMessage(error),
                                                     status: 'error',
                                                     duration: 5000,
@@ -255,68 +287,16 @@ export const ProfilePageInfoCard: React.FC = () => {
                                             });
                                     }}
                                 >
-                                    {isWaitingForVerificationCode
-                                        ? 'Reenviar código'
-                                        : 'Verificar email'}
-                                </Button>
-
-                                <HStack
-                                    ml={'2%'}
-                                    hidden={!isWaitingForVerificationCode}
-                                >
-                                    <PinInput
-                                        type='number'
-                                        isDisabled={isVerificationButtonLoading}
-                                        value={verificationCode}
-                                        onChange={(value) => {
-                                            setVerificationCode(value);
-                                        }}
-                                        onComplete={(code) => {
-                                            setIsVerificationButtonLoading(true);
-                                            confirmUserAttribute({
-                                                userAttributeKey: 'email',
-                                                confirmationCode: code,
-                                            })
-                                                .then(() => {
-                                                    setIsVerificationButtonLoading(false);
-                                                    setIsWaitingForVerificationCode(false);
-                                                    setVerificationCode(undefined);
-
-                                                    toast({
-                                                        title: 'Email verificado',
-                                                        description:
-                                                            'Seu email foi verificado com sucesso',
-                                                        status: 'success',
-                                                        duration: 5000,
-                                                        isClosable: true,
-                                                    });
-
-                                                    refetchAuthSessionData().catch(console.error);
-                                                })
-                                                .catch((error) => {
-                                                    setIsVerificationButtonLoading(false);
-                                                    setVerificationCode('');
-
-                                                    toast({
-                                                        title: 'Erro ao verificar email',
-                                                        description: getErrorMessage(error),
-                                                        status: 'error',
-                                                        duration: 5000,
-                                                        isClosable: true,
-                                                    });
-                                                });
-                                        }}
-                                    >
-                                        <PinInputField />
-                                        <PinInputField />
-                                        <PinInputField />
-                                        <PinInputField />
-                                        <PinInputField />
-                                        <PinInputField />
-                                    </PinInput>
-                                </HStack>
-                            </Flex>
-                        )}
+                                    <PinInputField />
+                                    <PinInputField />
+                                    <PinInputField />
+                                    <PinInputField />
+                                    <PinInputField />
+                                    <PinInputField />
+                                </PinInput>
+                            </HStack>
+                        </Flex>
+                    )}
                 </Fade>
             </Box>
         </VStack>

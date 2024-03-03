@@ -5,6 +5,8 @@ import { signInWithRedirect } from 'aws-amplify/auth';
 
 export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
     const enableIdentityProvider = import.meta.env.VITE_APP_ENABLE_IDENTITY_PROVIDER === 'true';
+    const [isIdentityProviderButtonLoading, setIsIdentityProviderButtonLoading] =
+        React.useState<boolean>(false);
 
     return (
         <Authenticator
@@ -47,6 +49,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                                 mt={8}
                             >
                                 <Button
+                                    isLoading={isIdentityProviderButtonLoading}
                                     leftIcon={
                                         <Image
                                             src={'logo-utfpr.png'}
@@ -63,12 +66,16 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                                         bgColor: '#e9f9fc',
                                     }}
                                     onClick={() => {
+                                        setIsIdentityProviderButtonLoading(true);
+
                                         signInWithRedirect({
                                             provider: {
                                                 custom: import.meta.env
                                                     .VITE_APP_AWS_IDENTITY_PROVIDER_NAME,
                                             },
                                         }).catch((error) => {
+                                            setIsIdentityProviderButtonLoading(false);
+
                                             console.error(
                                                 'Error signing in with custom provider',
                                                 error,
