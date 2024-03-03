@@ -31,7 +31,7 @@ export const router = createBrowserRouter([
                 path: 'instances',
                 element: (
                     <RoleSelectionContainer allowedRoles={['USER', 'ADMIN']}>
-                        <InstancesPage />,
+                        <InstancesPage />
                     </RoleSelectionContainer>
                 ),
             },
