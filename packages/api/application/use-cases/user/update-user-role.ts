@@ -11,7 +11,7 @@ export const updateUserRoleInputSchema = z
     .object({
         principal: principalSchema,
         userId: z.string().min(1).optional(),
-        role: roleSchema.extract(['ADMIN', 'USER']),
+        role: roleSchema.extract(['ADMIN', 'USER', 'NONE']),
     })
     .strict();
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleInputSchema>;

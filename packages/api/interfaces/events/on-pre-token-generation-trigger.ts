@@ -20,7 +20,9 @@ export const handler = LambdaHandlerAdapter.adaptCustom<PreTokenGenerationTrigge
     async (event) => {
         const user = await signInUser.execute({
             username: event.userName,
-            shouldUpdateLastLoginAt: event.triggerSource === 'TokenGeneration_Authentication',
+            shouldUpdateLastLoginAt:
+                event.triggerSource === 'TokenGeneration_Authentication' ||
+                event.triggerSource === 'TokenGeneration_HostedAuth',
         });
 
         const outputEvent = event;

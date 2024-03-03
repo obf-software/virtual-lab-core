@@ -103,6 +103,7 @@ export class User {
                     this.data.quotas.canLaunchInstanceWithHibernation,
             },
             groupIds: props.groupIds ?? this.data.groupIds,
+            lastLoginAt: props.lastLoginAt ?? this.data.lastLoginAt,
             updatedAt: dayjs.utc().toDate(),
         };
 

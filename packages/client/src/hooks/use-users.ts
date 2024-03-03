@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { listUsers } from '../services/api';
+import { queryClient } from '../services/query-client';
 
 export const useUsers = (props: {
     groupId?: string;
@@ -28,7 +29,13 @@ export const useUsers = (props: {
                 page: props.page,
                 resultsPerPage: props.resultsPerPage,
             });
+
             if (!response.success) throw new Error(response.error);
+
+            response.data.data.forEach((user) => {
+                queryClient.setQueryData(['user', user.id], user);
+            });
+
             return response.data;
         },
         placeholderData: keepPreviousData,

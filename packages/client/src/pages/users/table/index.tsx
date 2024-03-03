@@ -1,9 +1,6 @@
 import {
-    Checkbox,
+    ButtonGroup,
     IconButton,
-    List,
-    ListIcon,
-    ListItem,
     Spinner,
     Table,
     TableCaption,
@@ -16,6 +13,7 @@ import {
     Thead,
     Tooltip,
     Tr,
+    useToast,
 } from '@chakra-ui/react';
 import React from 'react';
 import {
@@ -26,10 +24,11 @@ import {
     useReactTable,
 } from '@tanstack/react-table';
 import { Role, User } from '../../../services/api-protocols';
-import { roleToDisplayString } from '../../../services/helpers';
+import { getErrorMessage, roleToDisplayString } from '../../../services/helpers';
 import dayjs from 'dayjs';
-import { FiCpu, FiExternalLink, FiMonitor, FiMoon } from 'react-icons/fi';
+import { FiCheck, FiExternalLink } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useUserOperations } from '../../../hooks/use-user-operations';
 
 interface UsersPageTableProps {
     users: User[];
@@ -40,7 +39,7 @@ interface UsersPageTableProps {
 
 const roleStyleMap: Record<Role, { TagColorScheme: TagProps['colorScheme']; label: string }> = {
     NONE: {
-        TagColorScheme: 'gray',
+        TagColorScheme: 'red',
         label: roleToDisplayString('NONE'),
     },
     PENDING: {
@@ -52,7 +51,7 @@ const roleStyleMap: Record<Role, { TagColorScheme: TagProps['colorScheme']; labe
         label: roleToDisplayString('USER'),
     },
     ADMIN: {
-        TagColorScheme: 'red',
+        TagColorScheme: 'green',
         label: roleToDisplayString('ADMIN'),
     },
 };
@@ -64,32 +63,15 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
     isDisabled,
 }) => {
     const columnHelper = createColumnHelper<User>();
+    const { updateRole } = useUserOperations();
     const navigate = useNavigate();
+    const toast = useToast();
 
     const columns = [
-        // columnHelper.display({
-        //     id: 'select',
-
-        //     header: ({ table }) => (
-        //         <Checkbox
-        //             isChecked={table.getIsAllRowsSelected()}
-        //             isIndeterminate={table.getIsSomeRowsSelected()}
-        //             onChange={table.getToggleAllRowsSelectedHandler()}
-        //         />
-        //     ),
-        //     cell: ({ row }) => (
-        //         <Checkbox
-        //             isChecked={row.getIsSelected()}
-        //             isDisabled={!row.getCanSelect()}
-        //             isIndeterminate={row.getIsSomeSelected()}
-        //             onChange={row.getToggleSelectedHandler()}
-        //         />
-        //     ),
-        // }),
         columnHelper.accessor('name', {
             id: 'name',
             header: 'Nome',
-            cell: (row) => row.getValue(),
+            cell: (row) => row.getValue() ?? '-',
         }),
         columnHelper.accessor((row) => row.preferredUsername ?? row.username, {
             id: 'username',
@@ -119,64 +101,57 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
             cell: (row) =>
                 row.getValue() !== undefined ? dayjs(row.getValue()).format('DD/MM/YYYY') : 'Nunca',
         }),
-        // columnHelper.accessor('quotas', {
-        //     id: 'quotas',
-        //     header: 'Cotas',
-        //     cell: (row) => (
-        //         <List spacing={2}>
-        //             <Tooltip
-        //                 label={`Máximo de instâncias permitidas: ${row.getValue().maxInstances}`}
-        //             >
-        //                 <ListItem>
-        //                     <ListIcon
-        //                         as={FiMonitor}
-        //                         color='green'
-        //                     />
-        //                     {row.getValue().maxInstances}
-        //                 </ListItem>
-        //             </Tooltip>
-
-        //             <Tooltip
-        //                 label={`Tipos de instâncias permitidos: ${row.getValue().allowedInstanceTypes.join(', ')}`}
-        //             >
-        //                 <ListItem>
-        //                     <ListIcon
-        //                         as={FiCpu}
-        //                         color='black'
-        //                     />
-        //                     {row.getValue().allowedInstanceTypes.join(', ').slice(0, 30)}
-        //                 </ListItem>
-        //             </Tooltip>
-
-        //             <Tooltip
-        //                 label={`Pode criar instâncias com hibernação? ${row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}`}
-        //             >
-        //                 <ListItem>
-        //                     <ListIcon
-        //                         as={FiMoon}
-        //                         color='blue'
-        //                     />
-        //                     {row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}
-        //                 </ListItem>
-        //             </Tooltip>
-        //         </List>
-        //     ),
-        // }),
         columnHelper.display({
             id: 'actions',
-            header: 'Abrir',
+            header: 'Ações',
             cell: ({ row }) => (
-                <Tooltip label='Abrir usuário'>
-                    <IconButton
-                        isDisabled={isDisabled}
-                        aria-label='Abrir usuário'
-                        icon={<FiExternalLink />}
-                        colorScheme='blue'
-                        onClick={() => {
-                            navigate(`/admin/user/${row.original.id}`);
-                        }}
-                    />
-                </Tooltip>
+                <ButtonGroup>
+                    <Tooltip
+                        label={
+                            row.original.role !== 'PENDING'
+                                ? 'Usuário já aprovado'
+                                : 'Aprovar usuário'
+                        }
+                    >
+                        <IconButton
+                            isDisabled={isDisabled === true || row.original.role !== 'PENDING'}
+                            isLoading={updateRole.isPending}
+                            aria-label='Aprovar usuário'
+                            icon={<FiCheck />}
+                            colorScheme='green'
+                            onClick={() => {
+                                updateRole.mutate(
+                                    {
+                                        userId: row.original.id,
+                                        role: 'USER',
+                                    },
+                                    {
+                                        onError: (error) => {
+                                            toast({
+                                                title: 'Falha ao aprovar usuário',
+                                                description: getErrorMessage(error),
+                                                status: 'error',
+                                                duration: 5000,
+                                                isClosable: true,
+                                            });
+                                        },
+                                    },
+                                );
+                            }}
+                        />
+                    </Tooltip>
+                    <Tooltip label='Abrir usuário'>
+                        <IconButton
+                            isDisabled={isDisabled}
+                            aria-label='Abrir usuário'
+                            icon={<FiExternalLink />}
+                            colorScheme='blue'
+                            onClick={() => {
+                                navigate(`/admin/user/${row.original.id}`);
+                            }}
+                        />
+                    </Tooltip>
+                </ButtonGroup>
             ),
         }),
     ];

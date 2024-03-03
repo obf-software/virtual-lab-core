@@ -11,15 +11,23 @@ import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbLink,
+    Fade,
+    Text,
 } from '@chakra-ui/react';
 import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useUser } from '../../hooks/use-user';
+import { UserPageInfoCard } from './info-card';
+import dayjs from 'dayjs';
+import { UserPageQuotaCard } from './quota-card';
 
 export const UserPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
     const navigate = useNavigate();
+    const params = useParams();
+    const { userQuery } = useUser({ userId: params.userId! });
 
     React.useEffect(() => {
         setActiveMenuItem('ADMIN_USERS');
@@ -58,11 +66,26 @@ export const UserPage: React.FC = () => {
                             >
                                 <BreadcrumbItem>
                                     <BreadcrumbLink isCurrentPage>
-                                        <Heading color='gray.800'>TODO</Heading>
+                                        <Heading color='gray.800'>
+                                            {userQuery.data?.name ??
+                                                userQuery.data?.preferredUsername ??
+                                                userQuery.data?.username}
+                                        </Heading>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </SlideFade>
                         </Breadcrumb>
+
+                        <Fade in={userQuery.data !== undefined}>
+                            <Text
+                                fontSize='md'
+                                color='gray.600'
+                            >
+                                {`Membro desde ${dayjs(userQuery.data?.createdAt).format(
+                                    'DD/MM/YYYY',
+                                )}`}
+                            </Text>
+                        </Fade>
                     </VStack>
 
                     <SlideFade
@@ -76,17 +99,25 @@ export const UserPage: React.FC = () => {
                                     aria-label='Recarregar'
                                     variant={'outline'}
                                     colorScheme='blue'
-                                    // hidden={usersQuery.isLoading}
-                                    // isLoading={usersQuery.isFetching}
-                                    // onClick={() => {
-                                    //     usersQuery.refetch().catch(console.error);
-                                    // }}
+                                    hidden={userQuery.isLoading}
+                                    isLoading={userQuery.isFetching}
+                                    onClick={() => {
+                                        userQuery.refetch().catch(console.error);
+                                    }}
                                 >
                                     <FiRefreshCw />
                                 </IconButton>
                             </Tooltip>
                         </ButtonGroup>
                     </SlideFade>
+                </Stack>
+
+                <Stack
+                    direction={'column'}
+                    spacing={6}
+                >
+                    <UserPageInfoCard userQuery={userQuery} />
+                    <UserPageQuotaCard userQuery={userQuery} />
                 </Stack>
             </Container>
         </Box>

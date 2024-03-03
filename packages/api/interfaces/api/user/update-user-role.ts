@@ -23,7 +23,7 @@ const updateUserRole = new UpdateUserRole(logger, auth, userRepository);
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
         const body = z
-            .object({ role: roleSchema.extract(['ADMIN', 'USER']) })
+            .object({ role: roleSchema.extract(['ADMIN', 'USER', 'NONE']) })
             .safeParse(JSON.parse(event.body ?? '{}'));
         if (!body.success) throw Errors.validationError(body.error);
 

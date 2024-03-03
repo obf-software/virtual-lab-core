@@ -10,8 +10,8 @@ export const updateUserQuotasInput = z
     .object({
         principal: principalSchema,
         userId: z.string().min(1).optional(),
-        maxInstances: z.number().positive().optional(),
-        allowedInstanceTypes: z.array(z.string().min(1)).nonempty().optional(),
+        maxInstances: z.number().min(0).optional(),
+        allowedInstanceTypes: z.array(z.string()).nonempty().optional(),
         canLaunchInstanceWithHibernation: z.boolean().optional(),
     })
     .strict()
