@@ -25,6 +25,7 @@ import { Paginator } from '../../components/paginator';
 import { SearchBar } from '../../components/search-bar';
 import { FilterButton } from '../../components/filter-button';
 import { NewInstancePageCard } from './card';
+import { useNavigate } from 'react-router-dom';
 
 export const NewInstancePage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
@@ -44,6 +45,7 @@ export const NewInstancePage: React.FC = () => {
         orderBy,
         textSearch,
     });
+    const navigate = useNavigate();
 
     const instanceTemplates = instanceTemplatesQuery.data?.data ?? [];
     const numberOfPages = instanceTemplatesQuery.data?.numberOfPages ?? 0;
@@ -68,39 +70,43 @@ export const NewInstancePage: React.FC = () => {
                     align={{ base: 'center', md: 'center' }}
                     spacing={{ base: 5, md: 10 }}
                 >
-                    <SlideFade
-                        in
-                        offsetX={'-20px'}
-                        offsetY={0}
+                    <VStack
+                        spacing={0}
+                        align={{ base: 'center', md: 'initial' }}
                     >
-                        <VStack
-                            spacing={0}
-                            align={{ base: 'center', md: 'initial' }}
-                        >
-                            <Breadcrumb separator={<Heading>/</Heading>}>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href='/instances'>
-                                        <Heading color='gray.800'>Instâncias</Heading>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
+                        <Breadcrumb separator={<Heading>/</Heading>}>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink
+                                    onClick={() => {
+                                        navigate('/instances');
+                                    }}
+                                >
+                                    <Heading color='gray.800'>Instâncias</Heading>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
 
+                            <SlideFade
+                                in
+                                offsetX={'-20px'}
+                                offsetY={0}
+                            >
                                 <BreadcrumbItem>
                                     <BreadcrumbLink isCurrentPage>
                                         <Heading color='gray.800'>Nova</Heading>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
-                            </Breadcrumb>
+                            </SlideFade>
+                        </Breadcrumb>
 
-                            <Text
-                                fontSize='md'
-                                color='gray.600'
-                            >
-                                {numberOfResults === 0 && 'Nenhum resultado'}
-                                {numberOfResults === 1 && '1 resultado'}
-                                {numberOfResults > 1 && `${numberOfResults} resultados`}
-                            </Text>
-                        </VStack>
-                    </SlideFade>
+                        <Text
+                            fontSize='md'
+                            color='gray.600'
+                        >
+                            {numberOfResults === 0 && 'Nenhum resultado'}
+                            {numberOfResults === 1 && '1 resultado'}
+                            {numberOfResults > 1 && `${numberOfResults} resultados`}
+                        </Text>
+                    </VStack>
 
                     <SlideFade
                         in

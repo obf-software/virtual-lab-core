@@ -15,9 +15,11 @@ import {
 import { FiRefreshCw } from 'react-icons/fi';
 import React from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
+import { useNavigate } from 'react-router-dom';
 
 export const UserPage: React.FC = () => {
     const { setActiveMenuItem } = useMenuContext();
+    const navigate = useNavigate();
 
     React.useEffect(() => {
         setActiveMenuItem('ADMIN_USERS');
@@ -34,30 +36,34 @@ export const UserPage: React.FC = () => {
                     align={{ base: 'center', md: 'center' }}
                     spacing={{ base: 5, md: 10 }}
                 >
-                    <SlideFade
-                        in
-                        offsetX={'-20px'}
-                        offsetY={0}
+                    <VStack
+                        spacing={0}
+                        align={{ base: 'center', md: 'initial' }}
                     >
-                        <VStack
-                            spacing={0}
-                            align={{ base: 'center', md: 'initial' }}
-                        >
-                            <Breadcrumb separator={<Heading>/</Heading>}>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href='/admin/users'>
-                                        <Heading color='gray.800'>Usuários</Heading>
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
+                        <Breadcrumb separator={<Heading>/</Heading>}>
+                            <BreadcrumbItem>
+                                <BreadcrumbLink
+                                    onClick={() => {
+                                        navigate('/admin/users');
+                                    }}
+                                >
+                                    <Heading color='gray.800'>Usuários</Heading>
+                                </BreadcrumbLink>
+                            </BreadcrumbItem>
 
+                            <SlideFade
+                                in
+                                offsetX={'-20px'}
+                                offsetY={0}
+                            >
                                 <BreadcrumbItem>
                                     <BreadcrumbLink isCurrentPage>
                                         <Heading color='gray.800'>TODO</Heading>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
-                            </Breadcrumb>
-                        </VStack>
-                    </SlideFade>
+                            </SlideFade>
+                        </Breadcrumb>
+                    </VStack>
 
                     <SlideFade
                         in

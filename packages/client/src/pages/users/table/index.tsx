@@ -86,7 +86,12 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
         //         />
         //     ),
         // }),
-        columnHelper.accessor('username', {
+        columnHelper.accessor('name', {
+            id: 'name',
+            header: 'Nome',
+            cell: (row) => row.getValue(),
+        }),
+        columnHelper.accessor((row) => row.preferredUsername ?? row.username, {
             id: 'username',
             header: 'Usuário',
             cell: (row) => row.getValue(),
@@ -114,52 +119,52 @@ export const UsersPageTable: React.FC<UsersPageTableProps> = ({
             cell: (row) =>
                 row.getValue() !== undefined ? dayjs(row.getValue()).format('DD/MM/YYYY') : 'Nunca',
         }),
-        columnHelper.accessor('quotas', {
-            id: 'quotas',
-            header: 'Cotas',
-            cell: (row) => (
-                <List spacing={2}>
-                    <Tooltip
-                        label={`Máximo de instâncias permitidas: ${row.getValue().maxInstances}`}
-                    >
-                        <ListItem>
-                            <ListIcon
-                                as={FiMonitor}
-                                color='green'
-                            />
-                            {row.getValue().maxInstances}
-                        </ListItem>
-                    </Tooltip>
+        // columnHelper.accessor('quotas', {
+        //     id: 'quotas',
+        //     header: 'Cotas',
+        //     cell: (row) => (
+        //         <List spacing={2}>
+        //             <Tooltip
+        //                 label={`Máximo de instâncias permitidas: ${row.getValue().maxInstances}`}
+        //             >
+        //                 <ListItem>
+        //                     <ListIcon
+        //                         as={FiMonitor}
+        //                         color='green'
+        //                     />
+        //                     {row.getValue().maxInstances}
+        //                 </ListItem>
+        //             </Tooltip>
 
-                    <Tooltip
-                        label={`Tipos de instâncias permitidos: ${row.getValue().allowedInstanceTypes.join(', ')}`}
-                    >
-                        <ListItem>
-                            <ListIcon
-                                as={FiCpu}
-                                color='black'
-                            />
-                            {row.getValue().allowedInstanceTypes.join(', ').slice(0, 30)}
-                        </ListItem>
-                    </Tooltip>
+        //             <Tooltip
+        //                 label={`Tipos de instâncias permitidos: ${row.getValue().allowedInstanceTypes.join(', ')}`}
+        //             >
+        //                 <ListItem>
+        //                     <ListIcon
+        //                         as={FiCpu}
+        //                         color='black'
+        //                     />
+        //                     {row.getValue().allowedInstanceTypes.join(', ').slice(0, 30)}
+        //                 </ListItem>
+        //             </Tooltip>
 
-                    <Tooltip
-                        label={`Pode criar instâncias com hibernação? ${row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}`}
-                    >
-                        <ListItem>
-                            <ListIcon
-                                as={FiMoon}
-                                color='blue'
-                            />
-                            {row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}
-                        </ListItem>
-                    </Tooltip>
-                </List>
-            ),
-        }),
+        //             <Tooltip
+        //                 label={`Pode criar instâncias com hibernação? ${row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}`}
+        //             >
+        //                 <ListItem>
+        //                     <ListIcon
+        //                         as={FiMoon}
+        //                         color='blue'
+        //                     />
+        //                     {row.getValue().canLaunchInstanceWithHibernation ? 'Sim' : 'Não'}
+        //                 </ListItem>
+        //             </Tooltip>
+        //         </List>
+        //     ),
+        // }),
         columnHelper.display({
             id: 'actions',
-            header: 'Açoẽs',
+            header: 'Abrir',
             cell: ({ row }) => (
                 <Tooltip label='Abrir usuário'>
                     <IconButton

@@ -127,6 +127,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
             boxShadow='md'
             overflow='hidden'
             width={{ base: '100%' }}
+            height={{ base: '100%' }}
             p={4}
             margin='auto'
         >
