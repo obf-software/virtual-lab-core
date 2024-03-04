@@ -111,6 +111,7 @@ export const ProfilePageQuotaCard: React.FC = () => {
                             spacing={4}
                             w={'full'}
                             my={4}
+                            hidden={userQuery.isLoading}
                         >
                             {userQuery.data?.quotas.allowedInstanceTypes.map(
                                 (instanceType, index) => (

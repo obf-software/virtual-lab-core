@@ -220,15 +220,18 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                                 </FormErrorMessage>
                             ) : (
                                 <FormHelperText>
-                                    <Link
-                                        href={
-                                            'https://console.aws.amazon.com/ec2/v2/home#Images:sort=name'
-                                        }
-                                        isExternal
-                                    >
-                                        {' '}
-                                        Clique aqui para consultar as AMIs disponíveis
-                                    </Link>
+                                    <Text>
+                                        Para consultar as AMIs disponíveis na AWS,{' '}
+                                        <Link
+                                            href={
+                                                'https://console.aws.amazon.com/ec2/v2/home#Images:sort=name'
+                                            }
+                                            isExternal
+                                            color={'blue.500'}
+                                        >
+                                            clique aqui
+                                        </Link>
+                                    </Text>
                                 </FormHelperText>
                             )}
                         </FormControl>

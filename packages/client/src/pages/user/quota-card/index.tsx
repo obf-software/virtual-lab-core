@@ -1,9 +1,12 @@
 import {
     Box,
+    Card,
+    CardBody,
     FormControl,
     FormHelperText,
     FormLabel,
     Heading,
+    Icon,
     InputGroup,
     InputRightElement,
     Link,
@@ -13,8 +16,8 @@ import {
     NumberInputField,
     NumberInputStepper,
     Select,
+    SimpleGrid,
     Spinner,
-    Textarea,
     VStack,
     useToast,
 } from '@chakra-ui/react';
@@ -22,6 +25,8 @@ import React from 'react';
 import { useUser } from '../../../hooks/use-user';
 import { useUserOperations } from '../../../hooks/use-user-operations';
 import { getErrorMessage } from '../../../services/helpers';
+import { UserPageQuotaCardInstanceTypeCard } from './instance-type-card';
+import { FiPlus } from 'react-icons/fi';
 
 interface UserPageQuotaCardProps {
     userQuery: ReturnType<typeof useUser>['userQuery'];
@@ -158,16 +163,6 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                             <option value='true'>Sim</option>
                             <option value='false'>Não</option>
                         </Select>
-                        {/* <Input
-                            value={
-                                userQuery.data?.quotas.canLaunchInstanceWithHibernation !==
-                                undefined
-                                    ? userQuery.data?.quotas.canLaunchInstanceWithHibernation
-                                        ? 'Sim'
-                                        : 'Não'
-                                    : '-'
-                            }
-                        /> */}
                         {(userQuery.isLoading || updateQuotas.isPending) && (
                             <InputRightElement>
                                 <Spinner
@@ -188,22 +183,68 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                     isReadOnly
                 >
                     <FormLabel fontWeight={'bold'}>Tipos de instâncias permitidos</FormLabel>
+
                     <InputGroup>
-                        <Textarea
-                            value={
-                                userQuery.data?.quotas.allowedInstanceTypes !== undefined
-                                    ? userQuery.data?.quotas.allowedInstanceTypes.join('\n')
-                                    : '-'
-                            }
-                            overflow={'visible'}
-                        />
-                        <InputRightElement>
-                            <Spinner
-                                size='sm'
-                                hidden={!userQuery.isLoading}
-                            />
-                        </InputRightElement>
+                        <SimpleGrid
+                            columns={{ base: 1, md: 2 }}
+                            spacing={4}
+                            w={'full'}
+                            my={4}
+                            hidden={userQuery.isLoading}
+                        >
+                            <Card
+                                w={'full'}
+                                borderRadius={12}
+                                boxShadow={'lg'}
+                                borderColor={'gray.200'}
+                                bgColor={'gray.100'}
+                                borderWidth={2}
+                                _hover={{
+                                    borderColor: 'gray.500',
+                                    cursor: 'pointer',
+                                }}
+                            >
+                                <CardBody>
+                                    <Box
+                                        w={'full'}
+                                        h={'full'}
+                                        display={'flex'}
+                                        justifyContent={'center'}
+                                        alignItems={'center'}
+                                    >
+                                        <Icon
+                                            as={FiPlus}
+                                            boxSize={'100px'}
+                                            color={'gray.500'}
+                                        />
+                                    </Box>
+                                </CardBody>
+                            </Card>
+
+                            {userQuery.data?.quotas.allowedInstanceTypes.map(
+                                (instanceType, index) => (
+                                    <UserPageQuotaCardInstanceTypeCard
+                                        key={`user-page-quota-card-instance-type-card-${instanceType.name}-${index}`}
+                                        onRemove={() => {
+                                            console.log('remove');
+                                        }}
+                                        instanceType={instanceType}
+                                    />
+                                ),
+                            )}
+                        </SimpleGrid>
+
+                        {userQuery.isLoading && (
+                            <Box
+                                py={4}
+                                w={'full'}
+                                textAlign={'center'}
+                            >
+                                <Spinner size='md' />
+                            </Box>
+                        )}
                     </InputGroup>
+
                     <FormHelperText>
                         Os tipos de instâncias que o usuário pode criar. Para mais informações,{' '}
                         <Link
