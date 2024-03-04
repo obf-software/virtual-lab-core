@@ -45,8 +45,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             platform: model.platform,
             distribution: model.distribution,
             instanceType: model.instanceType,
-            cpuCores: model.cpuCores,
-            memoryInGb: model.memoryInGb,
             storageInGb: model.storageInGb,
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
@@ -72,8 +70,6 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             platform: data.platform,
             distribution: data.distribution,
             instanceType: data.instanceType,
-            cpuCores: data.cpuCores,
-            memoryInGb: data.memoryInGb,
             storageInGb: data.storageInGb,
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
@@ -90,7 +86,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
                 data.connectionType,
                 data.platform,
                 data.distribution,
-                data.instanceType,
+                data.instanceType.name,
             ]
                 .filter((x): x is string => typeof x === 'string')
                 .map((x) => x.toLowerCase())

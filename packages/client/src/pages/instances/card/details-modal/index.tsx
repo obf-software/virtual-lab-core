@@ -10,6 +10,7 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
+    SimpleGrid,
     Text,
 } from '@chakra-ui/react';
 import { IconType } from 'react-icons';
@@ -83,15 +84,47 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
         },
         {
             label: 'Tipo de instância',
-            value: instance.instanceType,
+            value: instance.instanceType.name,
         },
         {
-            label: 'CPU',
-            value: instance.cpuCores,
+            label: 'CPU cores',
+            value: instance.instanceType.cpu.cores.toString(),
         },
         {
-            label: 'Memória',
-            value: `${instance.memoryInGb} GB`,
+            label: 'CPU threads por core',
+            value: instance.instanceType.cpu.threadsPerCore.toString(),
+        },
+        {
+            label: 'vCPUs',
+            value: instance.instanceType.cpu.vCpus.toString(),
+        },
+        {
+            label: 'Fabricante da CPU',
+            value: instance.instanceType.cpu.manufacturer,
+        },
+        {
+            label: 'Clock da CPU',
+            value: `${instance.instanceType.cpu.clockSpeedInGhz} GHz`,
+        },
+        {
+            label: 'Memória RAM',
+            value: `${instance.instanceType.ram.sizeInMb} MB`,
+        },
+        {
+            label: 'Memória de vídeo',
+            value: `${instance.instanceType.gpu.totalGpuMemoryInMb} MB`,
+        },
+        {
+            label: 'Dispositivos de vídeo',
+            value:
+                instance.instanceType.gpu.devices.length > 0
+                    ? instance.instanceType.gpu.devices
+                          .map(
+                              (device) =>
+                                  `${device.count}x ${device.manufacturer} ${device.name} (${device.memoryInMb} MB)`,
+                          )
+                          .join(', ')
+                    : 'Nenhum',
         },
         {
             label: 'Armazenamento',
@@ -117,6 +150,11 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
         },
     ];
 
+    const [leftDetailItems, rightDetailItems] = [
+        detailItems.slice(0, Math.ceil(detailItems.length / 2)),
+        detailItems.slice(Math.ceil(detailItems.length / 2)),
+    ];
+
     return (
         <Modal
             isOpen={isOpen}
@@ -127,21 +165,43 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
             closeOnEsc
         >
             <ModalOverlay />
-            <ModalContent maxW={'xl'}>
+            <ModalContent
+                maxW='6xl'
+                overflow='hidden'
+            >
                 <ModalHeader>Detalhes da instância</ModalHeader>
 
                 <ModalCloseButton />
 
                 <ModalBody>
-                    <List spacing={3}>
-                        {detailItems.map((item, index) => (
-                            <ListItem key={`instance-${instance.id}-detail-${item.label}-${index}`}>
-                                <Text>
-                                    <b>{item.label}</b>: {item.value}
-                                </Text>
-                            </ListItem>
-                        ))}
-                    </List>
+                    <SimpleGrid
+                        columns={{ base: 1, md: 2 }}
+                        spacingX={10}
+                    >
+                        <List spacing={3}>
+                            {leftDetailItems.map((item, index) => (
+                                <ListItem
+                                    key={`instance-${instance.id}-detail-${item.label}-${index}`}
+                                >
+                                    <Text>
+                                        <b>{item.label}</b>: {item.value}
+                                    </Text>
+                                </ListItem>
+                            ))}
+                        </List>
+
+                        <List spacing={3}>
+                            {rightDetailItems.map((item, index) => (
+                                <ListItem
+                                    key={`instance-${instance.id}-detail-${item.label}-${index}`}
+                                >
+                                    <Text>
+                                        <b>{item.label}</b>: {item.value}
+                                    </Text>
+                                </ListItem>
+                            ))}
+                        </List>
+                    </SimpleGrid>
                 </ModalBody>
 
                 <ModalFooter>

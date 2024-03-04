@@ -248,9 +248,9 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                             },
                                             notAllowed: (value) => {
                                                 if (
-                                                    !userQuery.data?.quotas.allowedInstanceTypes.includes(
-                                                        value,
-                                                    )
+                                                    !userQuery.data?.quotas.allowedInstanceTypes
+                                                        .map((it) => it.name)
+                                                        .includes(value)
                                                 ) {
                                                     return 'Tipo de instância não permitido para este usuário';
                                                 }
@@ -262,9 +262,9 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                         (allowedInstanceType, i) => (
                                             <option
                                                 key={`allowed-instance-type-${i}`}
-                                                value={allowedInstanceType}
+                                                value={allowedInstanceType.name}
                                             >
-                                                {allowedInstanceType}
+                                                {allowedInstanceType.name}
                                             </option>
                                         ),
                                     )}

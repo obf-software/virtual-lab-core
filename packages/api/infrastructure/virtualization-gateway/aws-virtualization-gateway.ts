@@ -5,6 +5,7 @@ import {
     DescribeInstanceTypesCommand,
     DescribeInstancesCommand,
     EC2Client,
+    InstanceTypeInfo,
     RebootInstancesCommand,
     StartInstancesCommand,
     StopInstancesCommand,
@@ -71,6 +72,37 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         }
 
         return state;
+    };
+
+    private mapInstanceType = (instanceType?: InstanceTypeInfo): VirtualInstanceType => {
+        const { VCpuInfo, ProcessorInfo, MemoryInfo, GpuInfo, HibernationSupported, NetworkInfo } =
+            instanceType ?? {};
+
+        return {
+            name: instanceType?.InstanceType ?? '-',
+            cpu: {
+                cores: VCpuInfo?.DefaultCores ?? 0,
+                vCpus: VCpuInfo?.DefaultVCpus ?? 0,
+                threadsPerCore: VCpuInfo?.DefaultThreadsPerCore ?? 0,
+                clockSpeedInGhz: ProcessorInfo?.SustainedClockSpeedInGhz ?? 0,
+                manufacturer: ProcessorInfo?.Manufacturer ?? '-',
+            },
+            ram: {
+                sizeInMb: MemoryInfo?.SizeInMiB ?? 0,
+            },
+            gpu: {
+                totalGpuMemoryInMb: GpuInfo?.TotalGpuMemoryInMiB ?? 0,
+                devices:
+                    GpuInfo?.Gpus?.map((device) => ({
+                        count: device.Count ?? 0,
+                        name: device.Name ?? '-',
+                        manufacturer: device.Manufacturer ?? '-',
+                        memoryInMb: device.MemoryInfo?.SizeInMiB ?? 0,
+                    })) ?? [],
+            },
+            hibernationSupport: HibernationSupported ?? false,
+            networkPerformance: NetworkInfo?.NetworkPerformance ?? '-',
+        };
     };
 
     getInstance = async (virtualId: string): Promise<VirtualInstance | undefined> => {
@@ -317,6 +349,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 description: ProductViewDetail?.ProductViewSummary?.ShortDescription ?? '',
             };
         } catch (error) {
+            console.log(error);
             return undefined;
         }
     };
@@ -354,6 +387,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 distribution: image.Description ?? 'unknown',
             };
         } catch (error) {
+            console.log(error);
             return undefined;
         }
     };
@@ -361,16 +395,22 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     createMachineImage = async (virtualId: string, storageInGb: number): Promise<string> => {
         const imageName = `virtual-lab-${randomUUID()}`;
 
-        const instanceBlockDeviceMappings = await this.ec2Client.send(
+        const { Reservations } = await this.ec2Client.send(
             new DescribeInstancesCommand({
                 InstanceIds: [virtualId],
             }),
         );
 
-        const instance = instanceBlockDeviceMappings.Reservations?.[0].Instances?.[0];
+        const instance = Reservations?.[0].Instances?.[0];
 
         if (!instance) {
             throw Errors.internalError('Instance not found');
+        }
+
+        const machineImage = await this.getMachineImageById(instance.ImageId ?? '');
+
+        if (!machineImage) {
+            throw Errors.internalError('Machine image not found');
         }
 
         const blockDeviceMappings = instance.BlockDeviceMappings?.map((mapping) => ({
@@ -385,7 +425,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             new CreateImageCommand({
                 InstanceId: virtualId,
                 Name: imageName,
-                Description: `Machine image from virtual lab instance ${virtualId}`,
+                Description: machineImage.distribution,
                 NoReboot: false,
                 BlockDeviceMappings: blockDeviceMappings,
             }),
@@ -407,22 +447,40 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             );
 
             if (!InstanceTypes || InstanceTypes.length === 0) return undefined;
-            const { VCpuInfo } = InstanceTypes[0];
 
-            const cores = VCpuInfo?.DefaultCores ?? 0;
-            const vCores = VCpuInfo?.DefaultVCpus ?? 0;
-            const threadsPerCore = VCpuInfo?.DefaultThreadsPerCore ?? 0;
-
-            const memoryInMib = InstanceTypes[0].MemoryInfo?.SizeInMiB ?? 0;
-            const memoryInGb = memoryInMib !== 0 ? `${memoryInMib / 1024}` : '0';
-
-            return {
-                name: instanceType,
-                cpuCores: `${cores} (${vCores} vCPUs, ${threadsPerCore} threads por núcleo)`,
-                memoryInGb,
-            };
+            return this.mapInstanceType(InstanceTypes[0]);
         } catch (error) {
+            console.log(error);
             return undefined;
+        }
+    };
+
+    listInstanceTypes = async (instanceTypes?: string[]): Promise<VirtualInstanceType[]> => {
+        try {
+            if (instanceTypes !== undefined && instanceTypes.length === 0) {
+                return [];
+            }
+
+            const { InstanceTypes } = await this.ec2Client.send(
+                new DescribeInstanceTypesCommand({
+                    InstanceTypes: instanceTypes as _InstanceType[] | undefined,
+                    Filters:
+                        instanceTypes === undefined
+                            ? [
+                                  { Name: 'bare-metal', Values: ['false'] },
+                                  { Name: 'current-generation', Values: ['true'] },
+                                  { Name: 'supported-usage-class', Values: ['on-demand'] },
+                                  { Name: 'supported-virtualization-type', Values: ['hvm'] },
+                              ]
+                            : undefined,
+                    MaxResults: 100,
+                }),
+            );
+
+            return InstanceTypes?.map((instanceType) => this.mapInstanceType(instanceType)) ?? [];
+        } catch (error) {
+            console.log(error);
+            return [];
         }
     };
 }

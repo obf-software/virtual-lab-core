@@ -3,6 +3,7 @@ import { Role, roleSchema } from '../dtos/role';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Errors } from '../dtos/errors';
+import { VirtualInstanceType, virtualInstanceTypeSchema } from '../dtos/virtual-instance-type';
 
 dayjs.extend(utc);
 
@@ -18,7 +19,7 @@ const userDataSchema = z.object({
     groupIds: z.array(z.string()),
     quotas: z.object({
         maxInstances: z.number(),
-        allowedInstanceTypes: z.array(z.string()),
+        allowedInstanceTypes: virtualInstanceTypeSchema.array(),
         canLaunchInstanceWithHibernation: z.boolean(),
     }),
 });
@@ -35,6 +36,7 @@ export class User {
         name?: string;
         preferredUsername?: string;
         role: 'PENDING' | 'USER';
+        allowedInstanceTypes?: VirtualInstanceType[];
     }): User {
         const dateNow = dayjs.utc().toDate();
         const data: UserData = {
@@ -49,7 +51,7 @@ export class User {
             groupIds: [],
             quotas: {
                 maxInstances: 2,
-                allowedInstanceTypes: ['t3.small'],
+                allowedInstanceTypes: props.allowedInstanceTypes ?? [],
                 canLaunchInstanceWithHibernation: false,
             },
         };
@@ -84,7 +86,7 @@ export class User {
         preferredUsername?: string;
         role?: Role;
         maxInstances?: number;
-        allowedInstanceTypes?: string[];
+        allowedInstanceTypes?: VirtualInstanceType[];
         canLaunchInstanceWithHibernation?: boolean;
         groupIds?: string[];
         lastLoginAt?: Date;
@@ -128,4 +130,9 @@ export class User {
     };
 
     belongsToGroup = (groupId: string) => this.data.groupIds.includes(groupId);
+
+    canUseInstanceType = (instanceType: VirtualInstanceType) => {
+        const instanceTypeNames = this.data.quotas.allowedInstanceTypes.map((type) => type.name);
+        return instanceTypeNames.includes(instanceType.name);
+    };
 }

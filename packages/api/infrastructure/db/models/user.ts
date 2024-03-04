@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { InstanceTypeDbModel } from './instance-type';
 
 export interface UserDbModel {
     _id: ObjectId;
@@ -12,7 +13,7 @@ export interface UserDbModel {
     groupIds: ObjectId[];
     quotas: {
         maxInstances: number;
-        allowedInstanceTypes: string[];
+        allowedInstanceTypes: InstanceTypeDbModel[];
         canLaunchInstanceWithHibernation: boolean;
     };
 

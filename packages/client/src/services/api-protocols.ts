@@ -56,6 +56,31 @@ export interface InstanceTemplate {
     updatedAt: string;
 }
 
+export interface InstanceType {
+    name: string;
+    cpu: {
+        cores: number;
+        threadsPerCore: number;
+        vCpus: number;
+        manufacturer: string;
+        clockSpeedInGhz: number;
+    };
+    ram: {
+        sizeInMb: number;
+    };
+    gpu: {
+        totalGpuMemoryInMb: number;
+        devices: {
+            count: number;
+            name: string;
+            manufacturer: string;
+            memoryInMb: number;
+        }[];
+    };
+    hibernationSupport: boolean;
+    networkPerformance: string;
+}
+
 export interface Instance {
     id: string;
     virtualId?: string;
@@ -69,9 +94,7 @@ export interface Instance {
     canHibernate: boolean;
     platform: InstancePlatform;
     distribution: string;
-    instanceType: string;
-    cpuCores: string;
-    memoryInGb: string;
+    instanceType: InstanceType;
     storageInGb: string;
     createdAt: string;
     updatedAt: string;
@@ -91,7 +114,7 @@ export interface User {
     groupIds: string[];
     quotas: {
         maxInstances: number;
-        allowedInstanceTypes: string[];
+        allowedInstanceTypes: InstanceType[];
         canLaunchInstanceWithHibernation: boolean;
     };
 }

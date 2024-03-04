@@ -38,3 +38,10 @@ export const getInstancePlatformIcon = (platform?: InstancePlatform): IconType =
     };
     return platformIconMap[platform ?? ('' as InstancePlatform)] ?? FaQuestion;
 };
+
+export const pluralize = (count: number, singular: string, plural: string) =>
+    `${count} ${count === 1 ? singular : plural}`;
+
+export const translateNetworkPerformance = (networkPerformance: string): string => {
+    return networkPerformance.replace('Gigabit', 'Gbps').replace('Up to', 'Até');
+};

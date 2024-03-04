@@ -3,6 +3,7 @@ import { User } from '../../../domain/entities/user';
 import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { VirtualizationGateway } from '../../virtualization-gateway';
 
 export const signUpUserInputSchema = z
     .object({
@@ -20,6 +21,7 @@ export class SignUpUser {
     constructor(
         private readonly logger: Logger,
         private readonly userRepository: UserRepository,
+        private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
     execute = async (input: SignUpUserInput): Promise<SignUpUserOutput> => {
@@ -42,11 +44,18 @@ export class SignUpUser {
             return existingUser;
         }
 
+        const instanceType = await this.virtualizationGateway.getInstanceType('t3.micro');
+
+        if (!instanceType) {
+            throw Errors.internalError('Instance type "t3.micro" not found');
+        }
+
         const newUser = User.create({
             username: validInput.username,
             name: validInput.name,
             preferredUsername: validInput.preferredUsername,
             role: validInput.isExternalProvider ? 'USER' : 'PENDING',
+            allowedInstanceTypes: [instanceType],
         });
         newUser.id = await this.userRepository.save(newUser);
 

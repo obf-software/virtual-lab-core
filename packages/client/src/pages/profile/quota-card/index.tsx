@@ -8,14 +8,16 @@ import {
     InputGroup,
     InputRightElement,
     Link,
+    SimpleGrid,
     Spinner,
-    Textarea,
+    Text,
     VStack,
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
 import { useUser } from '../../../hooks/use-user';
 import { getErrorMessage } from '../../../services/helpers';
+import { ProfilePageQuotaCardInstanceTypeCard } from './instance-type-card';
 
 export const ProfilePageQuotaCard: React.FC = () => {
     const toast = useToast();
@@ -104,28 +106,50 @@ export const ProfilePageQuotaCard: React.FC = () => {
                 >
                     <FormLabel fontWeight={'bold'}>Tipos de instâncias permitidos</FormLabel>
                     <InputGroup>
-                        <Textarea
-                            value={
-                                userQuery.data?.quotas.allowedInstanceTypes !== undefined
-                                    ? userQuery.data?.quotas.allowedInstanceTypes.join('\n')
-                                    : '-'
-                            }
-                            overflow={'visible'}
-                        />
-                        <InputRightElement>
-                            <Spinner
-                                size='sm'
-                                hidden={!userQuery.isLoading}
-                            />
-                        </InputRightElement>
+                        <SimpleGrid
+                            columns={{ base: 1, md: 2 }}
+                            spacing={4}
+                            w={'full'}
+                            my={4}
+                        >
+                            {userQuery.data?.quotas.allowedInstanceTypes.map(
+                                (instanceType, index) => (
+                                    <ProfilePageQuotaCardInstanceTypeCard
+                                        key={`profile-page-quota-card-instance-type-card-${instanceType.name}-${index}`}
+                                        instanceType={instanceType}
+                                    />
+                                ),
+                            )}
+                        </SimpleGrid>
+
+                        {userQuery.data?.quotas.allowedInstanceTypes.length === 0 &&
+                            !userQuery.isLoading && (
+                                <Box
+                                    py={4}
+                                    w={'full'}
+                                    textAlign={'center'}
+                                >
+                                    <Text textColor={'gray.500'}>
+                                        Nenhum tipo de instância permitido
+                                    </Text>
+                                </Box>
+                            )}
+
+                        {userQuery.isLoading && (
+                            <Box
+                                py={4}
+                                w={'full'}
+                                textAlign={'center'}
+                            >
+                                <Spinner size='md' />
+                            </Box>
+                        )}
                     </InputGroup>
                     <FormHelperText>
                         Os tipos de instâncias que você pode criar. Para mais informações,{' '}
                         <Link
                             isExternal
-                            href={
-                                'https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html'
-                            }
+                            href={'https://aws.amazon.com/pt/ec2/instance-types/'}
                             color={'blue.500'}
                         >
                             clique aqui

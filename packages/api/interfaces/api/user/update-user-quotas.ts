@@ -7,9 +7,17 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
-const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
-    process.env;
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+} = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
@@ -17,14 +25,20 @@ const configVault =
         ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
         : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const updateUserQuotas = new UpdateUserQuotas(logger, auth, userRepository);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
+const updateUserQuotas = new UpdateUserQuotas(logger, auth, userRepository, virtualizationGateway);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
         const body = z
             .object({
                 maxInstances: z.number().optional(),
-                allowedInstanceTypes: z.array(z.string()).nonempty().optional(),
+                allowedInstanceTypes: z.array(z.string()).optional(),
                 canLaunchInstanceWithHibernation: z.boolean().optional(),
             })
             .safeParse(JSON.parse(event.body ?? '{}'));

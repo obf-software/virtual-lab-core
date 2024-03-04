@@ -80,14 +80,13 @@ export class LaunchInstance {
                 throw Errors.insufficientRole('ADMIN');
             }
 
-            const { maxInstances, allowedInstanceTypes, canLaunchInstanceWithHibernation } =
-                user.getData().quotas;
+            const { maxInstances, canLaunchInstanceWithHibernation } = user.getData().quotas;
 
             if (userInstanceCount >= maxInstances) {
                 throw Errors.businessRuleViolation('Max instances reached');
             }
 
-            if (!allowedInstanceTypes.includes(validInput.instanceType)) {
+            if (!user.canUseInstanceType(instanceType)) {
                 throw Errors.businessRuleViolation(
                     `Instance type "${validInput.instanceType}" not allowed`,
                 );
@@ -118,9 +117,7 @@ export class LaunchInstance {
             canHibernate: validInput.canHibernate,
             platform: instanceMachineImage.platform,
             distribution: instanceMachineImage.distribution,
-            instanceType: instanceType.name,
-            cpuCores: instanceType.cpuCores,
-            memoryInGb: instanceType.memoryInGb,
+            instanceType,
             storageInGb: instanceTemplate.getData().storageInGb.toString(),
         });
         instance.id = await this.instanceRepository.save(instance);

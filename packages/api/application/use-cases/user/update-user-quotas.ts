@@ -5,13 +5,14 @@ import { Auth } from '../../auth';
 import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { VirtualizationGateway } from '../../virtualization-gateway';
 
 export const updateUserQuotasInput = z
     .object({
         principal: principalSchema,
         userId: z.string().min(1).optional(),
         maxInstances: z.number().min(0).optional(),
-        allowedInstanceTypes: z.array(z.string()).nonempty().optional(),
+        allowedInstanceTypes: z.array(z.string()).optional(),
         canLaunchInstanceWithHibernation: z.boolean().optional(),
     })
     .strict()
@@ -36,6 +37,7 @@ export class UpdateUserQuotas {
         private readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
+        private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
     execute = async (input: UpdateUserQuotasInput): Promise<UpdateUserQuotasOutput> => {
@@ -53,9 +55,16 @@ export class UpdateUserQuotas {
         const user = await this.userRepository.getById(userId);
         if (!user) throw Errors.resourceNotFound('User', userId);
 
+        const instanceTypes =
+            validInput.allowedInstanceTypes !== undefined
+                ? await this.virtualizationGateway.listInstanceTypes(
+                      validInput.allowedInstanceTypes,
+                  )
+                : undefined;
+
         user.update({
             maxInstances: validInput.maxInstances,
-            allowedInstanceTypes: validInput.allowedInstanceTypes,
+            allowedInstanceTypes: instanceTypes,
             canLaunchInstanceWithHibernation: validInput.canLaunchInstanceWithHibernation,
         });
 

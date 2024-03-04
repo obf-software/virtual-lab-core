@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { InstanceTypeDbModel } from './instance-type';
 
 export interface InstanceDbModel {
     _id: ObjectId;
@@ -13,9 +14,7 @@ export interface InstanceDbModel {
     canHibernate: boolean;
     platform: 'LINUX' | 'WINDOWS' | 'UNKNOWN';
     distribution: string;
-    instanceType: string;
-    cpuCores: string;
-    memoryInGb: string;
+    instanceType: InstanceTypeDbModel;
     storageInGb: string;
     createdAt: Date;
     updatedAt: Date;

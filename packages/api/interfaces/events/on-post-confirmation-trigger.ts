@@ -5,16 +5,30 @@ import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lambaL
 import { LambdaHandlerAdapter } from '../../infrastructure/lambda-handler-adapter';
 import { AWSLogger } from '../../infrastructure/logger/aws-logger';
 import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
+import { AwsVirtualizationGateway } from '../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
-const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
-    process.env;
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    SHARED_SECRET_NAME,
+    DATABASE_URL_PARAMETER_NAME,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+} = process.env;
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
         ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
         : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const signUpUser = new SignUpUser(logger, userRepository);
+const virtualizationGateway = new AwsVirtualizationGateway(
+    configVault,
+    AWS_REGION,
+    API_SNS_TOPIC_ARN,
+    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+);
+const signUpUser = new SignUpUser(logger, userRepository, virtualizationGateway);
 
 export const handler = LambdaHandlerAdapter.adaptCustom<PostConfirmationTriggerHandler>(
     async (event) => {

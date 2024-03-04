@@ -25,8 +25,6 @@ import {
 import dayjs from 'dayjs';
 import React from 'react';
 import {
-    FiCalendar,
-    FiClock,
     FiCpu,
     FiInfo,
     FiMoreVertical,
@@ -37,11 +35,17 @@ import {
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 import * as relativeTime from 'dayjs/plugin/relativeTime';
-import { BiBookBookmark, BiHdd, BiMicrochip } from 'react-icons/bi';
+import { BiBookBookmark, BiHdd } from 'react-icons/bi';
+import { BsGpuCard } from 'react-icons/bs';
+import { LiaMemorySolid } from 'react-icons/lia';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { InstancesPageCardDetailsModal } from './details-modal';
 import { Instance } from '../../../services/api-protocols';
-import { getInstancePlatformIcon } from '../../../services/helpers';
+import {
+    getInstancePlatformIcon,
+    pluralize,
+    translateNetworkPerformance,
+} from '../../../services/helpers';
 import { InstanceStateTag } from '../../../components/instance-state-tag';
 import { useInstanceOperations } from '../../../hooks/use-instance-operations';
 import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
@@ -49,6 +53,7 @@ import { useAuthSessionData } from '../../../hooks/use-auth-session-data';
 import { useInstanceConnectionData } from '../../../hooks/use-instance-connection-data';
 import { useNavigate } from 'react-router-dom';
 import { InstancesPageCardCreateTemplateModal } from './create-template-modal';
+import { FaNetworkWired } from 'react-icons/fa';
 
 dayjs.extend(relativeTime);
 dayjs.extend(localizedFormat);
@@ -83,7 +88,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
         {
             icon: FiCpu,
             label: 'CPU',
-            value: instance.cpuCores,
+            value: `${pluralize(instance.instanceType.cpu.cores, 'core', 'cores')}, ${pluralize(instance.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, ${pluralize(instance.instanceType.cpu.threadsPerCore, 'thread per core', 'threads per core')}, @ ${instance.instanceType.cpu.clockSpeedInGhz} GHz (${instance.instanceType.cpu.manufacturer})`,
         },
         {
             icon: getInstancePlatformIcon(instance.platform),
@@ -96,24 +101,31 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
             value: `${instance.storageInGb} GB`,
         },
         {
-            icon: FiClock,
-            label: 'Último acesso',
-            value: instance.lastConnectionAt
-                ? dayjs(instance.lastConnectionAt, {
-                      format: 'YYYY-MM-DDTHH:mm:ss.SSSZ',
-                  }).fromNow()
-                : 'Nunca',
+            icon: FaNetworkWired,
+            label: 'Performance de rede',
+            value: translateNetworkPerformance(instance.instanceType.networkPerformance),
         },
         {
-            icon: BiMicrochip,
-            label: 'Memória',
-            value: `${instance.memoryInGb} GB`,
+            icon: LiaMemorySolid,
+            label: 'Memória RAM',
+            value: `${instance.instanceType.ram.sizeInMb} MB`,
         },
-
         {
-            icon: FiCalendar,
-            label: 'Criada em',
-            value: dayjs(instance.createdAt).format('DD/MM/YYYY'),
+            icon: BsGpuCard,
+            label: 'Memória de vídeo',
+            value:
+                instance.instanceType.gpu.totalGpuMemoryInMb !== 0
+                    ? `${instance.instanceType.gpu.totalGpuMemoryInMb} Mb (${
+                          instance.instanceType.gpu.devices.length > 0
+                              ? instance.instanceType.gpu.devices
+                                    .map(
+                                        (device) =>
+                                            `${device.count}x ${device.manufacturer} ${device.name} - ${device.memoryInMb} Mb`,
+                                    )
+                                    .join(', ')
+                              : 'Nenhum dispositivo'
+                      })`
+                    : 'N/A',
         },
     ];
 

@@ -8,6 +8,7 @@ import {
 import { InstanceState, instanceStateSchema } from '../dtos/instance-state';
 import { Errors } from '../dtos/errors';
 import { InstancePlatform, instancePlatformSchema } from '../dtos/instance-platform';
+import { VirtualInstanceType, virtualInstanceTypeSchema } from '../dtos/virtual-instance-type';
 
 dayjs.extend(utc);
 
@@ -24,9 +25,7 @@ export const instanceDataSchema = z.object({
     canHibernate: z.boolean(),
     platform: instancePlatformSchema,
     distribution: z.string(),
-    instanceType: z.string(),
-    cpuCores: z.string(),
-    memoryInGb: z.string(),
+    instanceType: virtualInstanceTypeSchema,
     storageInGb: z.string(),
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -51,9 +50,7 @@ export class Instance {
         canHibernate: boolean;
         platform: InstancePlatform;
         distribution: string;
-        instanceType: string;
-        cpuCores: string;
-        memoryInGb: string;
+        instanceType: VirtualInstanceType;
         storageInGb: string;
     }): Instance => {
         const dateNow = dayjs.utc().toDate();
@@ -71,8 +68,6 @@ export class Instance {
             platform: props.platform,
             distribution: props.distribution,
             instanceType: props.instanceType,
-            cpuCores: props.cpuCores,
-            memoryInGb: props.memoryInGb,
             storageInGb: props.storageInGb,
             createdAt: dateNow,
             updatedAt: dateNow,
@@ -111,9 +106,7 @@ export class Instance {
         description?: string;
         connectionType?: InstanceConnectionType;
         canHibernate?: boolean;
-        instanceType?: string;
-        cpuCores?: string;
-        memoryInGb?: string;
+        instanceType?: VirtualInstanceType;
         storageInGb?: string;
         lastConnectionAt?: Date;
     }) => {
@@ -125,8 +118,6 @@ export class Instance {
             connectionType: props.connectionType ?? this.data.connectionType,
             canHibernate: props.canHibernate ?? this.data.canHibernate,
             instanceType: props.instanceType ?? this.data.instanceType,
-            cpuCores: props.cpuCores ?? this.data.cpuCores,
-            memoryInGb: props.memoryInGb ?? this.data.memoryInGb,
             storageInGb: props.storageInGb ?? this.data.storageInGb,
             lastConnectionAt: props.lastConnectionAt ?? this.data.lastConnectionAt,
             updatedAt: dayjs.utc().toDate(),

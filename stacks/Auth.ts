@@ -14,7 +14,14 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
         },
-        permissions: ['ssm:*', 'secretsmanager:*'],
+        permissions: [
+            'ssm:*',
+            'secretsmanager:*',
+            'ec2:*',
+            'servicecatalog:*',
+            'cloudformation:*',
+            'events:*',
+        ],
     });
 
     const preSignUpTrigger = new sst.Function(stack, 'preSignUpTrigger', {
@@ -23,7 +30,14 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
         },
-        permissions: ['ssm:*', 'secretsmanager:*'],
+        permissions: [
+            'ssm:*',
+            'secretsmanager:*',
+            'ec2:*',
+            'servicecatalog:*',
+            'cloudformation:*',
+            'events:*',
+        ],
     });
 
     const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
@@ -32,7 +46,14 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
         },
-        permissions: ['ssm:*', 'secretsmanager:*'],
+        permissions: [
+            'ssm:*',
+            'secretsmanager:*',
+            'ec2:*',
+            'servicecatalog:*',
+            'cloudformation:*',
+            'events:*',
+        ],
     });
 
     const userPool = new cognito.UserPool(stack, 'UserPool', {
