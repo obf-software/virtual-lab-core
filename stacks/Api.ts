@@ -120,6 +120,9 @@ export const Api = ({ stack }: sst.StackContext) => {
         'POST /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/launch-instance.handler',
         },
+        'GET /api/v1/instance-types': {
+            function: 'packages/api/interfaces/api/instance/list-instance-types.handler',
+        },
         'GET /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/list-instances.handler',
         },

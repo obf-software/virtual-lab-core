@@ -461,23 +461,42 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 return [];
             }
 
-            const { InstanceTypes } = await this.ec2Client.send(
-                new DescribeInstanceTypesCommand({
-                    InstanceTypes: instanceTypes as _InstanceType[] | undefined,
-                    Filters:
-                        instanceTypes === undefined
-                            ? [
-                                  { Name: 'bare-metal', Values: ['false'] },
-                                  { Name: 'current-generation', Values: ['true'] },
-                                  { Name: 'supported-usage-class', Values: ['on-demand'] },
-                                  { Name: 'supported-virtualization-type', Values: ['hvm'] },
-                              ]
-                            : undefined,
-                    MaxResults: 100,
-                }),
-            );
+            const fetchedInstanceTypes: VirtualInstanceType[] = [];
+            let nextToken: string | undefined;
 
-            return InstanceTypes?.map((instanceType) => this.mapInstanceType(instanceType)) ?? [];
+            // eslint-disable-next-line no-constant-condition
+            while (true) {
+                const { InstanceTypes, NextToken } = await this.ec2Client.send(
+                    new DescribeInstanceTypesCommand({
+                        InstanceTypes: instanceTypes as _InstanceType[] | undefined,
+                        Filters:
+                            instanceTypes === undefined
+                                ? [
+                                      { Name: 'bare-metal', Values: ['false'] },
+                                      { Name: 'current-generation', Values: ['true'] },
+                                      { Name: 'supported-usage-class', Values: ['on-demand'] },
+                                      { Name: 'supported-virtualization-type', Values: ['hvm'] },
+                                  ]
+                                : undefined,
+                        MaxResults: 100,
+                        NextToken: nextToken,
+                    }),
+                );
+
+                fetchedInstanceTypes.push(
+                    ...(InstanceTypes?.map((instanceType) => this.mapInstanceType(instanceType)) ??
+                        []),
+                );
+
+                if (NextToken !== undefined) {
+                    console.log('NextToken', NextToken, InstanceTypes?.length);
+                    nextToken = NextToken;
+                } else {
+                    break;
+                }
+            }
+
+            return fetchedInstanceTypes;
         } catch (error) {
             console.log(error);
             return [];
