@@ -44,6 +44,8 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     private serviceCatalogClient: ServiceCatalogClient;
     private cloudFormationClient: CloudFormationClient;
 
+    private cachedInstanceTypes: VirtualInstanceType[] = [];
+
     constructor(
         private readonly configVault: ConfigVault,
         AWS_REGION: string,
@@ -461,6 +463,11 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 return [];
             }
 
+            if (instanceTypes === undefined && this.cachedInstanceTypes.length > 0) {
+                console.log('Returning cached instance types');
+                return this.cachedInstanceTypes;
+            }
+
             const fetchedInstanceTypes: VirtualInstanceType[] = [];
             let nextToken: string | undefined;
 
@@ -494,6 +501,10 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 } else {
                     break;
                 }
+            }
+
+            if (instanceTypes === undefined) {
+                this.cachedInstanceTypes = fetchedInstanceTypes;
             }
 
             return fetchedInstanceTypes;
