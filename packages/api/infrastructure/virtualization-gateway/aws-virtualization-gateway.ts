@@ -54,6 +54,9 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     private cachedServiceCatalogLinuxProduct: Product | undefined;
     private cachedServiceCatalogWindowsProduct: Product | undefined;
 
+    private cachedMachineImages: MachineImage[] = [];
+    private cachedMachineImagesAt: Date | undefined;
+
     constructor(
         private readonly configVault: ConfigVault,
         AWS_REGION: string,
@@ -408,10 +411,63 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     };
 
     listRecommendedMachineImages = async (): Promise<MachineImage[]> => {
-        /**
-         * @todo Implement this method
-         */
-        return Promise.resolve([]);
+        if (
+            this.cachedMachineImages.length > 0 &&
+            dayjs().utc().diff(this.cachedMachineImagesAt, 'minutes') < 10
+        ) {
+            console.log('Returning cached machine images');
+            return this.cachedMachineImages;
+        }
+
+        const instanceParameterNames: string[] = [
+            '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2',
+            '/aws/service/ami-windows-latest/Windows_Server-2019-English-Full-Base',
+            '/aws/service/ami-windows-latest/EC2LaunchV2-Windows_Server-2016-English-Full-Base',
+            '/aws/service/ami-windows-latest/TPM-Windows_Server-2022-English-Full-Base',
+        ];
+
+        const machineImageIds = await Promise.all(
+            instanceParameterNames.map((name) => this.configVault.getParameter(name)),
+        );
+        const definedMachineImageIds = machineImageIds.filter(
+            (id): id is string => id !== undefined,
+        );
+
+        const { Images } = await this.ec2Client.send(
+            new DescribeImagesCommand({ ImageIds: definedMachineImageIds }),
+        );
+
+        const mappedMachineImages =
+            Images?.map((image) => {
+                const storageInGb =
+                    image.BlockDeviceMappings?.map((i) => i.Ebs?.VolumeSize ?? 0)?.reduce(
+                        (acc, curr) => acc + curr,
+                        0,
+                    ) ?? 0;
+
+                let platform: MachineImage['platform'] = 'UNKNOWN';
+
+                if (
+                    image.Platform === 'Windows' ||
+                    image.PlatformDetails?.toLowerCase().includes('windows')
+                ) {
+                    platform = 'WINDOWS';
+                } else if (image.PlatformDetails?.toLowerCase().includes('linux')) {
+                    platform = 'LINUX';
+                }
+
+                return {
+                    id: image.ImageId ?? '',
+                    storageInGb,
+                    platform,
+                    distribution: image.Description ?? 'unknown',
+                } satisfies MachineImage;
+            }) ?? [];
+
+        this.cachedMachineImages = mappedMachineImages;
+        this.cachedMachineImagesAt = dayjs().utc().toDate();
+
+        return mappedMachineImages;
     };
 
     createMachineImage = async (virtualId: string, storageInGb: number): Promise<string> => {
