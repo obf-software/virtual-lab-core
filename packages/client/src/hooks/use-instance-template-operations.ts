@@ -9,14 +9,12 @@ export const useInstanceTemplateOperations = () => {
             name: string;
             description: string;
             machineImageId: string;
-            productId: string;
             storageInGb?: number;
         }) => {
             const response = await api.createInstanceTemplate({
                 name: mut.name,
                 description: mut.description,
                 machineImageId: mut.machineImageId,
-                productId: mut.productId,
                 storageInGb: mut.storageInGb,
             });
             if (!response.success) throw new Error(response.error);

@@ -36,7 +36,6 @@ interface TemplatesPageCreateModalForm {
     name: string;
     description: string;
     machineImageId: string;
-    productId: string;
     storageInGb?: string;
 }
 
@@ -60,7 +59,6 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
             name: `Copia de ${copyFrom.name}`,
             description: `Cópia de ${copyFrom.description}`,
             machineImageId: copyFrom.machineImageId,
-            productId: copyFrom.productId,
             storageInGb: copyFrom.storageInGb.toString(),
         });
 
@@ -73,7 +71,6 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
         name,
         description,
         machineImageId,
-        productId,
         storageInGb,
     }) => {
         createInstanceTemplate.mutate(
@@ -81,7 +78,6 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                 name,
                 description,
                 machineImageId,
-                productId,
                 storageInGb: storageInGb ? parseInt(storageInGb) : undefined,
             },
             {
@@ -232,47 +228,6 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                                             clique aqui
                                         </Link>
                                     </Text>
-                                </FormHelperText>
-                            )}
-                        </FormControl>
-
-                        <FormControl
-                            isRequired
-                            isInvalid={formMethods.formState.errors.productId !== undefined}
-                            mt={'5%'}
-                        >
-                            <FormLabel
-                                id='productId'
-                                fontWeight={'semibold'}
-                            >
-                                ID do Produto
-                            </FormLabel>
-
-                            <Input
-                                id='productId'
-                                {...formMethods.register('productId', {
-                                    required: {
-                                        value: true,
-                                        message: 'O produto é obrigatório',
-                                    },
-                                })}
-                            />
-
-                            {formMethods.formState.errors.productId?.message !== undefined ? (
-                                <FormErrorMessage>
-                                    {formMethods.formState.errors.productId?.message}
-                                </FormErrorMessage>
-                            ) : (
-                                <FormHelperText>
-                                    <Link
-                                        href={
-                                            'https://us-east-1.console.aws.amazon.com/servicecatalog/home#admin-products'
-                                        }
-                                        isExternal
-                                    >
-                                        {' '}
-                                        Clique aqui para consultar os produtos disponíveis
-                                    </Link>
                                 </FormHelperText>
                             )}
                         </FormControl>

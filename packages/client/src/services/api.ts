@@ -208,7 +208,6 @@ export const createInstanceTemplate = async (props: {
     name: string;
     description: string;
     machineImageId: string;
-    productId: string;
     storageInGb?: number;
 }) =>
     executeRequest<InstanceTemplate>({

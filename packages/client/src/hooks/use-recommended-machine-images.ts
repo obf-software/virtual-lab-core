@@ -1,11 +1,11 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { listProducts } from '../services/api';
+import { listRecommendedMachineImages } from '../services/api';
 
-export const useProducts = () => {
-    const productsQuery = useQuery({
-        queryKey: ['products'],
+export const useRecommendedMachineImages = () => {
+    const recommendedMachineImagesQuery = useQuery({
+        queryKey: ['instance-types'],
         queryFn: async () => {
-            const response = await listProducts();
+            const response = await listRecommendedMachineImages();
             if (!response.success) throw new Error(response.error);
             return response.data;
         },
@@ -15,6 +15,6 @@ export const useProducts = () => {
     });
 
     return {
-        productsQuery,
+        recommendedMachineImagesQuery,
     };
 };

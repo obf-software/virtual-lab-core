@@ -19,6 +19,7 @@ import {
     SimpleGrid,
     Spinner,
     VStack,
+    useDisclosure,
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
@@ -27,6 +28,7 @@ import { useUserOperations } from '../../../hooks/use-user-operations';
 import { getErrorMessage } from '../../../services/helpers';
 import { UserPageQuotaCardInstanceTypeCard } from './instance-type-card';
 import { FiPlus } from 'react-icons/fi';
+import { UserPageQuotaCardAddInstanceTypeModal } from './add-instance-type-modal';
 
 interface UserPageQuotaCardProps {
     userQuery: ReturnType<typeof useUser>['userQuery'];
@@ -39,6 +41,7 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
         userQuery.data?.quotas.maxInstances ?? 0,
     );
     const [debouncedMaxInstances, setDebouncedMaxInstances] = React.useState<number>();
+    const addInstanceTypeModalDisclosure = useDisclosure();
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -83,6 +86,12 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
             spacing={4}
             align={'start'}
         >
+            <UserPageQuotaCardAddInstanceTypeModal
+                userInstanceTypes={userQuery.data?.quotas.allowedInstanceTypes ?? []}
+                isOpen={addInstanceTypeModalDisclosure.isOpen}
+                onClose={addInstanceTypeModalDisclosure.onClose}
+            />
+
             <Heading
                 size={'lg'}
                 color='gray.800'
@@ -203,6 +212,7 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                                     borderColor: 'gray.500',
                                     cursor: 'pointer',
                                 }}
+                                onClick={addInstanceTypeModalDisclosure.onOpen}
                             >
                                 <CardBody>
                                     <Box
