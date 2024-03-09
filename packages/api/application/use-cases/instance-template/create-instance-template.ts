@@ -11,7 +11,6 @@ export const createInstanceTemplateInputSchema = z.object({
     principal: principalSchema,
     name: z.string().min(1),
     description: z.string().min(1),
-    productId: z.string().min(1),
     machineImageId: z.string().min(1),
     storageInGb: z.number().int().min(1).optional(),
 });
@@ -38,18 +37,21 @@ export class CreateInstanceTemplate {
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
         const { id } = this.auth.getClaims(validInput.principal);
 
-        const [product, machineImage] = await Promise.all([
-            this.virtualizationGateway.getProductById(validInput.productId),
-            this.virtualizationGateway.getMachineImageById(validInput.machineImageId),
-        ]);
-
-        if (!product) {
-            throw Errors.resourceNotFound('Product', validInput.productId);
-        }
+        const machineImage = await this.virtualizationGateway.getMachineImageById(
+            validInput.machineImageId,
+        );
 
         if (!machineImage) {
             throw Errors.resourceNotFound('MachineImage', validInput.machineImageId);
         }
+
+        if (machineImage.platform === 'UNKNOWN') {
+            throw Errors.businessRuleViolation('Cannot create a template from an unknown platform');
+        }
+
+        const product = await this.virtualizationGateway.getProductByInstancePlatform(
+            machineImage.platform,
+        );
 
         const storageInGb = validInput.storageInGb ?? machineImage.storageInGb;
 

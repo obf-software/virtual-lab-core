@@ -74,8 +74,10 @@ export const Api = ({ stack }: sst.StackContext) => {
                     DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
                     INSTANCE_PASSWORD_PARAMETER_NAME: ssmParameters.instancePassword.name,
                     GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
-                    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME:
-                        ssmParameters.serviceCatalogPortfolioId.name,
+                    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                        ssmParameters.serviceCatalogLinuxProductId.name,
+                    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                        ssmParameters.serviceCatalogWindowsProductId.name,
                 },
                 layers: [paramsAndSecretsExtension],
                 role: apiLambdaDefaultRole,
@@ -120,9 +122,6 @@ export const Api = ({ stack }: sst.StackContext) => {
         'POST /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/launch-instance.handler',
         },
-        'GET /api/v1/instance-types': {
-            function: 'packages/api/interfaces/api/instance/list-instance-types.handler',
-        },
         'GET /api/v1/instances': {
             function: 'packages/api/interfaces/api/instance/list-instances.handler',
         },
@@ -161,9 +160,6 @@ export const Api = ({ stack }: sst.StackContext) => {
             function:
                 'packages/api/interfaces/api/instance-templates/list-instance-templates.handler',
         },
-        'GET /api/v1/products': {
-            function: 'packages/api/interfaces/api/instance-templates/list-products.handler',
-        },
         'PATCH /api/v1/instance-templates/{instanceTemplateId}': {
             function:
                 'packages/api/interfaces/api/instance-templates/update-instance-templates.handler',
@@ -185,6 +181,18 @@ export const Api = ({ stack }: sst.StackContext) => {
         },
         'PATCH /api/v1/users/{userId}/role': {
             function: 'packages/api/interfaces/api/user/update-user-role.handler',
+        },
+    });
+
+    /**
+     * Misc module
+     */
+    api.addRoutes(stack, {
+        'GET /api/v1/instance-types': {
+            function: 'packages/api/interfaces/api/instance/list-instance-types.handler',
+        },
+        'GET /api/v1/recommended-instance-types': {
+            function: 'packages/api/interfaces/api/misc/list-recommended-machine-images.handler',
         },
     });
 

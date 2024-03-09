@@ -3,8 +3,8 @@ import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
-import { ListProducts } from '../../../application/use-cases/instance-template/list-products';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { ListRecommendedMachineImages } from '../../../application/use-cases/misc/list-recommended-machine-images';
 
 const {
     IS_LOCAL,
@@ -12,7 +12,8 @@ const {
     AWS_SESSION_TOKEN,
     SHARED_SECRET_NAME,
     API_SNS_TOPIC_ARN,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
 } = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
@@ -24,13 +25,18 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
     AWS_REGION,
     API_SNS_TOPIC_ARN,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
 );
-const listProducts = new ListProducts(logger, auth, virtualizationGateway);
+const listRecommendedMachineImages = new ListRecommendedMachineImages(
+    logger,
+    auth,
+    virtualizationGateway,
+);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const output = await listProducts.execute({
+        const output = await listRecommendedMachineImages.execute({
             principal: CognitoAuth.extractPrincipal(event),
         });
 

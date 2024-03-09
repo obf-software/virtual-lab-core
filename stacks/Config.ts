@@ -12,8 +12,11 @@ export const Config = ({ stack }: sst.StackContext) => {
         guacamoleCypherKey: {
             name: `/virtual-lab/${stack.stage}/guacamole-cypher-key`,
         },
-        serviceCatalogPortfolioId: {
-            name: `/virtual-lab/${stack.stage}/service-catalog-portfolio-id`,
+        serviceCatalogLinuxProductId: {
+            name: `/virtual-lab/${stack.stage}/service-catalog-linux-product-id`,
+        },
+        serviceCatalogWindowsProductId: {
+            name: `/virtual-lab/${stack.stage}/service-catalog-windows-product-id`,
         },
     };
 

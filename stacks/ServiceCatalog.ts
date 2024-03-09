@@ -38,10 +38,12 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
             API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
-            SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME:
-                ssmParameters.serviceCatalogPortfolioId.name,
             API_EVENT_BUS_NAME: apiEventBus.eventBusName,
             APP_SYNC_API_URL: appSyncApi.url,
+            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogLinuxProductId.name,
+            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogWindowsProductId.name,
         },
     });
     apiSnsTopic.addSubscription(new snssubscriptions.LambdaSubscription(onLaunchStatusChange));
@@ -52,18 +54,6 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
         description: 'Default Portfolio',
     });
     defaultPortfolio.giveAccessToRole(apiLambdaDefaultRole);
-
-    const serviceCatalogPortfolioIdParameter = new ssm.StringParameter(
-        stack,
-        'ServiceCatalogPortfolioIdParameter',
-        {
-            dataType: ssm.ParameterDataType.TEXT,
-            tier: ssm.ParameterTier.STANDARD,
-            description: 'Service Catalog Portfolio Id',
-            parameterName: ssmParameters.serviceCatalogPortfolioId.name,
-            stringValue: defaultPortfolio.portfolioId,
-        },
-    );
 
     const serviceCatalogSshKey = new ec2.CfnKeyPair(stack, 'ServiceCatalogSshKey', {
         keyName: `service-catalog-${stack.stage}`,
@@ -147,8 +137,33 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     defaultPortfolio.addProduct(baseLinuxProduct);
     defaultPortfolio.addProduct(baseWindowsProduct);
 
+    const serviceCatalogLinuxProductIdParameter = new ssm.StringParameter(
+        stack,
+        'ServiceCatalogLinuxProductIdParameter',
+        {
+            dataType: ssm.ParameterDataType.TEXT,
+            tier: ssm.ParameterTier.STANDARD,
+            description: 'Service Catalog Linux Product Id',
+            parameterName: ssmParameters.serviceCatalogLinuxProductId.name,
+            stringValue: baseLinuxProduct.productId,
+        },
+    );
+
+    const serviceCatalogWindowsProductIdParameter = new ssm.StringParameter(
+        stack,
+        'ServiceCatalogWindowsProductIdParameter',
+        {
+            dataType: ssm.ParameterDataType.TEXT,
+            tier: ssm.ParameterTier.STANDARD,
+            description: 'Service Catalog Windows Product Id',
+            parameterName: ssmParameters.serviceCatalogWindowsProductId.name,
+            stringValue: baseWindowsProduct.productId,
+        },
+    );
+
     return {
         defaultPortfolio,
-        serviceCatalogPortfolioIdParameter,
+        serviceCatalogLinuxProductIdParameter,
+        serviceCatalogWindowsProductIdParameter,
     };
 };

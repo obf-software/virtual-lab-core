@@ -123,8 +123,9 @@ export interface InstanceConnection {
     connectionString: string;
 }
 
-export interface Product {
+export interface MachineImage {
     id: string;
-    name: string;
-    description: string;
+    storageInGb: number;
+    platform: InstancePlatform;
+    distribution: string;
 }

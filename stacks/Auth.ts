@@ -29,6 +29,11 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         environment: {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+            API_SNS_TOPIC_ARN: 'cannot-be-used-yet',
+            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogLinuxProductId.name,
+            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogWindowsProductId.name,
         },
         permissions: [
             'ssm:*',
@@ -45,6 +50,11 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         environment: {
             SHARED_SECRET_NAME: 'not-used-yet',
             DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+            API_SNS_TOPIC_ARN: 'cannot-be-used-yet',
+            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogLinuxProductId.name,
+            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                ssmParameters.serviceCatalogWindowsProductId.name,
         },
         permissions: [
             'ssm:*',

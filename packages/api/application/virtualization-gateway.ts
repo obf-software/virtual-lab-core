@@ -5,6 +5,7 @@ import { VirtualInstance } from '../domain/dtos/virtual-instance';
 import { Product } from '../domain/dtos/product';
 import { MachineImage } from '../domain/dtos/machine-image';
 import { VirtualInstanceType } from '../domain/dtos/virtual-instance-type';
+import { InstancePlatform } from '../domain/dtos/instance-platform';
 
 export interface VirtualizationGateway {
     getInstance(virtualId: string): Promise<VirtualInstance | undefined>;
@@ -15,9 +16,9 @@ export interface VirtualizationGateway {
     terminateInstance(launchToken: string): Promise<void>;
     launchInstance(productId: string, parameters: VirtualInstanceLaunchParameters): Promise<string>;
     getInstanceStack(stackName: string): Promise<VirtualInstanceStack>;
-    listProducts(): Promise<Product[]>;
-    getProductById(productId: string): Promise<Product | undefined>;
+    getProductByInstancePlatform(platform: InstancePlatform): Promise<Product>;
     getMachineImageById(machineImageId: string): Promise<MachineImage | undefined>;
+    listRecommendedMachineImages(): Promise<MachineImage[]>;
     createMachineImage(virtualId: string, storageInGb: number): Promise<string>;
     getInstanceType(instanceType: string): Promise<VirtualInstanceType | undefined>;
     listInstanceTypes(instanceTypes?: string[]): Promise<VirtualInstanceType[]>;

@@ -5,13 +5,13 @@ import {
     Instance,
     InstanceConnection,
     InstanceTemplate,
-    Product,
     Role,
     SeekPaginated,
     UrlPath,
     User,
     InstanceState,
     InstanceType,
+    MachineImage,
 } from './api-protocols';
 import { getErrorMessage } from './helpers';
 
@@ -158,12 +158,6 @@ export const launchInstance = async (props: {
         body: props,
     });
 
-export const listInstanceTypes = async () =>
-    executeRequest<InstanceType[]>({
-        path: '/api/v1/instance-types',
-        method: 'GET',
-    });
-
 export const listInstances = async (props: {
     orderBy: 'creationDate' | 'lastConnectionDate' | 'alphabetical';
     order: 'asc' | 'desc';
@@ -249,12 +243,6 @@ export const listInstanceTemplates = async (props: {
         queryParams: props,
     });
 
-export const listProducts = async () =>
-    executeRequest<Product[]>({
-        path: '/api/v1/products',
-        method: 'GET',
-    });
-
 export const updateInstanceTemplate = async (props: {
     instanceTemplateId: string;
     name?: string;
@@ -309,4 +297,19 @@ export const updateUserRole = async (props: { userId: string; role: Role }) =>
         path: `/api/v1/users/${props.userId}/role`,
         method: 'PATCH',
         body: { role: props.role },
+    });
+
+/**
+ * Misc module
+ */
+export const listInstanceTypes = async () =>
+    executeRequest<InstanceType[]>({
+        path: '/api/v1/instance-types',
+        method: 'GET',
+    });
+
+export const listRecommendedMachineImages = async () =>
+    executeRequest<MachineImage[]>({
+        path: '/api/v1/machine-images',
+        method: 'GET',
     });

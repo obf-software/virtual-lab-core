@@ -1,4 +1,4 @@
-import { ListInstanceTypes } from '../../../application/use-cases/instance/list-instance-types';
+import { ListInstanceTypes } from '../../../application/use-cases/misc/list-instance-types';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
@@ -12,7 +12,8 @@ const {
     AWS_SESSION_TOKEN,
     API_SNS_TOPIC_ARN,
     SHARED_SECRET_NAME,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
 } = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
@@ -24,7 +25,8 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
     AWS_REGION,
     API_SNS_TOPIC_ARN,
-    SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
 );
 const listInstanceTypes = new ListInstanceTypes(logger, auth, virtualizationGateway);
 

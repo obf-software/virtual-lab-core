@@ -24,7 +24,6 @@ import {
     ProvisionProductCommand,
     ServiceCatalogClient,
     TerminateProvisionedProductCommand,
-    paginateSearchProductsAsAdmin,
 } from '@aws-sdk/client-service-catalog';
 import {
     CloudFormationClient,
@@ -40,6 +39,7 @@ import { MachineImage } from '../../domain/dtos/machine-image';
 import { VirtualInstanceType } from '../../domain/dtos/virtual-instance-type';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { InstancePlatform } from '../../domain/dtos/instance-platform';
 
 dayjs.extend(utc);
 
@@ -50,14 +50,16 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
 
     private cachedInstanceTypes: VirtualInstanceType[] = [];
     private cachedInstanceTypesAt: Date | undefined;
-    private cachedProducts: Product[] = [];
-    private cachedProductsAt: Date | undefined;
+
+    private cachedServiceCatalogLinuxProduct: Product | undefined;
+    private cachedServiceCatalogWindowsProduct: Product | undefined;
 
     constructor(
         private readonly configVault: ConfigVault,
         AWS_REGION: string,
         private readonly API_SNS_TOPIC_ARN: string,
-        private readonly SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME: string,
+        private readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string,
+        private readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string,
     ) {
         this.ec2Client = new EC2Client({ region: AWS_REGION });
         this.serviceCatalogClient = new ServiceCatalogClient({ region: AWS_REGION });
@@ -319,59 +321,52 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         };
     };
 
-    listProducts = async (): Promise<Product[]> => {
-        if (
-            this.cachedProducts.length > 0 &&
-            dayjs().utc().diff(this.cachedProductsAt, 'minutes') < 10
-        ) {
-            console.log('Returning cached products');
-            return this.cachedProducts;
+    getProductByInstancePlatform = async (platform: InstancePlatform): Promise<Product> => {
+        if (platform === 'UNKNOWN') {
+            throw Errors.internalError('Unknown instance platform');
         }
 
-        const serviceCatalogPortfolioId = await this.configVault.getParameter(
-            this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
+        let productId: string | undefined;
+
+        if (platform === 'LINUX') {
+            if (this.cachedServiceCatalogLinuxProduct !== undefined) {
+                return this.cachedServiceCatalogLinuxProduct;
+            }
+
+            productId = await this.configVault.getParameter(
+                this.SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+            );
+        } else if (platform === 'WINDOWS') {
+            if (this.cachedServiceCatalogWindowsProduct !== undefined) {
+                return this.cachedServiceCatalogWindowsProduct;
+            }
+
+            productId = await this.configVault.getParameter(
+                this.SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+            );
+        }
+
+        if (productId === undefined) {
+            throw Errors.internalError('Product not found');
+        }
+
+        const { ProductViewDetail } = await this.serviceCatalogClient.send(
+            new DescribeProductAsAdminCommand({ Id: productId }),
         );
-        if (serviceCatalogPortfolioId === undefined) {
-            throw Errors.internalError(
-                `Failed to retrieve ${this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME} from config vault`,
-            );
+
+        const product = {
+            id: ProductViewDetail?.ProductViewSummary?.ProductId ?? '',
+            name: ProductViewDetail?.ProductViewSummary?.Name ?? '',
+            description: ProductViewDetail?.ProductViewSummary?.ShortDescription ?? '',
+        };
+
+        if (platform === 'LINUX') {
+            this.cachedServiceCatalogLinuxProduct = product;
+        } else if (platform === 'WINDOWS') {
+            this.cachedServiceCatalogWindowsProduct = product;
         }
 
-        const products: Product[] = [];
-        const paginator = paginateSearchProductsAsAdmin(
-            { client: this.serviceCatalogClient },
-            { PortfolioId: serviceCatalogPortfolioId, PageSize: 100 },
-        );
-        for await (const page of paginator) {
-            products.push(
-                ...(page.ProductViewDetails ?? []).map((p) => ({
-                    id: p.ProductViewSummary?.ProductId ?? '',
-                    name: p.ProductViewSummary?.Name ?? '',
-                    description: p.ProductViewSummary?.ShortDescription ?? '',
-                })),
-            );
-        }
-
-        this.cachedProducts = products;
-        this.cachedProductsAt = dayjs().utc().toDate();
-        return products;
-    };
-
-    getProductById = async (productId: string): Promise<Product | undefined> => {
-        try {
-            const { ProductViewDetail } = await this.serviceCatalogClient.send(
-                new DescribeProductAsAdminCommand({ Id: productId }),
-            );
-
-            return {
-                id: ProductViewDetail?.ProductViewSummary?.ProductId ?? '',
-                name: ProductViewDetail?.ProductViewSummary?.Name ?? '',
-                description: ProductViewDetail?.ProductViewSummary?.ShortDescription ?? '',
-            };
-        } catch (error) {
-            console.log(error);
-            return undefined;
-        }
+        return product;
     };
 
     getMachineImageById = async (machineImageId: string): Promise<MachineImage | undefined> => {
@@ -410,6 +405,13 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             console.log(error);
             return undefined;
         }
+    };
+
+    listRecommendedMachineImages = async (): Promise<MachineImage[]> => {
+        /**
+         * @todo Implement this method
+         */
+        return Promise.resolve([]);
     };
 
     createMachineImage = async (virtualId: string, storageInGb: number): Promise<string> => {
