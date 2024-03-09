@@ -92,7 +92,7 @@ export const NewInstancePage: React.FC = () => {
                             >
                                 <BreadcrumbItem>
                                     <BreadcrumbLink isCurrentPage>
-                                        <Heading color='gray.800'>Nova</Heading>
+                                        <Heading color='gray.800'>Templates</Heading>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                             </SlideFade>

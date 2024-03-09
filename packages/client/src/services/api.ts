@@ -11,6 +11,7 @@ import {
     UrlPath,
     User,
     InstanceState,
+    InstanceType,
 } from './api-protocols';
 import { getErrorMessage } from './helpers';
 
@@ -155,6 +156,12 @@ export const launchInstance = async (props: {
         path: '/api/v1/instances',
         method: 'POST',
         body: props,
+    });
+
+export const listInstanceTypes = async () =>
+    executeRequest<InstanceType[]>({
+        path: '/api/v1/instance-types',
+        method: 'GET',
     });
 
 export const listInstances = async (props: {

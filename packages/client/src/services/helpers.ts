@@ -45,3 +45,19 @@ export const pluralize = (count: number, singular: string, plural: string) =>
 export const translateNetworkPerformance = (networkPerformance: string): string => {
     return networkPerformance.replace('Gigabit', 'Gbps').replace('Up to', 'Até');
 };
+
+export const bytesToHumanReadable = (
+    number: number,
+    currentUnity: 'B' | 'MB' | 'GB' | 'TB',
+): string => {
+    if (number < 1024) {
+        return `${Number.isInteger(number) ? number : number.toFixed(1)} ${currentUnity}`;
+    }
+    if (currentUnity === 'TB') {
+        return `${(number / 1024).toFixed(2)} ${currentUnity}`;
+    }
+    return bytesToHumanReadable(
+        number / 1024,
+        currentUnity === 'B' ? 'MB' : currentUnity === 'MB' ? 'GB' : 'TB',
+    );
+};

@@ -38,6 +38,10 @@ import { VirtualInstanceStack } from '../../domain/dtos/virtual-instance-stack';
 import { instanceConnectionTypeSchema } from '../../domain/dtos/instance-connection-type';
 import { MachineImage } from '../../domain/dtos/machine-image';
 import { VirtualInstanceType } from '../../domain/dtos/virtual-instance-type';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
 
 export class AwsVirtualizationGateway implements VirtualizationGateway {
     private ec2Client: EC2Client;
@@ -45,6 +49,9 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     private cloudFormationClient: CloudFormationClient;
 
     private cachedInstanceTypes: VirtualInstanceType[] = [];
+    private cachedInstanceTypesAt: Date | undefined;
+    private cachedProducts: Product[] = [];
+    private cachedProductsAt: Date | undefined;
 
     constructor(
         private readonly configVault: ConfigVault,
@@ -313,6 +320,14 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     };
 
     listProducts = async (): Promise<Product[]> => {
+        if (
+            this.cachedProducts.length > 0 &&
+            dayjs().utc().diff(this.cachedProductsAt, 'minutes') < 10
+        ) {
+            console.log('Returning cached products');
+            return this.cachedProducts;
+        }
+
         const serviceCatalogPortfolioId = await this.configVault.getParameter(
             this.SERVICE_CATALOG_PORTFOLIO_ID_PARAMETER_NAME,
         );
@@ -336,6 +351,9 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 })),
             );
         }
+
+        this.cachedProducts = products;
+        this.cachedProductsAt = dayjs().utc().toDate();
         return products;
     };
 
@@ -463,7 +481,11 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 return [];
             }
 
-            if (instanceTypes === undefined && this.cachedInstanceTypes.length > 0) {
+            if (
+                instanceTypes === undefined &&
+                this.cachedInstanceTypes.length > 0 &&
+                dayjs().utc().diff(this.cachedInstanceTypesAt, 'minutes') < 10
+            ) {
                 console.log('Returning cached instance types');
                 return this.cachedInstanceTypes;
             }
@@ -505,6 +527,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
 
             if (instanceTypes === undefined) {
                 this.cachedInstanceTypes = fetchedInstanceTypes;
+                this.cachedInstanceTypesAt = dayjs().utc().toDate();
             }
 
             return fetchedInstanceTypes;

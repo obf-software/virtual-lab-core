@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import {
     Button,
     Divider,
@@ -5,7 +6,9 @@ import {
     FormErrorMessage,
     FormHelperText,
     FormLabel,
+    HStack,
     Heading,
+    Icon,
     Input,
     Modal,
     ModalBody,
@@ -14,11 +17,12 @@ import {
     ModalFooter,
     ModalHeader,
     ModalOverlay,
-    Select,
     Spinner,
     Switch,
     Text,
     Textarea,
+    Tooltip,
+    VStack,
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
@@ -26,7 +30,26 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { BiRocket } from 'react-icons/bi';
 import { useUser } from '../../../../hooks/use-user';
 import { useInstanceOperations } from '../../../../hooks/use-instance-operations';
-import { InstanceTemplate } from '../../../../services/api-protocols';
+import { InstanceTemplate, InstanceType } from '../../../../services/api-protocols';
+import {
+    GroupBase,
+    OptionBase,
+    Select,
+    SelectComponentsConfig,
+    SingleValue,
+    chakraComponents,
+} from 'chakra-react-select';
+import { FiCpu } from 'react-icons/fi';
+import {
+    bytesToHumanReadable,
+    pluralize,
+    translateNetworkPerformance,
+} from '../../../../services/helpers';
+import { FaNetworkWired } from 'react-icons/fa';
+import { LiaMemorySolid } from 'react-icons/lia';
+import { BsGpuCard } from 'react-icons/bs';
+import { IconType } from 'react-icons';
+import { GiNightSleep } from 'react-icons/gi';
 
 export interface NewInstancePageCardLaunchModalProps {
     instanceTemplate: InstanceTemplate;
@@ -40,6 +63,95 @@ interface LaunchForm {
     canHibernate: boolean;
     instanceType: string;
 }
+
+interface InstanceTypeOption extends OptionBase {
+    label: string;
+    value: string;
+    instanceType: InstanceType;
+}
+
+const instanceTypeSelectComponents: SelectComponentsConfig<
+    InstanceTypeOption,
+    true,
+    GroupBase<InstanceTypeOption>
+> = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Option: ({ children, ...props }) => {
+        const gridItems: { icon: IconType; label: string; value: string }[] = [
+            {
+                icon: FiCpu,
+                label: 'CPU',
+                value: `${pluralize(props.data.instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(props.data.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, ${pluralize(props.data.instanceType.cpu.threadsPerCore, 'Thread por Core', 'Threads por Core')}, @ ${props.data.instanceType.cpu.clockSpeedInGhz} GHz (${props.data.instanceType.cpu.manufacturer})`,
+            },
+            {
+                icon: FaNetworkWired,
+                label: 'Performance de rede',
+                value: translateNetworkPerformance(props.data.instanceType.networkPerformance),
+            },
+            {
+                icon: LiaMemorySolid,
+                label: 'Memória RAM',
+                value: bytesToHumanReadable(props.data.instanceType.ram.sizeInMb, 'MB'),
+            },
+            {
+                icon: BsGpuCard,
+                label: 'Memória de vídeo',
+                value:
+                    props.data.instanceType.gpu.totalGpuMemoryInMb !== 0
+                        ? `${props.data.instanceType.gpu.totalGpuMemoryInMb} Mb (${
+                              props.data.instanceType.gpu.devices.length > 0
+                                  ? props.data.instanceType.gpu.devices
+                                        .map(
+                                            (device) =>
+                                                `${device.count}x ${device.manufacturer} ${device.name} - ${device.memoryInMb} Mb`,
+                                        )
+                                        .join(', ')
+                                  : 'Nenhum dispositivo'
+                          })`
+                        : 'N/A',
+            },
+            {
+                icon: GiNightSleep,
+                label: 'Hibernação',
+                value: `Hibernação ${
+                    props.data.instanceType.hibernationSupport ? ' ' : 'não '
+                }suportada`,
+            },
+        ];
+
+        return (
+            <chakraComponents.Option {...props}>
+                <VStack align={'start'}>
+                    <Heading
+                        size={'md'}
+                        noOfLines={1}
+                        mb={2}
+                    >
+                        {props.data.instanceType.name}
+                    </Heading>
+                    {gridItems.map(({ icon, label, value }, index) => (
+                        <Tooltip
+                            label={`${label}: ${value}`}
+                            key={`instance-grid-item-${index}`}
+                        >
+                            <HStack
+                                spacing={4}
+                                align='center'
+                            >
+                                <Icon
+                                    aria-label={value}
+                                    as={icon}
+                                    boxSize={'20px'}
+                                />
+                                <Text fontSize={'md'}>{value}</Text>
+                            </HStack>
+                        </Tooltip>
+                    ))}
+                </VStack>
+            </chakraComponents.Option>
+        );
+    },
+};
 
 export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchModalProps> = ({
     instanceTemplate,
@@ -58,12 +170,51 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
         },
     });
 
+    const instanceTypeWatch = formMethods.watch('instanceType');
+
+    React.useEffect(() => {
+        if (instanceTypeWatch) {
+            const instanceType = userQuery.data?.quotas.allowedInstanceTypes.find(
+                (it) => it.name === instanceTypeWatch,
+            );
+
+            if (!instanceType) {
+                formMethods.setError('instanceType', {
+                    type: 'notAllowed',
+                    message: 'Você não tem permissão para criar este tipo de instância',
+                });
+            } else {
+                formMethods.clearErrors('instanceType');
+            }
+        }
+    }, [instanceTypeWatch]);
+
     const submitHandler: SubmitHandler<LaunchForm> = ({
         canHibernate,
         description,
         name,
         instanceType,
     }) => {
+        if (!instanceType || instanceType === '') {
+            formMethods.setError('instanceType', {
+                type: 'required',
+                message: 'O tipo de instância é obrigatório',
+            });
+            return;
+        }
+
+        const instanceTypeHasHibernationSupport =
+            userQuery.data?.quotas.allowedInstanceTypes.find((it) => it.name === instanceType)
+                ?.hibernationSupport ?? false;
+
+        if (canHibernate && !instanceTypeHasHibernationSupport) {
+            formMethods.setError('canHibernate', {
+                type: 'notAllowed',
+                message: 'Hibernação não permitida para este tipo de instância',
+            });
+            return;
+        }
+
         launchInstance.mutate(
             {
                 ownerId: 'me',
@@ -229,9 +380,7 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                     Tipo de instância
                                 </FormLabel>
 
-                                <Select
-                                    id='instanceType'
-                                    {...formMethods.register('instanceType', {
+                                {/* {...formMethods.register('instanceType', {
                                         validate: {
                                             noAllowedInstanceTypes: () => {
                                                 if (
@@ -252,23 +401,56 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                                         .map((it) => it.name)
                                                         .includes(value)
                                                 ) {
-                                                    return 'Tipo de instância não permitido para este usuário';
+                                                    return 'Você não tem permissão para criar este tipo de instância';
                                                 }
                                             },
                                         },
-                                    })}
-                                >
-                                    {userQuery.data?.quotas.allowedInstanceTypes.map(
-                                        (allowedInstanceType, i) => (
-                                            <option
-                                                key={`allowed-instance-type-${i}`}
-                                                value={allowedInstanceType.name}
-                                            >
-                                                {allowedInstanceType.name}
-                                            </option>
-                                        ),
+                                    })} */}
+
+                                <Select
+                                    name='instanceType'
+                                    placeholder='Buscar'
+                                    selectedOptionColorScheme='blue'
+                                    isLoading={userQuery.isLoading}
+                                    components={instanceTypeSelectComponents}
+                                    value={
+                                        {
+                                            label: instanceTypeWatch,
+                                            value: instanceTypeWatch,
+                                            instanceType:
+                                                userQuery.data?.quotas.allowedInstanceTypes.find(
+                                                    (it) => it.name === instanceTypeWatch,
+                                                ),
+                                        } as InstanceTypeOption
+                                    }
+                                    options={userQuery.data?.quotas.allowedInstanceTypes.map(
+                                        (instanceType) => ({
+                                            label: instanceType.name,
+                                            value: instanceType.name,
+                                            instanceType,
+                                        }),
                                     )}
-                                </Select>
+                                    onChange={(selected) => {
+                                        const s =
+                                            selected as unknown as SingleValue<InstanceTypeOption>;
+                                        formMethods.setValue('instanceType', s?.value ?? '');
+                                    }}
+
+                                    // options={searchGroupsQuery.data?.data?.map((group) => ({
+                                    //     label: group.name,
+                                    //     value: group,
+                                    // }))}
+                                    // onInputChange={(value) => {
+                                    //     setTextQuery(value);
+                                    // }}
+                                    // onChange={(selec `ted) => {
+                                    //     setGroupsToLink(selected.map((item) => item.value) ?? []);
+                                    // }}
+                                    // value={groupsToLink.map((group) => ({
+                                    //     label: group.name,
+                                    //     value: group,
+                                    // }))}
+                                />
 
                                 <FormErrorMessage>
                                     {formMethods.formState.errors.instanceType?.message}
