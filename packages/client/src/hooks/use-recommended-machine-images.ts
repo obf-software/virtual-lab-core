@@ -3,7 +3,7 @@ import { listRecommendedMachineImages } from '../services/api';
 
 export const useRecommendedMachineImages = () => {
     const recommendedMachineImagesQuery = useQuery({
-        queryKey: ['instance-types'],
+        queryKey: ['recommended-machine-images'],
         queryFn: async () => {
             const response = await listRecommendedMachineImages();
             if (!response.success) throw new Error(response.error);
