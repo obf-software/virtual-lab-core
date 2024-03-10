@@ -72,7 +72,7 @@ interface InstanceTypeOption extends OptionBase {
 
 const instanceTypeSelectComponents: SelectComponentsConfig<
     InstanceTypeOption,
-    true,
+    false,
     GroupBase<InstanceTypeOption>
 > = {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,14 +1,17 @@
+/* eslint-disable react/prop-types */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
     Button,
     FormControl,
     FormErrorMessage,
     FormHelperText,
     FormLabel,
+    HStack,
     Heading,
+    Icon,
     Input,
     InputGroup,
     InputRightElement,
-    Link,
     Modal,
     ModalBody,
     ModalCloseButton,
@@ -18,13 +21,25 @@ import {
     ModalOverlay,
     Text,
     Textarea,
+    Tooltip,
+    VStack,
     useToast,
 } from '@chakra-ui/react';
 import React from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { InstanceTemplate } from '../../../services/api-protocols';
-import { BiRocket } from 'react-icons/bi';
+import { InstanceTemplate, MachineImage } from '../../../services/api-protocols';
+import { BiHdd, BiRocket } from 'react-icons/bi';
 import { useInstanceTemplateOperations } from '../../../hooks/use-instance-template-operations';
+import {
+    CreatableSelect,
+    GroupBase,
+    OptionBase,
+    SelectComponentsConfig,
+    chakraComponents,
+} from 'chakra-react-select';
+import { useRecommendedMachineImages } from '../../../hooks/use-recommended-machine-images';
+import { IconType } from 'react-icons';
+import { bytesToHumanReadable, getInstancePlatformIcon } from '../../../services/helpers';
 
 export interface TemplatesPageCreateModalProps {
     copyFrom?: InstanceTemplate;
@@ -39,15 +54,100 @@ interface TemplatesPageCreateModalForm {
     storageInGb?: string;
 }
 
+interface MachineImageOption extends OptionBase {
+    label: string;
+    value: string;
+    machineImage?: MachineImage;
+}
+
+const machineImageSelectComponents: SelectComponentsConfig<
+    MachineImageOption,
+    false,
+    GroupBase<MachineImageOption>
+> = {
+    Option: ({ children, ...props }) => {
+        const gridItems: { icon: IconType; label: string; value: string }[] = [
+            {
+                icon: getInstancePlatformIcon(props.data.machineImage?.platform),
+                label: 'Sistema operacional',
+                value: props.data.machineImage?.distribution ?? 'Desconhecido',
+            },
+            {
+                icon: BiHdd,
+                label: 'Armazenamento mínimo',
+                value: bytesToHumanReadable(props.data.machineImage?.storageInGb ?? 0, 'GB'),
+            },
+        ];
+
+        return (
+            <chakraComponents.Option {...props}>
+                {props.data.machineImage !== undefined ? (
+                    <VStack align={'start'}>
+                        <Heading
+                            size={'md'}
+                            noOfLines={1}
+                            mb={2}
+                        >
+                            {props.data.machineImage?.id}
+                        </Heading>
+                        {gridItems.map(({ icon, label, value }, index) => (
+                            <Tooltip
+                                label={`${label}: ${value}`}
+                                key={`templates-page-create-modal-recommended-machine-images-${value}-${index}`}
+                            >
+                                <HStack
+                                    spacing={4}
+                                    align='center'
+                                >
+                                    <Icon
+                                        aria-label={value}
+                                        as={icon}
+                                        boxSize={'20px'}
+                                    />
+                                    <Text fontSize={'md'}>{value}</Text>
+                                </HStack>
+                            </Tooltip>
+                        ))}
+                    </VStack>
+                ) : (
+                    children
+                )}
+            </chakraComponents.Option>
+        );
+    },
+};
+
 export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> = ({
     copyFrom,
     isOpen,
     onClose,
 }) => {
     const { createInstanceTemplate } = useInstanceTemplateOperations();
+    const { recommendedMachineImagesQuery } = useRecommendedMachineImages();
     const toast = useToast();
-
     const formMethods = useForm<TemplatesPageCreateModalForm>();
+
+    const machineImageIdWatch = formMethods.watch('machineImageId');
+
+    React.useEffect(() => {
+        formMethods.clearErrors('machineImageId');
+    }, [machineImageIdWatch]);
+
+    React.useEffect(() => {
+        if (!machineImageIdWatch) {
+            return;
+        }
+
+        const selectedImage = recommendedMachineImagesQuery.data?.find(
+            (image) => image.id === machineImageIdWatch,
+        );
+
+        if (selectedImage === undefined) {
+            return;
+        }
+
+        formMethods.setValue('storageInGb', selectedImage.storageInGb.toString());
+    }, [machineImageIdWatch, recommendedMachineImagesQuery.data]);
 
     React.useEffect(() => {
         if (copyFrom === undefined) {
@@ -73,6 +173,14 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
         machineImageId,
         storageInGb,
     }) => {
+        if (!machineImageId) {
+            formMethods.setError('machineImageId', {
+                type: 'required',
+                message: 'A imagem da máquina é obrigatória',
+            });
+            return;
+        }
+
         createInstanceTemplate.mutate(
             {
                 name,
@@ -198,18 +306,35 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                                 id='machineImageId'
                                 fontWeight={'semibold'}
                             >
-                                ID da Imagem da máquina
+                                Imagem da máquina
                             </FormLabel>
 
-                            <Input
-                                id='machineImageId'
-                                {...formMethods.register('machineImageId', {
-                                    required: {
-                                        value: true,
-                                        message: 'A imagem da máquina é obrigatória',
-                                    },
-                                })}
+                            <CreatableSelect
+                                name='machineImageId'
+                                placeholder='Escolha uma imagem'
+                                selectedOptionColorScheme='blue'
+                                formatCreateLabel={(inputValue) => `Usar imagem "${inputValue}"`}
+                                isLoading={recommendedMachineImagesQuery.isLoading}
+                                components={machineImageSelectComponents}
+                                value={{
+                                    label: machineImageIdWatch,
+                                    value: machineImageIdWatch,
+                                    machineImage: recommendedMachineImagesQuery.data?.find(
+                                        (image) => image.id === machineImageIdWatch,
+                                    ),
+                                }}
+                                options={
+                                    recommendedMachineImagesQuery.data?.map((image) => ({
+                                        label: image.id,
+                                        value: image.id,
+                                        machineImage: image,
+                                    })) ?? []
+                                }
+                                onChange={(selected) => {
+                                    formMethods.setValue('machineImageId', selected?.value ?? '');
+                                }}
                             />
+
                             {formMethods.formState.errors.machineImageId?.message !== undefined ? (
                                 <FormErrorMessage>
                                     {formMethods.formState.errors.machineImageId?.message}
@@ -217,16 +342,8 @@ export const TemplatesPageCreateModal: React.FC<TemplatesPageCreateModalProps> =
                             ) : (
                                 <FormHelperText>
                                     <Text>
-                                        Para consultar as AMIs disponíveis na AWS,{' '}
-                                        <Link
-                                            href={
-                                                'https://console.aws.amazon.com/ec2/v2/home#Images:sort=name'
-                                            }
-                                            isExternal
-                                            color={'blue.500'}
-                                        >
-                                            clique aqui
-                                        </Link>
+                                        Você pode escolher entre uma das imagens recomendadas ou
+                                        informar o ID de uma imagem existente.
                                     </Text>
                                 </FormHelperText>
                             )}

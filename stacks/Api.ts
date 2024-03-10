@@ -189,9 +189,9 @@ export const Api = ({ stack }: sst.StackContext) => {
      */
     api.addRoutes(stack, {
         'GET /api/v1/instance-types': {
-            function: 'packages/api/interfaces/api/instance/list-instance-types.handler',
+            function: 'packages/api/interfaces/api/misc/list-instance-types.handler',
         },
-        'GET /api/v1/recommended-instance-types': {
+        'GET /api/v1/recommended-machine-images': {
             function: 'packages/api/interfaces/api/misc/list-recommended-machine-images.handler',
         },
     });

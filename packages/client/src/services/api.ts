@@ -309,6 +309,6 @@ export const listInstanceTypes = async () =>
 
 export const listRecommendedMachineImages = async () =>
     executeRequest<MachineImage[]>({
-        path: '/api/v1/machine-images',
+        path: '/api/v1/recommended-machine-images',
         method: 'GET',
     });
