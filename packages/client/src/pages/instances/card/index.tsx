@@ -42,6 +42,7 @@ import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { InstancesPageCardDetailsModal } from './details-modal';
 import { Instance } from '../../../services/api-protocols';
 import {
+    bytesToHumanReadable,
     getInstancePlatformIcon,
     pluralize,
     translateNetworkPerformance,
@@ -98,7 +99,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
         {
             icon: BiHdd,
             label: 'Armazenamento',
-            value: `${instance.storageInGb} GB`,
+            value: bytesToHumanReadable(parseInt(instance.storageInGb), 'GB'),
         },
         {
             icon: FaNetworkWired,
@@ -108,19 +109,19 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
         {
             icon: LiaMemorySolid,
             label: 'Memória RAM',
-            value: `${instance.instanceType.ram.sizeInMb} MB`,
+            value: bytesToHumanReadable(instance.instanceType.ram.sizeInMb, 'MB'),
         },
         {
             icon: BsGpuCard,
             label: 'Memória de vídeo',
             value:
                 instance.instanceType.gpu.totalGpuMemoryInMb !== 0
-                    ? `${instance.instanceType.gpu.totalGpuMemoryInMb} Mb (${
+                    ? `${bytesToHumanReadable(instance.instanceType.gpu.totalGpuMemoryInMb, 'MB')} (${
                           instance.instanceType.gpu.devices.length > 0
                               ? instance.instanceType.gpu.devices
                                     .map(
                                         (device) =>
-                                            `${device.count}x ${device.manufacturer} ${device.name} - ${device.memoryInMb} Mb`,
+                                            `${device.count}x ${device.manufacturer} ${device.name} - ${bytesToHumanReadable(device.memoryInMb, 'MB')}`,
                                     )
                                     .join(', ')
                               : 'Nenhum dispositivo'

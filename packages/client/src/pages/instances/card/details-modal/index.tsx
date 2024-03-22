@@ -17,7 +17,7 @@ import { IconType } from 'react-icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { Instance } from '../../../../services/api-protocols';
-import { instanceStateToDisplayString } from '../../../../services/helpers';
+import { bytesToHumanReadable, instanceStateToDisplayString } from '../../../../services/helpers';
 
 dayjs.locale('pt-br');
 dayjs.extend(relativeTime);
@@ -108,11 +108,11 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
         },
         {
             label: 'Memória RAM',
-            value: `${instance.instanceType.ram.sizeInMb} MB`,
+            value: bytesToHumanReadable(instance.instanceType.ram.sizeInMb, 'MB'),
         },
         {
             label: 'Memória de vídeo',
-            value: `${instance.instanceType.gpu.totalGpuMemoryInMb} MB`,
+            value: bytesToHumanReadable(instance.instanceType.gpu.totalGpuMemoryInMb, 'MB'),
         },
         {
             label: 'Dispositivos de vídeo',
@@ -121,14 +121,14 @@ export const InstancesPageCardDetailsModal: React.FC<InstancesPageCardDetailsMod
                     ? instance.instanceType.gpu.devices
                           .map(
                               (device) =>
-                                  `${device.count}x ${device.manufacturer} ${device.name} (${device.memoryInMb} MB)`,
+                                  `${device.count}x ${device.manufacturer} ${device.name} (${bytesToHumanReadable(device.memoryInMb, 'MB')})`,
                           )
                           .join(', ')
                     : 'Nenhum',
         },
         {
             label: 'Armazenamento',
-            value: `${instance.storageInGb} GB`,
+            value: bytesToHumanReadable(parseInt(instance.storageInGb), 'GB'),
         },
         {
             label: 'Criado em',

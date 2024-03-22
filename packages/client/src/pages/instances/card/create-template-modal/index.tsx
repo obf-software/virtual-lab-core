@@ -27,6 +27,7 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 import { Instance } from '../../../../services/api-protocols';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useInstanceOperations } from '../../../../hooks/use-instance-operations';
+import { bytesToHumanReadable } from '../../../../services/helpers';
 
 dayjs.locale('pt-br');
 dayjs.extend(relativeTime);
@@ -196,7 +197,7 @@ export const InstancesPageCardCreateTemplateModal: React.FC<
                                     {...formMethods.register('storageInGb', {
                                         min: {
                                             value: Number(instance.storageInGb),
-                                            message: `O armazenamento deve ser maior ou igual a ${instance.storageInGb} GB`,
+                                            message: `O armazenamento deve ser maior ou igual a ${bytesToHumanReadable(parseInt(instance.storageInGb), 'GB')}`,
                                         },
                                     })}
                                 />

@@ -38,7 +38,7 @@ import * as relativeTime from 'dayjs/plugin/relativeTime';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { IconType } from 'react-icons';
 import { InstanceTemplate } from '../../../services/api-protocols';
-import { getInstancePlatformIcon } from '../../../services/helpers';
+import { bytesToHumanReadable, getInstancePlatformIcon } from '../../../services/helpers';
 import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
 import { useInstanceTemplateOperations } from '../../../hooks/use-instance-template-operations';
 import { SubmitHandler, useForm } from 'react-hook-form';
@@ -120,7 +120,7 @@ export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
         {
             icon: BiHdd,
             label: 'Armazenamento',
-            value: `${instanceTemplate.storageInGb} GB`,
+            value: bytesToHumanReadable(instanceTemplate.storageInGb, 'GB'),
         },
         {
             icon: FiUser,

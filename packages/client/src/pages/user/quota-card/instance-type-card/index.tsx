@@ -14,7 +14,11 @@ import { InstanceType } from '../../../../services/api-protocols';
 import React from 'react';
 import { IconType } from 'react-icons';
 import { FiCpu } from 'react-icons/fi';
-import { pluralize, translateNetworkPerformance } from '../../../../services/helpers';
+import {
+    bytesToHumanReadable,
+    pluralize,
+    translateNetworkPerformance,
+} from '../../../../services/helpers';
 import { FaNetworkWired } from 'react-icons/fa';
 import { LiaMemorySolid } from 'react-icons/lia';
 import { BsGpuCard } from 'react-icons/bs';
@@ -41,19 +45,19 @@ export const UserPageQuotaCardInstanceTypeCard: React.FC<
         {
             icon: LiaMemorySolid,
             label: 'Memória RAM',
-            value: `${instanceType.ram.sizeInMb} MB`,
+            value: bytesToHumanReadable(instanceType.ram.sizeInMb, 'MB'),
         },
         {
             icon: BsGpuCard,
             label: 'Memória de vídeo',
             value:
                 instanceType.gpu.totalGpuMemoryInMb !== 0
-                    ? `${instanceType.gpu.totalGpuMemoryInMb} Mb (${
+                    ? `${bytesToHumanReadable(instanceType.gpu.totalGpuMemoryInMb, 'MB')} (${
                           instanceType.gpu.devices.length > 0
                               ? instanceType.gpu.devices
                                     .map(
                                         (device) =>
-                                            `${device.count}x ${device.manufacturer} ${device.name} - ${device.memoryInMb} Mb`,
+                                            `${device.count}x ${device.manufacturer} ${device.name} - ${bytesToHumanReadable(device.memoryInMb, 'MB')}`,
                                     )
                                     .join(', ')
                               : 'Nenhum dispositivo'

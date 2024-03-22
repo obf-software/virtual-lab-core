@@ -98,12 +98,12 @@ const instanceTypeSelectComponents: SelectComponentsConfig<
                 label: 'Memória de vídeo',
                 value:
                     props.data.instanceType.gpu.totalGpuMemoryInMb !== 0
-                        ? `${props.data.instanceType.gpu.totalGpuMemoryInMb} Mb (${
+                        ? `${bytesToHumanReadable(props.data.instanceType.gpu.totalGpuMemoryInMb, 'MB')} (${
                               props.data.instanceType.gpu.devices.length > 0
                                   ? props.data.instanceType.gpu.devices
                                         .map(
                                             (device) =>
-                                                `${device.count}x ${device.manufacturer} ${device.name} - ${device.memoryInMb} Mb`,
+                                                `${device.count}x ${device.manufacturer} ${device.name} - ${bytesToHumanReadable(device.memoryInMb, 'MB')}`,
                                         )
                                         .join(', ')
                                   : 'Nenhum dispositivo'
