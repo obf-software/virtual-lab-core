@@ -55,13 +55,14 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
 
     React.useEffect(() => {
         if (
+            userQuery.data !== undefined &&
             debouncedMaxInstances !== undefined &&
             debouncedMaxInstances !== userQuery.data?.quotas.maxInstances &&
             debouncedMaxInstances >= 0
         ) {
             updateQuotas.mutate(
                 {
-                    userId: userQuery.data?.id ?? '',
+                    userId: userQuery.data.id,
                     maxInstances: debouncedMaxInstances,
                 },
                 {
