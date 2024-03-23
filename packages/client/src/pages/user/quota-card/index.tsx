@@ -15,6 +15,7 @@ import {
     Select,
     SimpleGrid,
     Spinner,
+    Text,
     VStack,
     useDisclosure,
     useToast,
@@ -42,6 +43,8 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
 
     const [instanceTypeToRemove, setInstanceTypeToRemove] = React.useState<string | undefined>();
     const removeInstanceTypeModalDisclosure = useDisclosure();
+
+    const numberOfAllowedInstanceTypes = userQuery.data?.quotas.allowedInstanceTypes.length ?? 0;
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -230,38 +233,50 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                 >
                     <FormLabel fontWeight={'bold'}>Tipos de instâncias permitidos</FormLabel>
 
-                    <InputGroup>
-                        <SimpleGrid
-                            columns={{ base: 1, md: 2 }}
-                            spacing={4}
-                            w={'full'}
-                            my={4}
-                            hidden={userQuery.isLoading}
-                        >
-                            {userQuery.data?.quotas.allowedInstanceTypes.map(
-                                (instanceType, index) => (
-                                    <UserPageQuotaCardInstanceTypeCard
-                                        key={`user-page-quota-card-instance-type-card-${instanceType.name}-${index}`}
-                                        onRemove={() => {
-                                            setInstanceTypeToRemove(instanceType.name);
-                                            removeInstanceTypeModalDisclosure.onOpen();
-                                        }}
-                                        instanceType={instanceType}
-                                    />
-                                ),
-                            )}
-                        </SimpleGrid>
-
-                        {userQuery.isLoading && (
-                            <Box
-                                py={4}
+                    {!userQuery.isLoading && numberOfAllowedInstanceTypes > 0 && (
+                        <InputGroup>
+                            <SimpleGrid
+                                columns={{ base: 1, md: 2 }}
+                                spacing={4}
                                 w={'full'}
-                                textAlign={'center'}
+                                my={4}
+                                hidden={userQuery.isLoading}
                             >
-                                <Spinner size='md' />
-                            </Box>
-                        )}
-                    </InputGroup>
+                                {userQuery.data?.quotas.allowedInstanceTypes.map(
+                                    (instanceType, index) => (
+                                        <UserPageQuotaCardInstanceTypeCard
+                                            key={`user-page-quota-card-instance-type-card-${instanceType.name}-${index}`}
+                                            onRemove={() => {
+                                                setInstanceTypeToRemove(instanceType.name);
+                                                removeInstanceTypeModalDisclosure.onOpen();
+                                            }}
+                                            instanceType={instanceType}
+                                        />
+                                    ),
+                                )}
+                            </SimpleGrid>
+                        </InputGroup>
+                    )}
+
+                    {!userQuery.isLoading && numberOfAllowedInstanceTypes === 0 && (
+                        <Box
+                            py={4}
+                            w={'100%'}
+                            textAlign={'left'}
+                        >
+                            <Text color={'gray.500'}>Nenhum tipo de instância permitido</Text>
+                        </Box>
+                    )}
+
+                    {userQuery.isLoading && (
+                        <Box
+                            py={4}
+                            w={'full'}
+                            textAlign={'left'}
+                        >
+                            <Spinner size='md' />
+                        </Box>
+                    )}
 
                     <FormHelperText>
                         Os tipos de instâncias que o usuário pode criar. Para mais informações,{' '}
