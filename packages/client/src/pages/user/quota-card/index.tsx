@@ -1,12 +1,9 @@
 import {
     Box,
-    Card,
-    CardBody,
     FormControl,
     FormHelperText,
     FormLabel,
     Heading,
-    Icon,
     InputGroup,
     InputRightElement,
     Link,
@@ -27,8 +24,8 @@ import { useUser } from '../../../hooks/use-user';
 import { useUserOperations } from '../../../hooks/use-user-operations';
 import { getErrorMessage } from '../../../services/helpers';
 import { UserPageQuotaCardInstanceTypeCard } from './instance-type-card';
-import { FiPlus } from 'react-icons/fi';
 import { UserPageQuotaCardAddInstanceTypeModal } from './add-instance-type-modal';
+import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
 
 interface UserPageQuotaCardProps {
     userQuery: ReturnType<typeof useUser>['userQuery'];
@@ -42,6 +39,9 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
     );
     const [debouncedMaxInstances, setDebouncedMaxInstances] = React.useState<number>();
     const addInstanceTypeModalDisclosure = useDisclosure();
+
+    const [instanceTypeToRemove, setInstanceTypeToRemove] = React.useState<string | undefined>();
+    const removeInstanceTypeModalDisclosure = useDisclosure();
 
     React.useEffect(() => {
         const timeout = setTimeout(() => {
@@ -90,6 +90,43 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                 userInstanceTypes={userQuery.data?.quotas.allowedInstanceTypes ?? []}
                 isOpen={addInstanceTypeModalDisclosure.isOpen}
                 onClose={addInstanceTypeModalDisclosure.onClose}
+            />
+
+            <ConfirmDeletionAlertDialog
+                isLoading={updateQuotas.isPending}
+                isOpen={removeInstanceTypeModalDisclosure.isOpen}
+                onClose={removeInstanceTypeModalDisclosure.onClose}
+                title={`Remover tipo de instância ${instanceTypeToRemove ?? ''}?`}
+                text={`O usuário não poderá mais criar instâncias desse tipo.`}
+                onConfirm={() => {
+                    if (userQuery.data === undefined) {
+                        return;
+                    }
+
+                    updateQuotas.mutate(
+                        {
+                            userId: userQuery.data.id,
+                            allowedInstanceTypes: [
+                                ...new Set(
+                                    userQuery.data.quotas.allowedInstanceTypes
+                                        .filter(
+                                            (instanceType) =>
+                                                instanceType.name !== instanceTypeToRemove,
+                                        )
+                                        .map((instanceType) => instanceType.name),
+                                ),
+                            ],
+                        },
+                        {
+                            onSuccess() {
+                                removeInstanceTypeModalDisclosure.onClose();
+                            },
+                            onError() {
+                                removeInstanceTypeModalDisclosure.onClose();
+                            },
+                        },
+                    );
+                }}
             />
 
             <Heading
@@ -141,8 +178,7 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                         )}
                     </InputGroup>
                     <FormHelperText>
-                        O número máximo de instâncias que o usuário pode ter rodando
-                        simultaneamente.
+                        O número máximo de instâncias que o usuário pode ter simultaneamente.
                     </FormHelperText>
                 </FormControl>
 
@@ -201,42 +237,13 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                             my={4}
                             hidden={userQuery.isLoading}
                         >
-                            <Card
-                                w={'full'}
-                                borderRadius={12}
-                                boxShadow={'lg'}
-                                borderColor={'gray.200'}
-                                bgColor={'gray.100'}
-                                borderWidth={2}
-                                _hover={{
-                                    borderColor: 'gray.500',
-                                    cursor: 'pointer',
-                                }}
-                                onClick={addInstanceTypeModalDisclosure.onOpen}
-                            >
-                                <CardBody>
-                                    <Box
-                                        w={'full'}
-                                        h={'full'}
-                                        display={'flex'}
-                                        justifyContent={'center'}
-                                        alignItems={'center'}
-                                    >
-                                        <Icon
-                                            as={FiPlus}
-                                            boxSize={'100px'}
-                                            color={'gray.500'}
-                                        />
-                                    </Box>
-                                </CardBody>
-                            </Card>
-
                             {userQuery.data?.quotas.allowedInstanceTypes.map(
                                 (instanceType, index) => (
                                     <UserPageQuotaCardInstanceTypeCard
                                         key={`user-page-quota-card-instance-type-card-${instanceType.name}-${index}`}
                                         onRemove={() => {
-                                            console.log('remove');
+                                            setInstanceTypeToRemove(instanceType.name);
+                                            removeInstanceTypeModalDisclosure.onOpen();
                                         }}
                                         instanceType={instanceType}
                                     />
