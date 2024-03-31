@@ -410,6 +410,7 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                 <Select
                                     name='instanceType'
                                     placeholder='Buscar'
+                                    noOptionsMessage={() => 'Nenhum tipo de instância encontrado'}
                                     selectedOptionColorScheme='blue'
                                     isLoading={userQuery.isLoading}
                                     components={instanceTypeSelectComponents}
