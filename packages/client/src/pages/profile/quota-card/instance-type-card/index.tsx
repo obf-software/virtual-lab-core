@@ -21,6 +21,7 @@ import {
 import { FaNetworkWired } from 'react-icons/fa';
 import { LiaMemorySolid } from 'react-icons/lia';
 import { BsGpuCard } from 'react-icons/bs';
+import { GiNightSleep } from 'react-icons/gi';
 
 interface ProfilePageQuotaCardInstanceTypeCardProps {
     instanceType: InstanceType;
@@ -61,6 +62,11 @@ export const ProfilePageQuotaCardInstanceTypeCard: React.FC<
                               : 'Nenhum dispositivo'
                       })`
                     : 'N/A',
+        },
+        {
+            icon: GiNightSleep,
+            label: 'Hibernação',
+            value: `Hibernação ${instanceType.hibernationSupport ? ' ' : 'não '}suportada`,
         },
     ];
 
