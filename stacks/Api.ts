@@ -219,6 +219,39 @@ export const Api = ({ stack }: sst.StackContext) => {
                 },
             },
         },
+        onInstanceIdle: {
+            pattern: {
+                detailType: ['INSTANCE_IDLE'],
+            },
+            targets: {
+                lambda: {
+                    type: 'function',
+                    function: {
+                        handler: 'packages/api/interfaces/events/on-instance-idle.handler',
+                        permissions: [
+                            appSyncApi,
+                            'ssm:*',
+                            'secretsmanager:*',
+                            'cloudformation:*',
+                            'servicecatalog:*',
+                            'ec2:*',
+                            's3:*',
+                            'iam:*',
+                            'sns:*',
+                        ],
+                        environment: {
+                            SHARED_SECRET_NAME: 'not-used-yet',
+                            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogLinuxProductId.name,
+                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogWindowsProductId.name,
+                        },
+                    },
+                },
+            },
+        },
     });
 
     stack.addOutputs({
