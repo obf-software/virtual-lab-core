@@ -229,7 +229,7 @@ export const NewInstancePage: React.FC = () => {
                         <Fade in>
                             <SimpleGrid
                                 pb={10}
-                                columns={{ base: 1, md: 3 }}
+                                columns={{ base: 1, lg: 2, xl: 3 }}
                                 spacing={6}
                             >
                                 {instanceTemplates.map((template) => (
