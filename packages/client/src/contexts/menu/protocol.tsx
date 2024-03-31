@@ -1,15 +1,12 @@
 import { IconType } from 'react-icons';
-import { BiBookBookmark, BiBookContent } from 'react-icons/bi';
-import { FiBook, FiBookOpen, FiHome, FiMonitor, FiUser, FiUsers } from 'react-icons/fi';
+import { BiBookBookmark } from 'react-icons/bi';
+import { FiHome, FiMonitor, FiUser } from 'react-icons/fi';
 
 export enum MenuItems {
     HOME = 'HOME',
     INSTANCES = 'INSTANCES',
-
-    // MY_GROUPS = 'MY_GROUPS',
     ADMIN_TEMPLATES = 'ADMIN_TEMPLATES',
     ADMIN_USERS = 'ADMIN_USERS',
-    // ADMIN_GROUPS = 'ADMIN_GROUPS',
 }
 
 interface MenuItemData {
@@ -34,12 +31,6 @@ export const menuItemsMap: {
         href: '/instances',
         adminOnly: false,
     },
-    // MY_GROUPS: {
-    //     icon: FiUsers,
-    //     label: 'Meus Grupos',
-    //     href: '/user-groups',
-    //     adminOnly: false,
-    // },
 
     ADMIN_TEMPLATES: {
         icon: BiBookBookmark,
@@ -53,12 +44,6 @@ export const menuItemsMap: {
         href: '/admin/users',
         adminOnly: true,
     },
-    // ADMIN_GROUPS: {
-    //     icon: FiUsers,
-    //     label: 'Grupos',
-    //     href: '/admin/groups',
-    //     adminOnly: true,
-    // },
 };
 
 export interface MenuContextData {
