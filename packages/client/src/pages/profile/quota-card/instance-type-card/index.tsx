@@ -33,7 +33,7 @@ export const ProfilePageQuotaCardInstanceTypeCard: React.FC<
         {
             icon: FiCpu,
             label: 'CPU',
-            value: `${pluralize(instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, ${pluralize(instanceType.cpu.threadsPerCore, 'Thread por Core', 'Threads por Core')}, @ ${instanceType.cpu.clockSpeedInGhz} GHz (${instanceType.cpu.manufacturer})`,
+            value: `${pluralize(instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, @ ${instanceType.cpu.clockSpeedInGhz} GHz (${instanceType.cpu.manufacturer})`,
         },
         {
             icon: FaNetworkWired,

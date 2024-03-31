@@ -1,9 +1,12 @@
+/* eslint-disable react/prop-types */
 import {
     Box,
     FormControl,
     FormHelperText,
     FormLabel,
+    HStack,
     Heading,
+    Icon,
     InputGroup,
     InputRightElement,
     Link,
@@ -16,6 +19,7 @@ import {
     SimpleGrid,
     Spinner,
     Text,
+    Tooltip,
     VStack,
     useDisclosure,
     useToast,
@@ -23,14 +27,122 @@ import {
 import React from 'react';
 import { useUser } from '../../../hooks/use-user';
 import { useUserOperations } from '../../../hooks/use-user-operations';
-import { getErrorMessage } from '../../../services/helpers';
+import {
+    bytesToHumanReadable,
+    getErrorMessage,
+    pluralize,
+    translateNetworkPerformance,
+} from '../../../services/helpers';
 import { UserPageQuotaCardInstanceTypeCard } from './instance-type-card';
-import { UserPageQuotaCardAddInstanceTypeModal } from './add-instance-type-modal';
 import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion-alert-dialog';
+import {
+    GroupBase,
+    OptionBase,
+    Select as ChakraReactSelect,
+    SelectComponentsConfig,
+    chakraComponents,
+} from 'chakra-react-select';
+import { InstanceType } from '../../../services/api-protocols';
+import { IconType } from 'react-icons';
+import { FiCpu } from 'react-icons/fi';
+import { FaNetworkWired } from 'react-icons/fa';
+import { LiaMemorySolid } from 'react-icons/lia';
+import { BsGpuCard } from 'react-icons/bs';
+import { GiNightSleep } from 'react-icons/gi';
+import { useInstanceTypes } from '../../../hooks/use-instance-types';
 
 interface UserPageQuotaCardProps {
     userQuery: ReturnType<typeof useUser>['userQuery'];
 }
+
+interface InstanceTypeOption extends OptionBase {
+    label: string;
+    value: string;
+    instanceType: InstanceType;
+}
+
+const instanceTypeSelectComponents: SelectComponentsConfig<
+    InstanceTypeOption,
+    false,
+    GroupBase<InstanceTypeOption>
+> = {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Option: ({ children, ...props }) => {
+        const gridItems: { icon: IconType; label: string; value: string }[] = [
+            {
+                icon: FiCpu,
+                label: 'CPU',
+                value: `${pluralize(props.data.instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(props.data.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, @ ${props.data.instanceType.cpu.clockSpeedInGhz} GHz (${props.data.instanceType.cpu.manufacturer})`,
+            },
+            {
+                icon: FaNetworkWired,
+                label: 'Performance de rede',
+                value: translateNetworkPerformance(props.data.instanceType.networkPerformance),
+            },
+            {
+                icon: LiaMemorySolid,
+                label: 'Memória RAM',
+                value: bytesToHumanReadable(props.data.instanceType.ram.sizeInMb, 'MB'),
+            },
+            {
+                icon: BsGpuCard,
+                label: 'Memória de vídeo',
+                value:
+                    props.data.instanceType.gpu.totalGpuMemoryInMb !== 0
+                        ? `${bytesToHumanReadable(props.data.instanceType.gpu.totalGpuMemoryInMb, 'MB')} (${
+                              props.data.instanceType.gpu.devices.length > 0
+                                  ? props.data.instanceType.gpu.devices
+                                        .map(
+                                            (device) =>
+                                                `${device.count}x ${device.manufacturer} ${device.name} - ${bytesToHumanReadable(device.memoryInMb, 'MB')}`,
+                                        )
+                                        .join(', ')
+                                  : 'Nenhum dispositivo'
+                          })`
+                        : 'N/A',
+            },
+            {
+                icon: GiNightSleep,
+                label: 'Hibernação',
+                value: `Hibernação ${
+                    props.data.instanceType.hibernationSupport ? ' ' : 'não '
+                }suportada`,
+            },
+        ];
+
+        return (
+            <chakraComponents.Option {...props}>
+                <VStack align={'start'}>
+                    <Heading
+                        size={'md'}
+                        noOfLines={1}
+                        mb={2}
+                    >
+                        {props.data.instanceType.name}
+                    </Heading>
+                    {gridItems.map(({ icon, label, value }, index) => (
+                        <Tooltip
+                            label={`${label}: ${value}`}
+                            key={`instance-grid-item-${index}`}
+                        >
+                            <HStack
+                                spacing={4}
+                                align='center'
+                            >
+                                <Icon
+                                    aria-label={value}
+                                    as={icon}
+                                    boxSize={'20px'}
+                                />
+                                <Text fontSize={'md'}>{value}</Text>
+                            </HStack>
+                        </Tooltip>
+                    ))}
+                </VStack>
+            </chakraComponents.Option>
+        );
+    },
+};
 
 export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery }) => {
     const { updateQuotas } = useUserOperations();
@@ -39,11 +151,11 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
         userQuery.data?.quotas.maxInstances ?? 0,
     );
     const [debouncedMaxInstances, setDebouncedMaxInstances] = React.useState<number>();
-    const addInstanceTypeModalDisclosure = useDisclosure();
 
     const [instanceTypeToRemove, setInstanceTypeToRemove] = React.useState<string | undefined>();
     const removeInstanceTypeModalDisclosure = useDisclosure();
 
+    const { instanceTypesQuery } = useInstanceTypes();
     const numberOfAllowedInstanceTypes = userQuery.data?.quotas.allowedInstanceTypes.length ?? 0;
 
     React.useEffect(() => {
@@ -90,12 +202,6 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
             spacing={4}
             align={'start'}
         >
-            <UserPageQuotaCardAddInstanceTypeModal
-                userInstanceTypes={userQuery.data?.quotas.allowedInstanceTypes ?? []}
-                isOpen={addInstanceTypeModalDisclosure.isOpen}
-                onClose={addInstanceTypeModalDisclosure.onClose}
-            />
-
             <ConfirmDeletionAlertDialog
                 isLoading={updateQuotas.isPending}
                 isOpen={removeInstanceTypeModalDisclosure.isOpen}
@@ -227,11 +333,70 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
                     </FormHelperText>
                 </FormControl>
 
-                <FormControl
-                    mt={'2%'}
-                    isReadOnly
-                >
+                <FormControl mt={'2%'}>
                     <FormLabel fontWeight={'bold'}>Tipos de instâncias permitidos</FormLabel>
+
+                    <ChakraReactSelect
+                        name='instanceType'
+                        placeholder='Selecione um tipo de instância'
+                        noOptionsMessage={() => 'Nenhum tipo de instância encontrado'}
+                        selectedOptionColorScheme='blue'
+                        isLoading={instanceTypesQuery.isLoading || updateQuotas.isPending}
+                        components={instanceTypeSelectComponents}
+                        options={(() => {
+                            return instanceTypesQuery.data?.map((instanceType) => ({
+                                label: instanceType.name,
+                                value: instanceType.name,
+                                instanceType,
+                            }));
+                        })()}
+                        onChange={(selected) => {
+                            if (selected === null) {
+                                return;
+                            }
+
+                            if (userQuery.data === undefined) {
+                                return;
+                            }
+
+                            if (
+                                userQuery.data.quotas.allowedInstanceTypes.find(
+                                    (instanceType) => instanceType.name === selected.value,
+                                ) !== undefined
+                            ) {
+                                toast({
+                                    title: 'Tipo de instância já permitido',
+                                    description:
+                                        'O tipo de instância selecionado já está permitido',
+                                    status: 'info',
+                                });
+                                return;
+                            }
+
+                            updateQuotas.mutate(
+                                {
+                                    userId: userQuery.data.id,
+                                    allowedInstanceTypes: [
+                                        ...new Set([
+                                            ...userQuery.data.quotas.allowedInstanceTypes.map(
+                                                (instanceType) => instanceType.name,
+                                            ),
+                                            selected.value,
+                                        ]),
+                                    ],
+                                },
+                                {
+                                    onError: (error) => {
+                                        toast({
+                                            title: 'Erro ao adicionar tipo de instância',
+                                            description: getErrorMessage(error),
+                                            status: 'error',
+                                        });
+                                    },
+                                },
+                            );
+                        }}
+                    />
 
                     {!userQuery.isLoading && numberOfAllowedInstanceTypes > 0 && (
                         <InputGroup>

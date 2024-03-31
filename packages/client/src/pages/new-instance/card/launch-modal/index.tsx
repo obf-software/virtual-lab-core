@@ -81,7 +81,7 @@ const instanceTypeSelectComponents: SelectComponentsConfig<
             {
                 icon: FiCpu,
                 label: 'CPU',
-                value: `${pluralize(props.data.instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(props.data.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, ${pluralize(props.data.instanceType.cpu.threadsPerCore, 'Thread por Core', 'Threads por Core')}, @ ${props.data.instanceType.cpu.clockSpeedInGhz} GHz (${props.data.instanceType.cpu.manufacturer})`,
+                value: `${pluralize(props.data.instanceType.cpu.cores, 'Core', 'Cores')}, ${pluralize(props.data.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, @ ${props.data.instanceType.cpu.clockSpeedInGhz} GHz (${props.data.instanceType.cpu.manufacturer})`,
             },
             {
                 icon: FaNetworkWired,

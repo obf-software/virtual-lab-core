@@ -89,7 +89,7 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
         {
             icon: FiCpu,
             label: 'CPU',
-            value: `${pluralize(instance.instanceType.cpu.cores, 'core', 'cores')}, ${pluralize(instance.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, ${pluralize(instance.instanceType.cpu.threadsPerCore, 'thread per core', 'threads per core')}, @ ${instance.instanceType.cpu.clockSpeedInGhz} GHz (${instance.instanceType.cpu.manufacturer})`,
+            value: `${pluralize(instance.instanceType.cpu.cores, 'core', 'cores')}, ${pluralize(instance.instanceType.cpu.vCpus, 'vCPU', 'vCPUs')}, @ ${instance.instanceType.cpu.clockSpeedInGhz} GHz (${instance.instanceType.cpu.manufacturer})`,
         },
         {
             icon: getInstancePlatformIcon(instance.platform),

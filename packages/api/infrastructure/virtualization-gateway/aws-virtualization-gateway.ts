@@ -565,7 +565,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                                       { Name: 'supported-virtualization-type', Values: ['hvm'] },
                                   ]
                                 : undefined,
-                        MaxResults: 100,
+                        MaxResults: instanceTypes === undefined ? 100 : undefined,
                         NextToken: nextToken,
                     }),
                 );
