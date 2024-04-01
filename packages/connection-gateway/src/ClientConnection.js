@@ -11,8 +11,9 @@ class ClientConnection {
      * @param {number} connectionId
      * @param {WebSocket.WebSocket} webSocket
      * @param req
+     * @param {EventPublisher} eventPublisher
      */
-    constructor(server, connectionId, webSocket, req) {
+    constructor(server, connectionId, webSocket, req, eventPublisher) {
         this.STATE_OPEN = 1;
         this.STATE_CLOSED = 2;
 
@@ -25,6 +26,7 @@ class ClientConnection {
         this.query = Url.parse(req.url, true).query;
         this.lastActivity = Date.now();
         this.activityCheckInterval = null;
+        this.eventPublisher = eventPublisher;
 
         this.logger.verbose('Client connection open');
 
@@ -56,6 +58,8 @@ class ClientConnection {
                 this.activityCheckInterval = setInterval(this.checkActivity.bind(this), 1000);
             }
         });
+
+        this.eventPublisher.publishConnectionStartedEvent(this.query.virtualId);
     }
 
     decryptToken() {
@@ -91,6 +95,8 @@ class ClientConnection {
         this.state = this.STATE_CLOSED;
 
         this.logger.verbose('Client connection closed');
+
+        this.eventPublisher.publishConnectionEndedEvent(this.query.virtualId);
     }
 
     error(error) {

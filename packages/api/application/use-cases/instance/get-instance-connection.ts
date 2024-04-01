@@ -81,7 +81,7 @@ export class GetInstanceConnection {
         instance.onUserConnected();
         await this.instanceRepository.update(instance);
 
-        const connectionString =
+        const connectionStringPromise =
             instance.getData().connectionType === 'VNC'
                 ? this.connectionEncoder.encodeVncConnection({
                       hostname: virtualInstance.hostname,
@@ -101,6 +101,10 @@ export class GetInstanceConnection {
                       username: 'developer',
                   });
 
-        return { connectionString: await connectionString };
+        const connectionString = await connectionStringPromise;
+
+        return {
+            connectionString: `${connectionString}&virtualId=${virtualId}`,
+        };
     };
 }

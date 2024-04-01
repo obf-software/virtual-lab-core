@@ -6,6 +6,8 @@ import { UserRepository } from '../../user-repository';
 import { EventPublisher } from '../../event-publisher';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceStateChanged } from '../../../domain/application-events/instance-state-changed';
+import { ApplicationEvent } from '../../../domain/dtos/application-event';
+import { InstanceConnectionEnded } from '../../../domain/application-events/instance-connection-ended';
 
 export const notifyInstanceStateChangeInputSchema = z
     .object({
@@ -52,12 +54,28 @@ export class NotifyInstanceStateChange {
             return;
         }
 
-        await this.eventPublisher.publish(
+        const eventsToPublish: ApplicationEvent[] = [
             new InstanceStateChanged({
                 username: user.getData().username,
                 instance: instance.getData(),
                 state: validInput.state,
             }),
-        );
+        ];
+
+        const virtualId = instance.getData().virtualId;
+        if (validInput.state === 'RUNNING' && virtualId) {
+            /**
+             * This is a way to ensure that the instance will be automatically stopped after
+             * a certain time if the user does not connect to it.
+             */
+            eventsToPublish.push(
+                new InstanceConnectionEnded({
+                    username: user.getData().username,
+                    virtualId,
+                }),
+            );
+        }
+
+        await this.eventPublisher.publish(...eventsToPublish);
     };
 }

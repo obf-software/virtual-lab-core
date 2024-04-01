@@ -1,6 +1,7 @@
 const EventEmitter = require('events').EventEmitter;
 const Ws = require('ws');
 const DeepExtend = require('deep-extend');
+const EventPublisher = require('./EventPublisher.js');
 
 const ClientConnection = require('./ClientConnection.js');
 
@@ -9,6 +10,7 @@ class Server extends EventEmitter {
         super();
 
         this.logger = logger;
+        this.eventPublisher = new EventPublisher(logger);
 
         if (wsOptions.hasOwnProperty('server')) {
             this.wsOptions = wsOptions;
@@ -170,7 +172,13 @@ class Server extends EventEmitter {
         this.connectionsCount++;
         this.activeConnections.set(
             this.connectionsCount,
-            new ClientConnection(this, this.connectionsCount, webSocketConnection, req),
+            new ClientConnection(
+                this,
+                this.connectionsCount,
+                webSocketConnection,
+                req,
+                this.eventPublisher,
+            ),
         );
     }
 }
