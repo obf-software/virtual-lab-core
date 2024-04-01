@@ -11,7 +11,10 @@ import {
     StopInstancesCommand,
     _InstanceType,
 } from '@aws-sdk/client-ec2';
-import { VirtualizationGateway } from '../../application/virtualization-gateway';
+import {
+    VirtualizationGateway,
+    VirtualizationGatewayScheduleOperation,
+} from '../../application/virtualization-gateway';
 import { InstanceState } from '../../domain/dtos/instance-state';
 import { VirtualInstance } from '../../domain/dtos/virtual-instance';
 import { Errors } from '../../domain/dtos/errors';
@@ -40,6 +43,12 @@ import { VirtualInstanceType } from '../../domain/dtos/virtual-instance-type';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { InstancePlatform } from '../../domain/dtos/instance-platform';
+import {
+    CreateScheduleCommand,
+    DeleteScheduleCommand,
+    ResourceNotFoundException,
+    SchedulerClient,
+} from '@aws-sdk/client-scheduler';
 
 dayjs.extend(utc);
 
@@ -47,6 +56,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     private ec2Client: EC2Client;
     private serviceCatalogClient: ServiceCatalogClient;
     private cloudFormationClient: CloudFormationClient;
+    private schedulerClient: SchedulerClient;
 
     private cachedInstanceTypes: VirtualInstanceType[] = [];
     private cachedInstanceTypesAt: Date | undefined;
@@ -63,10 +73,13 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         private readonly API_SNS_TOPIC_ARN: string,
         private readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string,
         private readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string,
+        private readonly EVENT_BUS_ARN: string,
+        private readonly EVENT_BUS_PUBLISHER_ROLE_ARN: string,
     ) {
         this.ec2Client = new EC2Client({ region: AWS_REGION });
         this.serviceCatalogClient = new ServiceCatalogClient({ region: AWS_REGION });
         this.cloudFormationClient = new CloudFormationClient({ region: AWS_REGION });
+        this.schedulerClient = new SchedulerClient({ region: AWS_REGION });
     }
 
     private mapInstanceState = (stateName?: string): InstanceState => {
@@ -117,6 +130,13 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             hibernationSupport: HibernationSupported ?? false,
             networkPerformance: NetworkInfo?.NetworkPerformance ?? '-',
         };
+    };
+
+    private getScheduledOperationName = (
+        virtualId: string,
+        operation: VirtualizationGatewayScheduleOperation,
+    ): string => {
+        return `virtual-lab-core-${virtualId}-${operation}`;
     };
 
     getInstance = async (virtualId: string): Promise<VirtualInstance | undefined> => {
@@ -592,6 +612,54 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         } catch (error) {
             console.log(error);
             return [];
+        }
+    };
+
+    scheduleInstanceOperation = async (
+        virtualId: string,
+        operation: VirtualizationGatewayScheduleOperation,
+        afterMinutes: number,
+    ): Promise<void> => {
+        await this.unscheduleInstanceOperation(virtualId, operation);
+
+        await this.schedulerClient.send(
+            new CreateScheduleCommand({
+                Name: this.getScheduledOperationName(virtualId, operation),
+                FlexibleTimeWindow: {
+                    Mode: 'OFF',
+                },
+                ActionAfterCompletion: 'DELETE',
+                ScheduleExpression: `at(${dayjs().utc().add(afterMinutes, 'minutes').format('YYYY-MM-DDTHH:mm:ss')})`,
+                ScheduleExpressionTimezone: 'UTC',
+                State: 'ENABLED',
+                Description: `Scheduled ${operation} operation for virtual instance ${virtualId}`,
+                Target: {
+                    Arn: this.EVENT_BUS_ARN,
+                    RoleArn: this.EVENT_BUS_PUBLISHER_ROLE_ARN,
+                    EventBridgeParameters: {
+                        DetailType: 'INSTANCE_IDLE',
+                        Source: 'virtual-lab-core',
+                    },
+                    Input: JSON.stringify({ virtualId }),
+                },
+            }),
+        );
+    };
+
+    unscheduleInstanceOperation = async (
+        virtualId: string,
+        operation: VirtualizationGatewayScheduleOperation,
+    ): Promise<void> => {
+        try {
+            await this.schedulerClient.send(
+                new DeleteScheduleCommand({
+                    Name: this.getScheduledOperationName(virtualId, operation),
+                }),
+            );
+        } catch (error) {
+            if (!(error instanceof ResourceNotFoundException)) {
+                throw error;
+            }
         }
     };
 }

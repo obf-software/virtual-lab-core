@@ -34,6 +34,8 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 ssmParameters.serviceCatalogLinuxProductId.name,
             SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
                 ssmParameters.serviceCatalogWindowsProductId.name,
+            EVENT_BUS_ARN: 'cannot-be-used-yet',
+            EVENT_BUS_PUBLISHER_ROLE_ARN: 'cannot-be-used-yet',
         },
         permissions: [
             'ssm:*',
@@ -55,6 +57,8 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
                 ssmParameters.serviceCatalogLinuxProductId.name,
             SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
                 ssmParameters.serviceCatalogWindowsProductId.name,
+            EVENT_BUS_ARN: 'cannot-be-used-yet',
+            EVENT_BUS_PUBLISHER_ROLE_ARN: 'cannot-be-used-yet',
         },
         permissions: [
             'ssm:*',

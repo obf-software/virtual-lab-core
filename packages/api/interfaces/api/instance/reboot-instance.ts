@@ -16,6 +16,8 @@ const {
     API_SNS_TOPIC_ARN,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+    EVENT_BUS_ARN,
+    EVENT_BUS_PUBLISHER_ROLE_ARN,
 } = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
@@ -30,6 +32,8 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     API_SNS_TOPIC_ARN,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+    EVENT_BUS_ARN,
+    EVENT_BUS_PUBLISHER_ROLE_ARN,
 );
 const rebootInstance = new RebootInstance(logger, auth, instanceRepository, virtualizationGateway);
 

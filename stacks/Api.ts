@@ -23,6 +23,20 @@ export const Api = ({ stack }: sst.StackContext) => {
         },
     });
 
+    const apiEventBusPublisherRole = new iam.Role(stack, 'ApiEventBusPublisherRole', {
+        assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+        inlinePolicies: {
+            PutEvents: new iam.PolicyDocument({
+                statements: [
+                    new iam.PolicyStatement({
+                        actions: ['events:PutEvents'],
+                        resources: [apiEventBus.eventBusArn],
+                    }),
+                ],
+            }),
+        },
+    });
+
     const apiLambdaDefaultRole = new iam.Role(stack, 'ApiLambdaDefaultRole', {
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
         managedPolicies: [
@@ -64,6 +78,7 @@ export const Api = ({ stack }: sst.StackContext) => {
                     's3:*',
                     'iam:*',
                     'sns:*',
+                    'scheduler:*',
                 ],
                 environment: {
                     SHARED_SECRET_NAME: 'not-used-yet',
@@ -78,9 +93,12 @@ export const Api = ({ stack }: sst.StackContext) => {
                         ssmParameters.serviceCatalogLinuxProductId.name,
                     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
                         ssmParameters.serviceCatalogWindowsProductId.name,
+                    EVENT_BUS_ARN: apiEventBus.eventBusArn,
+                    EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
                 },
                 layers: [paramsAndSecretsExtension],
                 role: apiLambdaDefaultRole,
+                timeout: `15 seconds`,
             },
         },
     });
@@ -247,6 +265,80 @@ export const Api = ({ stack }: sst.StackContext) => {
                                 ssmParameters.serviceCatalogLinuxProductId.name,
                             SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
                                 ssmParameters.serviceCatalogWindowsProductId.name,
+                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
+                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
+                        },
+                    },
+                },
+            },
+        },
+        onInstanceConnectionStarted: {
+            pattern: {
+                detailType: ['INSTANCE_CONNECTION_STARTED'],
+            },
+            targets: {
+                lambda: {
+                    type: 'function',
+                    function: {
+                        handler:
+                            'packages/api/interfaces/events/on-instance-connection-started.handler',
+                        permissions: [
+                            appSyncApi,
+                            'ssm:*',
+                            'secretsmanager:*',
+                            'cloudformation:*',
+                            'servicecatalog:*',
+                            'ec2:*',
+                            's3:*',
+                            'iam:*',
+                            'sns:*',
+                            'scheduler:*',
+                        ],
+                        environment: {
+                            SHARED_SECRET_NAME: 'not-used-yet',
+                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogLinuxProductId.name,
+                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogWindowsProductId.name,
+                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
+                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
+                        },
+                    },
+                },
+            },
+        },
+        onInstanceConnectionEnded: {
+            pattern: {
+                detailType: ['INSTANCE_CONNECTION_ENDED'],
+            },
+            targets: {
+                lambda: {
+                    type: 'function',
+                    function: {
+                        handler:
+                            'packages/api/interfaces/events/on-instance-connection-ended.handler',
+                        permissions: [
+                            appSyncApi,
+                            'ssm:*',
+                            'secretsmanager:*',
+                            'cloudformation:*',
+                            'servicecatalog:*',
+                            'ec2:*',
+                            's3:*',
+                            'iam:*',
+                            'sns:*',
+                            'scheduler:*',
+                        ],
+                        environment: {
+                            SHARED_SECRET_NAME: 'not-used-yet',
+                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
+                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogLinuxProductId.name,
+                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+                                ssmParameters.serviceCatalogWindowsProductId.name,
+                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
+                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
                         },
                     },
                 },
@@ -263,5 +355,6 @@ export const Api = ({ stack }: sst.StackContext) => {
         apiLambdaDefaultRole,
         apiEventBus,
         apiSnsTopic,
+        apiEventBusPublisherRole,
     };
 };

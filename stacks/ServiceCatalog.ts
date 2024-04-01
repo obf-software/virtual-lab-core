@@ -13,7 +13,8 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 
 export const ServiceCatalog = ({ stack }: sst.StackContext) => {
     const { ssmParameters, vpc } = sst.use(Config);
-    const { apiLambdaDefaultRole, apiSnsTopic, apiEventBus } = sst.use(Api);
+    const { apiLambdaDefaultRole, apiSnsTopic, apiEventBus, apiEventBusPublisherRole } =
+        sst.use(Api);
     const { appSyncApi } = sst.use(AppSyncApi);
 
     const scriptsBucket = new sst.Bucket(stack, 'ScriptsBucket');
@@ -44,6 +45,8 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
                 ssmParameters.serviceCatalogLinuxProductId.name,
             SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
                 ssmParameters.serviceCatalogWindowsProductId.name,
+            EVENT_BUS_ARN: apiEventBus.eventBusArn,
+            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
         },
     });
     apiSnsTopic.addSubscription(new snssubscriptions.LambdaSubscription(onLaunchStatusChange));

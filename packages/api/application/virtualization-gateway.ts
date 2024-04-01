@@ -7,6 +7,8 @@ import { MachineImage } from '../domain/dtos/machine-image';
 import { VirtualInstanceType } from '../domain/dtos/virtual-instance-type';
 import { InstancePlatform } from '../domain/dtos/instance-platform';
 
+export type VirtualizationGatewayScheduleOperation = 'turnOff';
+
 export interface VirtualizationGateway {
     getInstance(virtualId: string): Promise<VirtualInstance | undefined>;
     listInstancesStates(virtualIds: string[]): Promise<Record<string, InstanceState>>;
@@ -22,4 +24,13 @@ export interface VirtualizationGateway {
     createMachineImage(virtualId: string, storageInGb: number): Promise<string>;
     getInstanceType(instanceType: string): Promise<VirtualInstanceType | undefined>;
     listInstanceTypes(instanceTypes?: string[]): Promise<VirtualInstanceType[]>;
+    scheduleInstanceOperation(
+        virtualId: string,
+        operation: VirtualizationGatewayScheduleOperation,
+        afterMinutes: number,
+    ): Promise<void>;
+    unscheduleInstanceOperation(
+        virtualId: string,
+        operation: VirtualizationGatewayScheduleOperation,
+    ): Promise<void>;
 }
