@@ -2,12 +2,14 @@ import * as sst from 'sst/constructs';
 import { Api } from './Api';
 import { Auth } from './Auth';
 import { AppSyncApi } from './AppSyncApi';
+import { ConnectionGateway } from './ConnectionGateway';
 
 export const Client = ({ stack, app }: sst.StackContext) => {
     const { api } = sst.use(Api);
     const { userPool, userPoolClient, userPoolDomain, identityPoolId, userPoolIdentityProvider } =
         sst.use(Auth);
     const { appSyncApi } = sst.use(AppSyncApi);
+    const { serviceWebsocketUrl } = sst.use(ConnectionGateway);
 
     const staticSite = new sst.StaticSite(stack, 'StaticSite', {
         path: 'packages/client',
@@ -23,12 +25,12 @@ export const Client = ({ stack, app }: sst.StackContext) => {
             VITE_APP_AWS_IDENTITY_PROVIDER_NAME: userPoolIdentityProvider?.providerName ?? '',
             VITE_APP_API_URL: api.url,
             VITE_APP_APP_SYNC_API_URL: appSyncApi.url,
-            VITE_APP_WEBSOCKET_SERVER_URL: 'ws://localhost:8080/',
+            VITE_APP_WEBSOCKET_SERVER_URL: serviceWebsocketUrl,
         },
     });
 
     stack.addOutputs({
-        staticSiteUrl: staticSite.url ?? 'N/A',
+        staticSiteUrl: staticSite.url ?? 'http://localhost:5173/',
     });
 
     return {

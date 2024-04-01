@@ -34,6 +34,7 @@ export const ServiceCatalog = ({ stack }: sst.StackContext) => {
             'servicecatalog:*',
             'cloudformation:*',
             'events:*',
+            'scheduler:*',
         ],
         environment: {
             SHARED_SECRET_NAME: 'not-used-yet',

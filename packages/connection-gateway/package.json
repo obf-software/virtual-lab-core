@@ -4,7 +4,14 @@
     "engines": {
         "node": "18"
     },
+    "scripts": {
+        "dev": "npm run dev:build && npm run dev:run",
+        "dev:build": "docker build -t connection-gateway .",
+        "dev:run": "AWS_PROFILE=virtual-lab npx sst bind \"env | grep -E 'SST_|AWS_|VLC_' > .env.tmp && docker run --env-file .env.tmp connection-gateway\""
+    },
     "dependencies": {
+        "@aws-sdk/client-eventbridge": "^3.540.0",
+        "@aws-sdk/client-ssm": "^3.540.0",
         "bufferutil": "^4.0.7",
         "deep-extend": "^0.6.0",
         "moment": "^2.29.4",

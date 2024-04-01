@@ -24,7 +24,7 @@ VOLUME /tmp/guacd-drives
 USER guacd
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm i --omit=dev
 COPY . .
 
 ENV LOG_LEVEL=info

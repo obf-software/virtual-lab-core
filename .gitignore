@@ -22,6 +22,7 @@ _dev
 # local env files
 .env*.local
 .env
+.env.tmp
 
 # typescript
 *.tsbuildinfo

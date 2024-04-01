@@ -6,6 +6,7 @@ import { Config } from './stacks/Config';
 import { AppSyncApi } from './stacks/AppSyncApi';
 import { ServiceCatalog } from './stacks/ServiceCatalog';
 import { LambdaLayers } from './stacks/LambdaLayers';
+import { ConnectionGateway } from './stacks/ConnectionGateway';
 
 export default {
     config() {
@@ -21,6 +22,7 @@ export default {
         app.stack(AppSyncApi);
         app.stack(Api);
         app.stack(ServiceCatalog);
+        app.stack(ConnectionGateway);
         app.stack(Client);
     },
 } satisfies SSTConfig;
