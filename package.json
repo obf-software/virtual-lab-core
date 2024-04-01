@@ -1,42 +1,41 @@
 {
-  "name": "virtual-lab-core",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": "18"
-  },
-  "scripts": {
-    "postinstall": "npm run install:client && npm run install:websocket-server",
-    "install:client": "cd packages/client && npm install",
-    "install:websocket-server": "cd packages/websocket-server && npm install",
-    "dev": "AWS_PROFILE=virtual-lab sst dev",
-    "build": "sst build",
-    "deploy": "sst deploy",
-    "remove": "AWS_PROFILE=virtual-lab sst remove",
-    "typecheck": "tsc --noEmit && npm run typecheck --ws",
-    "format": "prettier --write .",
-    "lint": "eslint . --report-unused-disable-directives"
-  },
-  "dependencies": {
-    "aws-cdk-lib": "2.124.0",
-    "constructs": "10.3.0",
-    "sst": "2.40.0"
-  },
-  "devDependencies": {
-    "@tsconfig/node18": "^18.2.2",
-    "@types/aws-lambda": "^8.10.131",
-    "@types/node": "^18.19.9",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
-    "eslint": "^8.56.0",
-    "eslint-plugin-react": "^7.33.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5",
-    "prettier": "^3.2.4",
-    "typescript": "^5.2.2"
-  },
-  "workspaces": [
-    "packages/api"
-  ]
+    "name": "virtual-lab-core",
+    "version": "0.0.0",
+    "private": true,
+    "type": "module",
+    "engines": {
+        "node": "18"
+    },
+    "scripts": {
+        "postinstall": "npm run install:client",
+        "install:client": "cd packages/client && npm install",
+        "dev": "AWS_PROFILE=virtual-lab sst dev",
+        "build": "sst build",
+        "deploy": "sst deploy",
+        "remove": "AWS_PROFILE=virtual-lab sst remove",
+        "typecheck": "tsc --noEmit && npm run typecheck --ws",
+        "format": "prettier --write .",
+        "lint": "eslint . --report-unused-disable-directives"
+    },
+    "dependencies": {
+        "aws-cdk-lib": "2.124.0",
+        "constructs": "10.3.0",
+        "sst": "2.40.0"
+    },
+    "devDependencies": {
+        "@tsconfig/node18": "^18.2.2",
+        "@types/aws-lambda": "^8.10.131",
+        "@types/node": "^18.19.9",
+        "@typescript-eslint/eslint-plugin": "^6.19.1",
+        "@typescript-eslint/parser": "^6.19.1",
+        "eslint": "^8.56.0",
+        "eslint-plugin-react": "^7.33.2",
+        "eslint-plugin-react-hooks": "^4.6.0",
+        "eslint-plugin-react-refresh": "^0.4.5",
+        "prettier": "^3.2.4",
+        "typescript": "^5.2.2"
+    },
+    "workspaces": [
+        "packages/*[!client]*"
+    ]
 }

@@ -1,5 +1,5 @@
 {
-    "name": "@virtual-lab-core/websocket-server",
+    "name": "@virtual-lab-core/connection-gateway",
     "version": "0.0.0",
     "engines": {
         "node": "18"
