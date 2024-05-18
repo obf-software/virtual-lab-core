@@ -1,41 +1,20 @@
 import * as sst from 'sst/constructs';
-import * as events from 'aws-cdk-lib/aws-events';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as sns from 'aws-cdk-lib/aws-sns';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Auth } from './Auth';
-import { Config } from './Config';
+import { Core } from './Core';
 import { AppSyncApi } from './AppSyncApi';
-import { LambdaLayers } from './LambdaLayers';
 
 export const Api = ({ stack }: sst.StackContext) => {
-    const { paramsAndSecretsExtension } = sst.use(LambdaLayers);
+    const {
+        ssmParameters,
+        paramsAndSecretsLambdaExtension,
+        defaultEventBus,
+        defaultSnsTopic,
+        defaultEventBusPublisherRole,
+    } = sst.use(Core);
     const { userPool, userPoolClient } = sst.use(Auth);
-    const { ssmParameters } = sst.use(Config);
     const { appSyncApi } = sst.use(AppSyncApi);
-
-    const apiSnsTopic = new sns.Topic(stack, 'ServiceCatalogTopic', {
-        displayName: 'API Service Catalog Topic',
-    });
-
-    const apiEventBus = new sst.EventBus(stack, 'ApiEventBus', {
-        cdk: {
-            eventBus: events.EventBus.fromEventBusName(stack, 'DefaultEventBus', 'default'),
-        },
-    });
-
-    const apiEventBusPublisherRole = new iam.Role(stack, 'ApiEventBusPublisherRole', {
-        assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
-        inlinePolicies: {
-            PutEvents: new iam.PolicyDocument({
-                statements: [
-                    new iam.PolicyStatement({
-                        actions: ['events:PutEvents'],
-                        resources: [apiEventBus.eventBusArn],
-                    }),
-                ],
-            }),
-        },
-    });
 
     const apiLambdaDefaultRole = new iam.Role(stack, 'ApiLambdaDefaultRole', {
         assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
@@ -48,6 +27,35 @@ export const Api = ({ stack }: sst.StackContext) => {
             iam.ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
         ],
     });
+
+    const environment: Record<string, string> = {
+        DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+        INSTANCE_PASSWORD_PARAMETER_NAME: ssmParameters.instancePassword.name,
+        GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
+        SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+            ssmParameters.serviceCatalogLinuxProductId.name,
+        SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+            ssmParameters.serviceCatalogWindowsProductId.name,
+        SNS_TOPIC_ARN: defaultSnsTopic.topicArn,
+        EVENT_BUS_NAME: defaultEventBus.eventBusName,
+        EVENT_BUS_ARN: defaultEventBus.eventBusArn,
+        EVENT_BUS_PUBLISHER_ROLE_ARN: defaultEventBusPublisherRole.roleArn,
+        APP_SYNC_API_URL: appSyncApi.url,
+    };
+
+    const permissions: sst.Permissions = [
+        appSyncApi,
+        'ssm:*',
+        'secretsmanager:*',
+        'cloudformation:*',
+        'servicecatalog:*',
+        'ec2:*',
+        's3:*',
+        'iam:*',
+        'sns:*',
+        'scheduler:*',
+        'events:*',
+    ];
 
     const api = new sst.Api(stack, 'Api', {
         cors: true,
@@ -68,39 +76,22 @@ export const Api = ({ stack }: sst.StackContext) => {
             authorizer: 'userPool',
             payloadFormatVersion: '2.0',
             function: {
-                permissions: [
-                    appSyncApi,
-                    'ssm:*',
-                    'secretsmanager:*',
-                    'cloudformation:*',
-                    'servicecatalog:*',
-                    'ec2:*',
-                    's3:*',
-                    'iam:*',
-                    'sns:*',
-                    'scheduler:*',
-                ],
-                environment: {
-                    SHARED_SECRET_NAME: 'not-used-yet',
-                    APP_SYNC_API_URL: appSyncApi.url,
-                    API_EVENT_BUS_NAME: apiEventBus.eventBusName,
-                    API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
-
-                    DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-                    INSTANCE_PASSWORD_PARAMETER_NAME: ssmParameters.instancePassword.name,
-                    GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
-                    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                        ssmParameters.serviceCatalogLinuxProductId.name,
-                    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                        ssmParameters.serviceCatalogWindowsProductId.name,
-                    EVENT_BUS_ARN: apiEventBus.eventBusArn,
-                    EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
-                },
-                layers: [paramsAndSecretsExtension],
+                permissions,
+                environment,
+                paramsAndSecrets: paramsAndSecretsLambdaExtension,
                 role: apiLambdaDefaultRole,
                 timeout: `15 seconds`,
             },
         },
+    });
+
+    const apiUrlParameter = new ssm.CfnParameter(stack, 'ApiUrlParameterName', {
+        description: `Virtual Lab API URL - ${stack.stage}`,
+        dataType: ssm.ParameterDataType.TEXT,
+        tier: ssm.ParameterTier.STANDARD,
+        type: 'String',
+        value: api.url,
+        name: ssmParameters.apiUrl.name,
     });
 
     /**
@@ -214,7 +205,7 @@ export const Api = ({ stack }: sst.StackContext) => {
         },
     });
 
-    apiEventBus.addRules(stack, {
+    defaultEventBus.addRules(stack, {
         onEc2InstanceStateChange: {
             pattern: {
                 detailType: ['EC2 Instance State-change Notification'],
@@ -226,13 +217,11 @@ export const Api = ({ stack }: sst.StackContext) => {
                     function: {
                         handler:
                             'packages/api/interfaces/events/on-ec2-instance-state-change-notification.handler',
-                        permissions: [appSyncApi, 'ssm:*', 'secretsmanager:*', 'events:*'],
-                        environment: {
-                            SHARED_SECRET_NAME: 'not-used-yet',
-                            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-                            API_EVENT_BUS_NAME: apiEventBus.eventBusName,
-                            APP_SYNC_API_URL: appSyncApi.url,
-                        },
+                        permissions,
+                        environment,
+                        paramsAndSecrets: paramsAndSecretsLambdaExtension,
+                        role: apiLambdaDefaultRole,
+                        timeout: `30 seconds`,
                     },
                 },
             },
@@ -246,28 +235,11 @@ export const Api = ({ stack }: sst.StackContext) => {
                     type: 'function',
                     function: {
                         handler: 'packages/api/interfaces/events/on-instance-idle.handler',
-                        permissions: [
-                            appSyncApi,
-                            'ssm:*',
-                            'secretsmanager:*',
-                            'cloudformation:*',
-                            'servicecatalog:*',
-                            'ec2:*',
-                            's3:*',
-                            'iam:*',
-                            'sns:*',
-                        ],
-                        environment: {
-                            SHARED_SECRET_NAME: 'not-used-yet',
-                            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
-                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogLinuxProductId.name,
-                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogWindowsProductId.name,
-                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
-                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
-                        },
+                        permissions,
+                        environment,
+                        paramsAndSecrets: paramsAndSecretsLambdaExtension,
+                        role: apiLambdaDefaultRole,
+                        timeout: `30 seconds`,
                     },
                 },
             },
@@ -282,28 +254,11 @@ export const Api = ({ stack }: sst.StackContext) => {
                     function: {
                         handler:
                             'packages/api/interfaces/events/on-instance-connection-started.handler',
-                        permissions: [
-                            appSyncApi,
-                            'ssm:*',
-                            'secretsmanager:*',
-                            'cloudformation:*',
-                            'servicecatalog:*',
-                            'ec2:*',
-                            's3:*',
-                            'iam:*',
-                            'sns:*',
-                            'scheduler:*',
-                        ],
-                        environment: {
-                            SHARED_SECRET_NAME: 'not-used-yet',
-                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
-                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogLinuxProductId.name,
-                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogWindowsProductId.name,
-                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
-                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
-                        },
+                        permissions,
+                        environment,
+                        paramsAndSecrets: paramsAndSecretsLambdaExtension,
+                        role: apiLambdaDefaultRole,
+                        timeout: `30 seconds`,
                     },
                 },
             },
@@ -318,28 +273,11 @@ export const Api = ({ stack }: sst.StackContext) => {
                     function: {
                         handler:
                             'packages/api/interfaces/events/on-instance-connection-ended.handler',
-                        permissions: [
-                            appSyncApi,
-                            'ssm:*',
-                            'secretsmanager:*',
-                            'cloudformation:*',
-                            'servicecatalog:*',
-                            'ec2:*',
-                            's3:*',
-                            'iam:*',
-                            'sns:*',
-                            'scheduler:*',
-                        ],
-                        environment: {
-                            SHARED_SECRET_NAME: 'not-used-yet',
-                            API_SNS_TOPIC_ARN: apiSnsTopic.topicArn,
-                            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogLinuxProductId.name,
-                            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                                ssmParameters.serviceCatalogWindowsProductId.name,
-                            EVENT_BUS_ARN: apiEventBus.eventBusArn,
-                            EVENT_BUS_PUBLISHER_ROLE_ARN: apiEventBusPublisherRole.roleArn,
-                        },
+                        permissions,
+                        environment,
+                        paramsAndSecrets: paramsAndSecretsLambdaExtension,
+                        role: apiLambdaDefaultRole,
+                        timeout: `30 seconds`,
                     },
                 },
             },
@@ -353,8 +291,6 @@ export const Api = ({ stack }: sst.StackContext) => {
     return {
         api,
         apiLambdaDefaultRole,
-        apiEventBus,
-        apiSnsTopic,
-        apiEventBusPublisherRole,
+        apiUrlParameter,
     };
 };

@@ -2,8 +2,11 @@
     "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "module": "CommonJS",
-        "moduleResolution": "Node",
+        "moduleResolution": "Node10",
         "strictNullChecks": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "types": ["jest", "node"]
     },
-    "exclude": ["packages", "_dev"],
+    "exclude": ["packages", "_dev"]
 }

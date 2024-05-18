@@ -1,81 +1,78 @@
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as cdk from 'aws-cdk-lib';
 import * as sst from 'sst/constructs';
-import { Config } from './Config';
-
-const stagesWhereUserPoolIsRetained = ['production'];
+import { Core } from './Core';
+import { featureFlagIsEnabled } from './config/feature-flags';
 
 export const Auth = ({ stack, app }: sst.StackContext) => {
-    const { ssmParameters } = sst.use(Config);
+    const {
+        ssmParameters,
+        defaultEventBus,
+        defaultSnsTopic,
+        defaultEventBusPublisherRole,
+        paramsAndSecretsLambdaExtension,
+    } = sst.use(Core);
+
+    const triggerEnvironment: Record<string, string> = {
+        DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
+        SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
+            ssmParameters.serviceCatalogLinuxProductId.name,
+        SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
+            ssmParameters.serviceCatalogWindowsProductId.name,
+        SNS_TOPIC_ARN: defaultSnsTopic.topicArn,
+        EVENT_BUS_ARN: defaultEventBus.eventBusArn,
+        EVENT_BUS_PUBLISHER_ROLE_ARN: defaultEventBusPublisherRole.roleArn,
+    };
+
+    const triggerPermissions: sst.Permissions = [
+        'ssm:*',
+        'secretsmanager:*',
+        'cloudformation:*',
+        'servicecatalog:*',
+        'ec2:*',
+        's3:*',
+        'iam:*',
+        'sns:*',
+        'scheduler:*',
+        'events:*',
+    ];
 
     const preTokenGenerationTrigger = new sst.Function(stack, 'preTokenGenerationTrigger', {
         handler: 'packages/api/interfaces/events/on-pre-token-generation-trigger.handler',
-        environment: {
-            SHARED_SECRET_NAME: 'not-used-yet',
-            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-        },
-        permissions: [
-            'ssm:*',
-            'secretsmanager:*',
-            'ec2:*',
-            'servicecatalog:*',
-            'cloudformation:*',
-            'events:*',
-        ],
+        environment: triggerEnvironment,
+        permissions: triggerPermissions,
+        paramsAndSecrets: paramsAndSecretsLambdaExtension,
     });
 
     const preSignUpTrigger = new sst.Function(stack, 'preSignUpTrigger', {
         handler: 'packages/api/interfaces/events/on-pre-sign-up-trigger.handler',
-        environment: {
-            SHARED_SECRET_NAME: 'not-used-yet',
-            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-            API_SNS_TOPIC_ARN: 'cannot-be-used-yet',
-            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                ssmParameters.serviceCatalogLinuxProductId.name,
-            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                ssmParameters.serviceCatalogWindowsProductId.name,
-            EVENT_BUS_ARN: 'cannot-be-used-yet',
-            EVENT_BUS_PUBLISHER_ROLE_ARN: 'cannot-be-used-yet',
-        },
-        permissions: [
-            'ssm:*',
-            'secretsmanager:*',
-            'ec2:*',
-            'servicecatalog:*',
-            'cloudformation:*',
-            'events:*',
-        ],
+        environment: triggerEnvironment,
+        permissions: triggerPermissions,
+        paramsAndSecrets: paramsAndSecretsLambdaExtension,
     });
 
     const postConfirmationTrigger = new sst.Function(stack, 'postConfirmationTrigger', {
         handler: 'packages/api/interfaces/events/on-post-confirmation-trigger.handler',
-        environment: {
-            SHARED_SECRET_NAME: 'not-used-yet',
-            DATABASE_URL_PARAMETER_NAME: ssmParameters.databaseUrl.name,
-            API_SNS_TOPIC_ARN: 'cannot-be-used-yet',
-            SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME:
-                ssmParameters.serviceCatalogLinuxProductId.name,
-            SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME:
-                ssmParameters.serviceCatalogWindowsProductId.name,
-            EVENT_BUS_ARN: 'cannot-be-used-yet',
-            EVENT_BUS_PUBLISHER_ROLE_ARN: 'cannot-be-used-yet',
-        },
-        permissions: [
-            'ssm:*',
-            'secretsmanager:*',
-            'ec2:*',
-            'servicecatalog:*',
-            'cloudformation:*',
-            'events:*',
-        ],
+        environment: triggerEnvironment,
+        permissions: triggerPermissions,
+        paramsAndSecrets: paramsAndSecretsLambdaExtension,
     });
+
+    let userPoolRemovalPolicy: cdk.RemovalPolicy = cdk.RemovalPolicy.DESTROY;
+    if (
+        featureFlagIsEnabled({
+            featureFlag: 'RETAIN_USER_POOL_ON_DELETE',
+            components: ['User Pool Retain Removal Policy'],
+            forceDisable: app.mode === 'dev',
+        })
+    ) {
+        userPoolRemovalPolicy = cdk.RemovalPolicy.RETAIN;
+    }
 
     const userPool = new cognito.UserPool(stack, 'UserPool', {
         accountRecovery: cognito.AccountRecovery.EMAIL_AND_PHONE_WITHOUT_MFA,
         advancedSecurityMode: cognito.AdvancedSecurityMode.OFF,
-        removalPolicy: stagesWhereUserPoolIsRetained.includes(app.stage)
-            ? cdk.RemovalPolicy.RETAIN
-            : cdk.RemovalPolicy.DESTROY,
+        removalPolicy: userPoolRemovalPolicy,
         mfa: cognito.Mfa.OPTIONAL,
         mfaSecondFactor: {
             otp: true,
@@ -120,13 +117,24 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
     });
 
     let userPoolIdentityProvider: cognito.UserPoolIdentityProviderOidc | undefined;
-    if (process.env.ENABLE_IDENTITY_PROVIDER === 'true') {
-        const clientId = process.env.IDENTITY_PROVIDER_CLIENT_ID;
-        const clientSecret = process.env.IDENTITY_PROVIDER_CLIENT_SECRET;
-        const issuerUrl = process.env.IDENTITY_PROVIDER_ISSUER_URL;
+    if (
+        featureFlagIsEnabled({
+            featureFlag: 'USER_POOL_IDENTITY_PROVIDER',
+            components: ['User Pool Identity Provider'],
+        })
+    ) {
+        const clientId = process.env.USER_POOL_IDENTITY_PROVIDER_CLIENT_ID;
+        const clientSecret = process.env.USER_POOL_IDENTITY_PROVIDER_CLIENT_SECRET;
+        const issuerUrl = process.env.USER_POOL_IDENTITY_PROVIDER_ISSUER_URL;
 
         if (!clientId || !clientSecret || !issuerUrl) {
-            throw new Error('Invalid Auth stack identity provider configuration');
+            throw new Error(`Invalid Auth stack user pool identity provider configuration`, {
+                cause: {
+                    clientId: !!clientId,
+                    clientSecret: !!clientSecret,
+                    issuerUrl: !!issuerUrl,
+                },
+            });
         }
 
         userPoolIdentityProvider = new cognito.UserPoolIdentityProviderOidc(

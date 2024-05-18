@@ -1,10 +1,8 @@
 import * as sst from 'sst/constructs';
-import { Config } from './Config';
-import { Api } from './Api';
+import { Core } from './Core';
 
 export const ConnectionGateway = ({ stack }: sst.StackContext) => {
-    const { vpc, ssmParameters } = sst.use(Config);
-    const { apiEventBus } = sst.use(Api);
+    const { vpc, ssmParameters, defaultEventBus } = sst.use(Core);
 
     const connectionGatewayService = new sst.Service(stack, 'ConnectionGatewayService', {
         path: 'packages/connection-gateway',
@@ -14,10 +12,17 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
         storage: '20 GB',
         environment: {
             PORT: '8080',
-            VLC_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
-            VLC_EVENT_BUS_ARN: apiEventBus.eventBusArn,
+            VL_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
+            VL_EVENT_BUS_ARN: defaultEventBus.eventBusArn,
         },
-        permissions: ['events:PutEvents', 'ssm:*'],
+        permissions: ['events:*', 'ssm:*'],
+        scaling: {
+            minContainers: 1,
+            maxContainers: 10,
+            requestsPerContainer: 1000,
+            cpuUtilization: 70,
+            memoryUtilization: 70,
+        },
         cdk: {
             vpc,
         },

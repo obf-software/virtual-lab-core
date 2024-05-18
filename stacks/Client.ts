@@ -5,10 +5,10 @@ import { AppSyncApi } from './AppSyncApi';
 import { ConnectionGateway } from './ConnectionGateway';
 
 export const Client = ({ stack, app }: sst.StackContext) => {
-    const { api } = sst.use(Api);
     const { userPool, userPoolClient, userPoolDomain, identityPoolId, userPoolIdentityProvider } =
         sst.use(Auth);
     const { appSyncApi } = sst.use(AppSyncApi);
+    const { api } = sst.use(Api);
     const { serviceWebsocketUrl } = sst.use(ConnectionGateway);
 
     const staticSite = new sst.StaticSite(stack, 'StaticSite', {

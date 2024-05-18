@@ -2,11 +2,11 @@ import { SSTConfig } from 'sst';
 import { Api } from './stacks/Api';
 import { Auth } from './stacks/Auth';
 import { Client } from './stacks/Client';
-import { Config } from './stacks/Config';
+import { Core } from './stacks/Core';
 import { AppSyncApi } from './stacks/AppSyncApi';
 import { ServiceCatalog } from './stacks/ServiceCatalog';
-import { LambdaLayers } from './stacks/LambdaLayers';
 import { ConnectionGateway } from './stacks/ConnectionGateway';
+import { featureFlagIsEnabled } from './stacks/config/feature-flags';
 
 export default {
     config() {
@@ -16,8 +16,17 @@ export default {
         };
     },
     stacks(app) {
-        app.stack(LambdaLayers);
-        app.stack(Config);
+        if (
+            featureFlagIsEnabled({
+                featureFlag: 'READABLE_LOG_FORMAT',
+                components: ['Lambda Powertools Dev Logging'],
+                forceEnable: app.mode === 'dev',
+            })
+        ) {
+            app.addDefaultFunctionEnv({ POWERTOOLS_DEV: 'true' });
+        }
+
+        app.stack(Core);
         app.stack(Auth);
         app.stack(AppSyncApi);
         app.stack(Api);
