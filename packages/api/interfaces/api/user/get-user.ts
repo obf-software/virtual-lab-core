@@ -6,14 +6,13 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
 
-const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
-    process.env;
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+        ? new AWSConfigVault(AWS_REGION)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const getUser = new GetUser(logger, auth, userRepository);
 

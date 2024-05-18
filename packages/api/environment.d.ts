@@ -6,20 +6,15 @@ namespace NodeJS {
         AWS_EXECUTION_ENV: string;
         AWS_SESSION_TOKEN: string;
 
-        SHARED_SECRET_NAME: string;
-        APP_SYNC_API_URL: string;
-        API_EVENT_BUS_NAME: string;
-        API_SNS_TOPIC_ARN: string;
-
-        /**
-         * SSM Parameter Store
-         */
         DATABASE_URL_PARAMETER_NAME: string;
         INSTANCE_PASSWORD_PARAMETER_NAME: string;
         GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: string;
         SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string;
         SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string;
+        SNS_TOPIC_ARN: string;
+        EVENT_BUS_NAME: string;
         EVENT_BUS_ARN: string;
         EVENT_BUS_PUBLISHER_ROLE_ARN: string;
+        APP_SYNC_API_URL: string;
     }
 }

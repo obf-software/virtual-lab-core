@@ -9,14 +9,13 @@ import { DatabaseUserRepository } from '../../../infrastructure/user-repository/
 import { Errors } from '../../../domain/dtos/errors';
 import { roleSchema } from '../../../domain/dtos/role';
 
-const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, SHARED_SECRET_NAME, DATABASE_URL_PARAMETER_NAME } =
-    process.env;
+const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+        ? new AWSConfigVault(AWS_REGION)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const updateUserRole = new UpdateUserRole(logger, auth, userRepository);
 

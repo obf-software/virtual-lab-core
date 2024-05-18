@@ -33,7 +33,7 @@ const getGuacamoleCypherKey = async () => {
             sessionToken: process.env.AWS_SESSION_TOKEN,
         },
     });
-    const parameterName = process.env.VLC_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME;
+    const parameterName = process.env.VL_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME;
 
     logger.info(`[GUACWS] Getting Guacamole cypher key from SSM parameter ${parameterName}`);
 

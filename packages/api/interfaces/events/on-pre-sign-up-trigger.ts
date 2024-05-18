@@ -11,9 +11,8 @@ const {
     IS_LOCAL,
     AWS_REGION,
     AWS_SESSION_TOKEN,
-    SHARED_SECRET_NAME,
     DATABASE_URL_PARAMETER_NAME,
-    API_SNS_TOPIC_ARN,
+    SNS_TOPIC_ARN,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
@@ -22,13 +21,13 @@ const {
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+        ? new AWSConfigVault(AWS_REGION)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
     AWS_REGION,
-    API_SNS_TOPIC_ARN,
+    SNS_TOPIC_ARN,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,

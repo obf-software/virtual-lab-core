@@ -84,7 +84,9 @@ export const ConnectionPage: React.FC = () => {
         );
     }
 
-    const { display, state, bindControls, errorMessage } = useConnection({ connectionString });
+    const { display, state, bindControls, errorMessage, client } = useConnection({
+        connectionString,
+    });
 
     display.onresize = (_width, height) => {
         display.scale(window.innerHeight / height);
@@ -95,6 +97,10 @@ export const ConnectionPage: React.FC = () => {
 
         return () => {
             unbindControls();
+
+            if (state === ConnectionState.CONNECTED) {
+                client.disconnect();
+            }
         };
     }, []);
 

@@ -57,7 +57,7 @@ class EventPublisher {
                     {
                         DetailType: detailType,
                         Detail: JSON.stringify(detail),
-                        EventBusName: process.env.VLC_EVENT_BUS_ARN,
+                        EventBusName: process.env.VL_EVENT_BUS_ARN,
                         Source: 'connection-gateway',
                     },
                 ],

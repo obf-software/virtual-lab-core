@@ -70,7 +70,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     constructor(
         private readonly configVault: ConfigVault,
         AWS_REGION: string,
-        private readonly API_SNS_TOPIC_ARN: string,
+        private readonly SNS_TOPIC_ARN: string,
         private readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string,
         private readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string,
         private readonly EVENT_BUS_ARN: string,
@@ -297,7 +297,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 ProvisioningArtifactName: 'latest',
                 ProvisionedProductName: launchToken,
                 ProvisionToken: launchToken,
-                NotificationArns: [this.API_SNS_TOPIC_ARN],
+                NotificationArns: [this.SNS_TOPIC_ARN],
                 ProvisioningParameters: provisioningParameters,
                 Tags: [
                     {

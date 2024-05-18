@@ -12,10 +12,9 @@ const {
     IS_LOCAL,
     AWS_REGION,
     AWS_SESSION_TOKEN,
-    SHARED_SECRET_NAME,
     DATABASE_URL_PARAMETER_NAME,
-    API_SNS_TOPIC_ARN,
-    API_EVENT_BUS_NAME,
+    SNS_TOPIC_ARN,
+    EVENT_BUS_NAME,
     APP_SYNC_API_URL,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
@@ -25,25 +24,20 @@ const {
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION, SHARED_SECRET_NAME)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN, SHARED_SECRET_NAME);
+        ? new AWSConfigVault(AWS_REGION)
+        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
 const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
 const virtualizationGateway = new AwsVirtualizationGateway(
     configVault,
     AWS_REGION,
-    API_SNS_TOPIC_ARN,
+    SNS_TOPIC_ARN,
     SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
     EVENT_BUS_PUBLISHER_ROLE_ARN,
 );
-const eventPublisher = new AWSEventPublisher(
-    logger,
-    AWS_REGION,
-    API_EVENT_BUS_NAME,
-    APP_SYNC_API_URL,
-);
+const eventPublisher = new AWSEventPublisher(logger, AWS_REGION, EVENT_BUS_NAME, APP_SYNC_API_URL);
 const linkLaunchedInstance = new LinkLaunchedInstance(
     logger,
     userRepository,
