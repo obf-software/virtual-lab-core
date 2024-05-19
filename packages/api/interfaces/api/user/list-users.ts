@@ -28,7 +28,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                         .enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'alphabetical'])
                         .default('creationDate'),
                     order: z.enum(['asc', 'desc']).default('asc'),
-                    groupId: z.string().optional(),
                     textSearch: z.string().optional(),
                 })
                 .extend(seekPaginationInputSchema.shape),
@@ -42,7 +41,6 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
                 resultsPerPage: query.resultsPerPage,
                 page: query.page,
             },
-            groupId: query.groupId,
             textSearch: query.textSearch,
         });
 

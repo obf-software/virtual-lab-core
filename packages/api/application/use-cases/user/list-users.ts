@@ -10,7 +10,6 @@ import { Errors } from '../../../domain/dtos/errors';
 export const listUsersInputSchema = z
     .object({
         principal: principalSchema,
-        groupId: z.string().min(1).optional(),
         textSearch: z.string().min(1).optional(),
         orderBy: z.enum(['creationDate', 'lastUpdateDate', 'lastLoginDate', 'alphabetical']),
         order: z.enum(['asc', 'desc']),
@@ -36,22 +35,9 @@ export class ListUsers {
         const { data: validInput } = inputValidation;
 
         this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        if (
-            !this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') &&
-            validInput.groupId !== undefined
-        ) {
-            const user = await this.userRepository.getById(id);
-
-            if (!user || !user.belongsToGroup(validInput.groupId)) {
-                throw Errors.resourceAccessDenied('Group', validInput.groupId);
-            }
-        }
 
         const paginatedUsers = await this.userRepository.list(
             {
-                groupId: validInput.groupId,
                 textSearch: validInput.textSearch,
             },
             validInput.orderBy,

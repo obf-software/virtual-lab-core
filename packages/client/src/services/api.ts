@@ -1,7 +1,6 @@
 import { fetchAuthSession } from 'aws-amplify/auth';
 import {
     ApiResponse,
-    Group,
     Instance,
     InstanceConnection,
     InstanceTemplate,
@@ -71,64 +70,6 @@ const executeRequest = async <T>(props: {
         return { success: false, error: reason };
     }
 };
-
-// GROUP MODULE
-
-export const createGroup = async (props: { name: string; description: string }) =>
-    executeRequest<Group>({
-        path: '/api/v1/groups',
-        method: 'POST',
-        body: props,
-    });
-
-export const deleteGroup = async (props: { groupId: string }) =>
-    executeRequest<void>({
-        path: `/api/v1/groups/${props.groupId}`,
-        method: 'DELETE',
-    });
-
-export const linkUsersToGroup = async (props: { groupId: string; userIds: string[] }) =>
-    executeRequest<void>({
-        path: `/api/v1/groups/${props.groupId}/link-users`,
-        method: 'POST',
-        body: { userIds: props.userIds },
-    });
-
-export const listGroups = async (props: {
-    orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical';
-    order: 'asc' | 'desc';
-    resultsPerPage: number;
-    page: number;
-    createdBy?: string;
-    userId?: string;
-    textSearch?: string;
-}) =>
-    executeRequest<SeekPaginated<Group>>({
-        path: '/api/v1/groups',
-        method: 'GET',
-        queryParams: props,
-    });
-
-export const unlinkUsersFromGroup = async (props: { groupId: string; userIds: string[] }) =>
-    executeRequest<void>({
-        path: `/api/v1/groups/${props.groupId}/unlink-users`,
-        method: 'POST',
-        body: { userIds: props.userIds },
-    });
-
-export const updateGroup = async (props: {
-    groupId: string;
-    name?: string;
-    description?: string;
-}) =>
-    executeRequest<Group>({
-        path: `/api/v1/groups/${props.groupId}`,
-        method: 'PATCH',
-        body: {
-            name: props.name,
-            description: props.description,
-        },
-    });
 
 // INSTANCE MODULE
 
@@ -266,7 +207,6 @@ export const listUsers = async (props: {
     order: 'asc' | 'desc';
     resultsPerPage: number;
     page: number;
-    groupId?: string;
     textSearch?: string;
 }) =>
     executeRequest<SeekPaginated<User>>({

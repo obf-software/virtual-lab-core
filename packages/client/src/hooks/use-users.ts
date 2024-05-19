@@ -3,7 +3,6 @@ import { listUsers } from '../services/api';
 import { queryClient } from '../services/query-client';
 
 export const useUsers = (props: {
-    groupId?: string;
     orderBy?: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical';
     order?: 'asc' | 'desc';
     textSearch?: string;
@@ -13,7 +12,6 @@ export const useUsers = (props: {
     const usersQuery = useQuery({
         queryKey: [
             `users`,
-            props.groupId,
             props.orderBy,
             props.order,
             props.textSearch,
@@ -22,7 +20,6 @@ export const useUsers = (props: {
         ],
         queryFn: async () => {
             const response = await listUsers({
-                groupId: props.groupId,
                 orderBy: props.orderBy ?? 'creationDate',
                 order: props.order ?? 'desc',
                 textSearch: props.textSearch,

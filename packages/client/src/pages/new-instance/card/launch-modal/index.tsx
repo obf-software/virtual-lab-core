@@ -436,21 +436,6 @@ export const NewInstancePageCardLaunchModal: React.FC<NewInstancePageCardLaunchM
                                             selected as unknown as SingleValue<InstanceTypeOption>;
                                         formMethods.setValue('instanceType', s?.value ?? '');
                                     }}
-
-                                    // options={searchGroupsQuery.data?.data?.map((group) => ({
-                                    //     label: group.name,
-                                    //     value: group,
-                                    // }))}
-                                    // onInputChange={(value) => {
-                                    //     setTextQuery(value);
-                                    // }}
-                                    // onChange={(selec `ted) => {
-                                    //     setGroupsToLink(selected.map((item) => item.value) ?? []);
-                                    // }}
-                                    // value={groupsToLink.map((group) => ({
-                                    //     label: group.name,
-                                    //     value: group,
-                                    // }))}
                                 />
 
                                 <FormErrorMessage>

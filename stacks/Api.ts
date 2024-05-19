@@ -95,30 +95,6 @@ export const Api = ({ stack }: sst.StackContext) => {
     });
 
     /**
-     * Group module
-     */
-    api.addRoutes(stack, {
-        'POST /api/v1/groups': {
-            function: 'packages/api/interfaces/api/group/create-group.handler',
-        },
-        'DELETE /api/v1/groups/{groupId}': {
-            function: 'packages/api/interfaces/api/group/delete-group.handler',
-        },
-        'POST /api/v1/groups/{groupId}/link-users': {
-            function: 'packages/api/interfaces/api/group/link-users-to-group.handler',
-        },
-        'GET /api/v1/groups': {
-            function: 'packages/api/interfaces/api/group/list-groups.handler',
-        },
-        'POST /api/v1/groups/{groupId}/unlink-users': {
-            function: 'packages/api/interfaces/api/group/unlink-users-from-group.handler',
-        },
-        'PATCH /api/v1/groups/{groupId}': {
-            function: 'packages/api/interfaces/api/group/update-group.handler',
-        },
-    });
-
-    /**
      * Instance module
      */
     api.addRoutes(stack, {

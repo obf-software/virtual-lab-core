@@ -33,15 +33,6 @@ export type InstanceState =
     | 'SHUTTING_DOWN'
     | 'TERMINATED';
 
-export interface Group {
-    id: string;
-    createdBy: string;
-    name: string;
-    description: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
 export interface InstanceTemplate {
     id: string;
     createdBy: string;
@@ -111,7 +102,6 @@ export interface User {
     createdAt: string;
     updatedAt: string;
     lastLoginAt?: string;
-    groupIds: string[];
     quotas: {
         maxInstances: number;
         allowedInstanceTypes: InstanceType[];
