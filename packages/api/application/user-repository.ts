@@ -7,7 +7,6 @@ export interface UserRepository {
     getByUsername(username: string): Promise<User | undefined>;
     list(
         match: {
-            groupId: string | undefined;
             textSearch: string | undefined;
         },
         orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical',

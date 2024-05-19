@@ -4,8 +4,12 @@ import { ConfigVault } from '../../application/config-vault';
 export class AWSConfigVault implements ConfigVault {
     private readonly ssmClient: SSMClient;
 
-    constructor(AWS_REGION: string) {
-        this.ssmClient = new SSMClient({ region: AWS_REGION });
+    constructor(
+        private readonly deps: {
+            readonly AWS_REGION: string;
+        },
+    ) {
+        this.ssmClient = new SSMClient({ region: deps.AWS_REGION });
     }
 
     getParameter = async (name: string): Promise<string | undefined> => {

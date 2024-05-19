@@ -2,11 +2,11 @@ import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { z } from 'zod';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
-import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
 import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
 import { ListInstances } from '../../../application/use-cases/instance/list-instances';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
-import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { Errors } from '../../../domain/dtos/errors';
 import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 

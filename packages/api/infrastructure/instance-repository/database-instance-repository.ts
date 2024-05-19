@@ -1,42 +1,36 @@
 import { ConfigVault } from '../../application/config-vault';
 import { InstanceRepository } from '../../application/instance-repository';
-import { Filter, MongoClient, ObjectId, Sort } from 'mongodb';
-import { Errors } from '../../domain/dtos/errors';
+import { Filter, ObjectId, Sort } from 'mongodb';
 import { InstanceDbModel } from '../db/models/instance';
 import { Instance } from '../../domain/entities/instance';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
+import { MongoRepositoryAdapter } from '../adapter/mongoRepositoryAdapter';
 
-export class DatabaseInstanceRepository implements InstanceRepository {
-    private dbClient?: MongoClient;
+export class DatabaseInstanceRepository
+    extends MongoRepositoryAdapter
+    implements InstanceRepository
+{
+    private readonly collectionName: string;
 
-    constructor(
-        private readonly configVault: ConfigVault,
-        private readonly DATABASE_URL_PARAMETER_NAME: string,
-        private readonly DATABASE_COLLECTION_NAME = 'instances',
-    ) {}
-
-    private async getMongoClient(): Promise<MongoClient> {
-        if (this.dbClient) return this.dbClient;
-
-        const retrievedDatabaseUrl = await this.configVault.getParameter(
-            this.DATABASE_URL_PARAMETER_NAME,
-        );
-        if (!retrievedDatabaseUrl) {
-            throw Errors.internalError(`Ivalid "${this.DATABASE_URL_PARAMETER_NAME}" parameter`);
-        }
-
-        const newDbClient = new MongoClient(retrievedDatabaseUrl);
-        this.dbClient = newDbClient;
-        return newDbClient;
+    constructor(deps: {
+        configVault: ConfigVault;
+        DATABASE_URL_PARAMETER_NAME: string;
+        collectionName?: string;
+    }) {
+        super({
+            configVault: deps.configVault,
+            DATABASE_URL_PARAMETER_NAME: deps.DATABASE_URL_PARAMETER_NAME,
+        });
+        this.collectionName = deps.collectionName ?? 'instances';
     }
 
     static mapInstanceDbModelToEntity = (model: InstanceDbModel): Instance => {
         return Instance.restore({
-            id: model._id.toJSON(),
+            id: model._id.toHexString(),
             virtualId: model.virtualId,
             productId: model.productId,
             machineImageId: model.machineImageId,
-            ownerId: model.ownerId.toJSON(),
+            ownerId: model.ownerId.toHexString(),
             launchToken: model.launchToken,
             name: model.name,
             description: model.description,
@@ -57,11 +51,11 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const data = entity.getData();
 
         return {
-            _id: data.id ? new ObjectId(data.id) : new ObjectId(),
+            _id: DatabaseInstanceRepository.parseObjectId(data.id) ?? new ObjectId(),
             virtualId: data.virtualId,
             productId: data.productId,
             machineImageId: data.machineImageId,
-            ownerId: new ObjectId(data.ownerId),
+            ownerId: DatabaseInstanceRepository.parseObjectId(data.ownerId),
             launchToken: data.launchToken,
             name: data.name,
             description: data.description,
@@ -75,7 +69,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             updatedAt: data.updatedAt,
             lastConnectionAt: data.lastConnectionAt,
 
-            textSearch: [
+            textSearch: DatabaseInstanceRepository.createTextSearchField([
                 data.name,
                 data.description,
                 data.virtualId,
@@ -87,10 +81,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
                 data.platform,
                 data.distribution,
                 data.instanceType.name,
-            ]
-                .filter((x): x is string => typeof x === 'string')
-                .map((x) => x.toLowerCase())
-                .join(' '),
+            ]),
         };
     };
 
@@ -98,11 +89,11 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const newInstance = await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .insertOne(DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance), {
                 ignoreUndefined: true,
             });
-        return newInstance.insertedId.toJSON();
+        return newInstance.insertedId.toHexString();
     };
 
     getById = async (id: string): Promise<Instance | undefined> => {
@@ -110,7 +101,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .findOne({ _id: new ObjectId(id) });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -120,7 +111,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .findOne({ virtualId: virtualId });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -130,7 +121,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const instance = await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .findOne({ launchToken: launchToken });
         if (!instance) return undefined;
         return DatabaseInstanceRepository.mapInstanceDbModelToEntity(instance);
@@ -144,7 +135,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         const count = await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .countDocuments(filter, { ignoreUndefined: true });
         return count;
     };
@@ -158,7 +149,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<Instance>> => {
-        if (!!match.ownerId && !ObjectId.isValid(match.ownerId)) {
+        if (match.ownerId && !ObjectId.isValid(match.ownerId)) {
             return {
                 data: [],
                 numberOfPages: 0,
@@ -170,8 +161,10 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
 
         const filter: Filter<InstanceDbModel> = {
-            ownerId: match.ownerId ? new ObjectId(match.ownerId) : undefined,
-            textSearch: match.textSearch ? { $regex: match.textSearch, $options: 'i' } : undefined,
+            ownerId: DatabaseInstanceRepository.parseObjectId(match.ownerId),
+            textSearch: match.textSearch
+                ? { $regex: match.textSearch.toLowerCase(), $options: 'i' }
+                : undefined,
         };
 
         const sortOrder = order === 'asc' ? 1 : -1;
@@ -189,7 +182,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
             },
         };
 
-        const collection = client.db().collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME);
+        const collection = client.db().collection<InstanceDbModel>(this.collectionName);
         const [count, instances] = await Promise.all([
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
@@ -212,7 +205,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .updateOne(
                 { _id: new ObjectId(instance.id) },
                 { $set: DatabaseInstanceRepository.mapInstanceEntityToDbModel(instance) },
@@ -224,7 +217,7 @@ export class DatabaseInstanceRepository implements InstanceRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<InstanceDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<InstanceDbModel>(this.collectionName)
             .deleteOne({ _id: new ObjectId(instance.id) }, { ignoreUndefined: true });
     };
 }

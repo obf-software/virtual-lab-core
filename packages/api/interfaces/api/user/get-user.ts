@@ -2,9 +2,9 @@ import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { GetUser } from '../../../application/use-cases/user/get-user';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
-import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
-import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 const logger = new AWSLogger();

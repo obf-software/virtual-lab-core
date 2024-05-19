@@ -2,10 +2,10 @@ import { NotifyInstanceStateChange } from '../../application/use-cases/instance/
 import { EC2InstanceStateChangeNotification } from '../../domain/application-events/ec2-instance-state-change-notification';
 import { InstanceState } from '../../domain/dtos/instance-state';
 import { AWSConfigVault } from '../../infrastructure/config-vault/aws-config-vault';
-import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lambaLayerConfigVault';
+import { LambdaLayerConfigVault } from '../../infrastructure/config-vault/lamba-layer-config-vault';
 import { AWSEventPublisher } from '../../infrastructure/event-publisher/aws-event-publisher';
 import { DatabaseInstanceRepository } from '../../infrastructure/instance-repository/database-instance-repository';
-import { LambdaHandlerAdapter } from '../../infrastructure/lambda-handler-adapter';
+import { LambdaHandlerAdapter } from '../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../infrastructure/logger/aws-logger';
 import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
 

@@ -16,12 +16,14 @@ export class AWSEventPublisher implements EventPublisher {
     private readonly eventBridgeClient: EventBridgeClient;
 
     constructor(
-        private readonly logger: Logger,
-        private readonly AWS_REGION: string,
-        private readonly AWS_EVENT_BUS_NAME: string,
-        private readonly AWS_APPSYNC_API_URL: string,
+        private readonly deps: {
+            readonly logger: Logger;
+            readonly AWS_REGION: string;
+            readonly AWS_EVENT_BUS_NAME: string;
+            readonly AWS_APPSYNC_API_URL: string;
+        },
     ) {
-        this.eventBridgeClient = new EventBridgeClient({ region: AWS_REGION });
+        this.eventBridgeClient = new EventBridgeClient({ region: deps.AWS_REGION });
     }
 
     private async publishToEventBridge(...events: ApplicationEvent[]): Promise<void> {
@@ -29,7 +31,7 @@ export class AWSEventPublisher implements EventPublisher {
 
         const command = new PutEventsCommand({
             Entries: events.map((event) => ({
-                EventBusName: this.AWS_EVENT_BUS_NAME,
+                EventBusName: this.deps.AWS_EVENT_BUS_NAME,
                 Source: 'virtualLabCore.api',
                 DetailType: event.type,
                 Detail: JSON.stringify(event.detail),
@@ -50,11 +52,11 @@ export class AWSEventPublisher implements EventPublisher {
         });
 
         if (failEntries.length > 0) {
-            this.logger.error(`Error publishing events to AWS EventBridge`, { failEntries });
+            this.deps.logger.error(`Error publishing events to AWS EventBridge`, { failEntries });
         }
 
         if (successEntries.length > 0) {
-            this.logger.info(`Successfully published events to AWS EventBridge`, {
+            this.deps.logger.info(`Successfully published events to AWS EventBridge`, {
                 successEntries,
             });
         }
@@ -63,10 +65,10 @@ export class AWSEventPublisher implements EventPublisher {
     private async publishToAppSync(...events: ApplicationEvent[]): Promise<void> {
         if (events.length === 0) return;
 
-        const url = new URL(this.AWS_APPSYNC_API_URL);
+        const url = new URL(this.deps.AWS_APPSYNC_API_URL);
         const signer = new SignatureV4({
             credentials: defaultProvider({}),
-            region: this.AWS_REGION,
+            region: this.deps.AWS_REGION,
             service: 'appsync',
             sha256: Sha256,
         });
@@ -125,16 +127,18 @@ export class AWSEventPublisher implements EventPublisher {
                     failResults.push(result.value);
                 }
             } else {
-                this.logger.error(`Error calling AWS AppSync`, { error: result.reason });
+                this.deps.logger.error(`Error calling AWS AppSync`, { error: result.reason });
             }
         });
 
         if (failResults.length > 0) {
-            this.logger.error(`Error publishing events to AWS AppSync`, { failResults });
+            this.deps.logger.error(`Error publishing events to AWS AppSync`, { failResults });
         }
 
         if (successResults.length > 0) {
-            this.logger.info(`Successfully published events to AWS AppSync`, { successResults });
+            this.deps.logger.info(`Successfully published events to AWS AppSync`, {
+                successResults,
+            });
         }
     }
 
@@ -144,7 +148,7 @@ export class AWSEventPublisher implements EventPublisher {
 
         events.forEach((event) => {
             if (!event.isValid()) {
-                this.logger.error(
+                this.deps.logger.error(
                     `Event ${event.type} is not valid: ${JSON.stringify(
                         event.detail,
                     )}. Not publishing.`,
@@ -158,7 +162,7 @@ export class AWSEventPublisher implements EventPublisher {
             } else if (event.destination === 'BUS') {
                 eventBridgeEvent.push(event);
             } else {
-                this.logger.error(
+                this.deps.logger.error(
                     `Event ${event.type} is not suposed to be published. Not publishing.`,
                 );
             }

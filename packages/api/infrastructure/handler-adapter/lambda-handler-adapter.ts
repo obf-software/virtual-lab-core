@@ -12,9 +12,9 @@ import type {
     SNSHandler,
 } from 'aws-lambda';
 
-import { ApplicationEvent } from '../domain/dtos/application-event';
+import { ApplicationEvent } from '../../domain/dtos/application-event';
 import { z } from 'zod';
-import { Errors } from '../domain/dtos/errors';
+import { Errors } from '../../domain/dtos/errors';
 
 export class LambdaHandlerAdapter {
     /**

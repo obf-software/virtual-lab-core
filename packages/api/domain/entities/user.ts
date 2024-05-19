@@ -16,7 +16,6 @@ const userDataSchema = z.object({
     createdAt: z.date(),
     updatedAt: z.date(),
     lastLoginAt: z.date().optional(),
-    groupIds: z.array(z.string()),
     quotas: z.object({
         maxInstances: z.number(),
         allowedInstanceTypes: virtualInstanceTypeSchema.array(),
@@ -48,7 +47,6 @@ export class User {
             createdAt: dateNow,
             updatedAt: dateNow,
             lastLoginAt: undefined,
-            groupIds: [],
             quotas: {
                 maxInstances: 2,
                 allowedInstanceTypes: props.allowedInstanceTypes ?? [],
@@ -88,7 +86,6 @@ export class User {
         maxInstances?: number;
         allowedInstanceTypes?: VirtualInstanceType[];
         canLaunchInstanceWithHibernation?: boolean;
-        groupIds?: string[];
         lastLoginAt?: Date;
     }) => {
         const updatedData: UserData = {
@@ -104,7 +101,6 @@ export class User {
                     props.canLaunchInstanceWithHibernation ??
                     this.data.quotas.canLaunchInstanceWithHibernation,
             },
-            groupIds: props.groupIds ?? this.data.groupIds,
             lastLoginAt: props.lastLoginAt ?? this.data.lastLoginAt,
             updatedAt: dayjs.utc().toDate(),
         };
@@ -117,19 +113,6 @@ export class User {
     onSignIn() {
         this.update({ lastLoginAt: dayjs.utc().toDate() });
     }
-
-    addToGroup = (groupId: string) => {
-        const newGroupIds = new Set([...this.data.groupIds, groupId]);
-        this.update({ groupIds: [...newGroupIds] });
-    };
-
-    removeFromGroup = (groupId: string) => {
-        const newGroupIds = new Set([...this.data.groupIds]);
-        newGroupIds.delete(groupId);
-        this.update({ groupIds: [...newGroupIds] });
-    };
-
-    belongsToGroup = (groupId: string) => this.data.groupIds.includes(groupId);
 
     canUseInstanceType = (instanceType: VirtualInstanceType) => {
         const instanceTypeNames = this.data.quotas.allowedInstanceTypes.map((type) => type.name);

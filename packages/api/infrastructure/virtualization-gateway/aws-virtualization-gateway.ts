@@ -68,18 +68,20 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     private cachedMachineImagesAt: Date | undefined;
 
     constructor(
-        private readonly configVault: ConfigVault,
-        AWS_REGION: string,
-        private readonly SNS_TOPIC_ARN: string,
-        private readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string,
-        private readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string,
-        private readonly EVENT_BUS_ARN: string,
-        private readonly EVENT_BUS_PUBLISHER_ROLE_ARN: string,
+        private readonly deps: {
+            readonly configVault: ConfigVault;
+            readonly AWS_REGION: string;
+            readonly SNS_TOPIC_ARN: string;
+            readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string;
+            readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string;
+            readonly EVENT_BUS_ARN: string;
+            readonly EVENT_BUS_PUBLISHER_ROLE_ARN: string;
+        },
     ) {
-        this.ec2Client = new EC2Client({ region: AWS_REGION });
-        this.serviceCatalogClient = new ServiceCatalogClient({ region: AWS_REGION });
-        this.cloudFormationClient = new CloudFormationClient({ region: AWS_REGION });
-        this.schedulerClient = new SchedulerClient({ region: AWS_REGION });
+        this.ec2Client = new EC2Client({ region: deps.AWS_REGION });
+        this.serviceCatalogClient = new ServiceCatalogClient({ region: deps.AWS_REGION });
+        this.cloudFormationClient = new CloudFormationClient({ region: deps.AWS_REGION });
+        this.schedulerClient = new SchedulerClient({ region: deps.AWS_REGION });
     }
 
     private mapInstanceState = (stateName?: string): InstanceState => {
@@ -297,7 +299,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 ProvisioningArtifactName: 'latest',
                 ProvisionedProductName: launchToken,
                 ProvisionToken: launchToken,
-                NotificationArns: [this.SNS_TOPIC_ARN],
+                NotificationArns: [this.deps.SNS_TOPIC_ARN],
                 ProvisioningParameters: provisioningParameters,
                 Tags: [
                     {
@@ -356,16 +358,16 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 return this.cachedServiceCatalogLinuxProduct;
             }
 
-            productId = await this.configVault.getParameter(
-                this.SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+            productId = await this.deps.configVault.getParameter(
+                this.deps.SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
             );
         } else if (platform === 'WINDOWS') {
             if (this.cachedServiceCatalogWindowsProduct !== undefined) {
                 return this.cachedServiceCatalogWindowsProduct;
             }
 
-            productId = await this.configVault.getParameter(
-                this.SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+            productId = await this.deps.configVault.getParameter(
+                this.deps.SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
             );
         }
 
@@ -447,7 +449,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         ];
 
         const machineImageIds = await Promise.all(
-            instanceParameterNames.map((name) => this.configVault.getParameter(name)),
+            instanceParameterNames.map((name) => this.deps.configVault.getParameter(name)),
         );
         const definedMachineImageIds = machineImageIds.filter(
             (id): id is string => id !== undefined,
@@ -634,8 +636,8 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 State: 'ENABLED',
                 Description: `Scheduled ${operation} operation for virtual instance ${virtualId}`,
                 Target: {
-                    Arn: this.EVENT_BUS_ARN,
-                    RoleArn: this.EVENT_BUS_PUBLISHER_ROLE_ARN,
+                    Arn: this.deps.EVENT_BUS_ARN,
+                    RoleArn: this.deps.EVENT_BUS_PUBLISHER_ROLE_ARN,
                     EventBridgeParameters: {
                         DetailType: 'INSTANCE_IDLE',
                         Source: 'virtual-lab-core',

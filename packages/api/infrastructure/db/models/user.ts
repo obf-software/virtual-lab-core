@@ -10,7 +10,6 @@ export interface UserDbModel {
     createdAt: Date;
     updatedAt: Date;
     lastLoginAt?: Date;
-    groupIds: ObjectId[];
     quotas: {
         maxInstances: number;
         allowedInstanceTypes: InstanceTypeDbModel[];

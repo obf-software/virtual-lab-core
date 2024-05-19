@@ -1,0 +1,106 @@
+import { ObjectId } from 'mongodb';
+import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
+import { InstanceTemplateRepository } from '../../application/instance-template-repository';
+import { InstanceTemplate, InstanceTemplateData } from '../../domain/entities/instance-template';
+import { randomUUID } from 'node:crypto';
+
+export class DatabaseInstanceTemplateRepository implements InstanceTemplateRepository {
+    constructor(private storage: InstanceTemplateData[] = []) {}
+
+    addTestRecord = (data: Partial<InstanceTemplateData> = {}) => {
+        const record: InstanceTemplateData = {
+            id: data.id ?? new ObjectId().toHexString(),
+            createdAt: data.createdAt ?? new Date(),
+            createdBy: data.createdBy ?? new ObjectId().toHexString(),
+            description: data.description ?? randomUUID(),
+            name: data.name ?? randomUUID(),
+            updatedAt: data.updatedAt ?? new Date(),
+            distribution: data.distribution ?? 'UBUNTU',
+            machineImageId: data.machineImageId ?? randomUUID(),
+            platform: data.platform ?? 'LINUX',
+            productId: data.productId ?? randomUUID(),
+            storageInGb: data.storageInGb ?? 8,
+        };
+
+        this.storage.push(record);
+        return record;
+    };
+
+    save = async (instanceTemplate: InstanceTemplate): Promise<string> => {
+        const id = new ObjectId().toHexString();
+        this.storage.push({ ...instanceTemplate.getData(), id });
+        return Promise.resolve(id);
+    };
+
+    getById = async (id: string): Promise<InstanceTemplate | undefined> => {
+        const instanceData = this.storage.find((instance) => instance.id === id);
+        if (!instanceData) return undefined;
+        return Promise.resolve(InstanceTemplate.restore({ ...instanceData, id }));
+    };
+
+    list = async (
+        match: {
+            createdBy: string | undefined;
+            textSearch: string | undefined;
+        },
+        orderBy: 'creationDate' | 'lastUpdateDate' | 'alphabetical',
+        order: 'asc' | 'desc',
+        pagination: SeekPaginationInput,
+    ): Promise<SeekPaginated<InstanceTemplate>> => {
+        const filteredInstances = this.storage.filter((f) => {
+            const matchArray = [];
+
+            if (match.createdBy) {
+                matchArray.push(f.createdBy === match.createdBy);
+            }
+
+            if (match.textSearch) {
+                matchArray.push(f.name.toLowerCase().includes(match.textSearch));
+            }
+
+            return matchArray.every((m) => m);
+        });
+
+        const orderedInstances = [...filteredInstances].sort((a, b) => {
+            const orderMap: Record<typeof orderBy, (string | number)[]> = {
+                creationDate: [a.createdAt.getTime(), b.createdAt.getTime()],
+                lastUpdateDate: [a.updatedAt.getTime(), b.updatedAt.getTime()],
+                alphabetical: [a.name.toLowerCase(), b.name.toLowerCase()],
+            };
+
+            const [aValue, bValue] = orderMap[orderBy];
+
+            if (order === 'asc') {
+                return aValue > bValue ? 1 : -1;
+            }
+
+            return aValue < bValue ? 1 : -1;
+        });
+
+        const paginatedInstances = orderedInstances.slice(
+            pagination.resultsPerPage * (pagination.page - 1),
+            pagination.resultsPerPage * pagination.page,
+        );
+
+        return Promise.resolve({
+            data: paginatedInstances.map((f) => InstanceTemplate.restore({ ...f, id: f.id! })),
+            numberOfResults: orderedInstances.length,
+            numberOfPages: Math.ceil(orderedInstances.length / pagination.resultsPerPage),
+            resultsPerPage: pagination.resultsPerPage,
+        });
+    };
+
+    update = async (instanceTemplate: InstanceTemplate): Promise<void> => {
+        const instanceData = this.storage.find((f) => f.id === instanceTemplate.id);
+        if (!instanceData) return Promise.resolve();
+        this.storage = this.storage.map((f) =>
+            f.id === instanceTemplate.id ? instanceTemplate.getData() : f,
+        );
+        return Promise.resolve();
+    };
+
+    delete = async (instanceTemplate: InstanceTemplate): Promise<void> => {
+        this.storage = this.storage.filter((f) => f.id !== instanceTemplate.id);
+        return Promise.resolve();
+    };
+}

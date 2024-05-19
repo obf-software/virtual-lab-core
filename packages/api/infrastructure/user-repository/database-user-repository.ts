@@ -1,38 +1,29 @@
-import { Filter, MongoClient, ObjectId, Sort } from 'mongodb';
+import { Filter, ObjectId, Sort } from 'mongodb';
 import { ConfigVault } from '../../application/config-vault';
 import { UserRepository } from '../../application/user-repository';
-import { Errors } from '../../domain/dtos/errors';
 import { User } from '../../domain/entities/user';
 import { UserDbModel } from '../db/models/user';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
+import { MongoRepositoryAdapter } from '../adapter/mongoRepositoryAdapter';
 
-export class DatabaseUserRepository implements UserRepository {
-    private dbClient?: MongoClient;
+export class DatabaseUserRepository extends MongoRepositoryAdapter implements UserRepository {
+    private readonly collectionName: string;
 
-    constructor(
-        private readonly configVault: ConfigVault,
-        private readonly DATABASE_URL_PARAMETER_NAME: string,
-        private readonly DATABASE_COLLECTION_NAME = 'users',
-    ) {}
-
-    private async getMongoClient(): Promise<MongoClient> {
-        if (this.dbClient) return this.dbClient;
-
-        const retrievedDatabaseUrl = await this.configVault.getParameter(
-            this.DATABASE_URL_PARAMETER_NAME,
-        );
-        if (!retrievedDatabaseUrl) {
-            throw Errors.internalError(`Ivalid "${this.DATABASE_URL_PARAMETER_NAME}" parameter`);
-        }
-
-        const newDbClient = new MongoClient(retrievedDatabaseUrl);
-        this.dbClient = newDbClient;
-        return newDbClient;
+    constructor(deps: {
+        configVault: ConfigVault;
+        DATABASE_URL_PARAMETER_NAME: string;
+        collectionName?: string;
+    }) {
+        super({
+            configVault: deps.configVault,
+            DATABASE_URL_PARAMETER_NAME: deps.DATABASE_URL_PARAMETER_NAME,
+        });
+        this.collectionName = deps.collectionName ?? 'users';
     }
 
     static mapUserDbModelToEntity = (model: UserDbModel): User => {
         return User.restore({
-            id: model._id.toJSON(),
+            id: model._id.toHexString(),
             username: model.username,
             name: model.name,
             preferredUsername: model.preferredUsername,
@@ -40,16 +31,15 @@ export class DatabaseUserRepository implements UserRepository {
             createdAt: model.createdAt,
             updatedAt: model.updatedAt,
             lastLoginAt: model.lastLoginAt,
-            groupIds: model.groupIds.map((id) => id.toJSON()),
             quotas: model.quotas,
         });
     };
 
     static mapUserEntityToDbModel = (entity: User): UserDbModel => {
-        const data = entity.toJSON();
+        const data = entity.getData();
 
         return {
-            _id: data.id ? new ObjectId(data.id) : new ObjectId(),
+            _id: DatabaseUserRepository.parseObjectId(data.id) ?? new ObjectId(),
             username: data.username,
             name: data.name,
             preferredUsername: data.preferredUsername,
@@ -57,13 +47,14 @@ export class DatabaseUserRepository implements UserRepository {
             createdAt: data.createdAt,
             updatedAt: data.updatedAt,
             lastLoginAt: data.lastLoginAt,
-            groupIds: data.groupIds.map((id) => new ObjectId(id)),
             quotas: data.quotas,
 
-            textSearch: [data.name, data.preferredUsername, data.username, data.role]
-                .filter((x): x is string => typeof x === 'string')
-                .map((x) => x.toLowerCase())
-                .join(' '),
+            textSearch: DatabaseUserRepository.createTextSearchField([
+                data.name,
+                data.preferredUsername,
+                data.username,
+                data.role,
+            ]),
         };
     };
 
@@ -71,11 +62,11 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const newUser = await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .insertOne(DatabaseUserRepository.mapUserEntityToDbModel(user), {
                 ignoreUndefined: true,
             });
-        return newUser.insertedId.toJSON();
+        return newUser.insertedId.toHexString();
     };
 
     getById = async (id: string): Promise<User | undefined> => {
@@ -83,7 +74,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const user = await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .findOne({ _id: new ObjectId(id) });
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
@@ -93,7 +84,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const user = await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .findOne({ username });
         if (!user) return undefined;
         return DatabaseUserRepository.mapUserDbModelToEntity(user);
@@ -101,27 +92,18 @@ export class DatabaseUserRepository implements UserRepository {
 
     list = async (
         match: {
-            groupId?: string;
             textSearch?: string;
         },
         orderBy: 'creationDate' | 'lastUpdateDate' | 'lastLoginDate' | 'alphabetical',
         order: 'asc' | 'desc',
         pagination: SeekPaginationInput,
     ): Promise<SeekPaginated<User>> => {
-        if (match.groupId && !ObjectId.isValid(match.groupId)) {
-            return {
-                data: [],
-                numberOfPages: 0,
-                numberOfResults: 0,
-                resultsPerPage: pagination.resultsPerPage,
-            };
-        }
-
         const client = await this.getMongoClient();
 
         const filter: Filter<UserDbModel> = {
-            textSearch: match.textSearch ? { $regex: match.textSearch, $options: 'i' } : undefined,
-            groupIds: match.groupId ? new ObjectId(match.groupId) : undefined,
+            textSearch: match.textSearch
+                ? { $regex: match.textSearch.toLowerCase(), $options: 'i' }
+                : undefined,
         };
 
         const sortOrder = order === 'asc' ? 1 : -1;
@@ -143,7 +125,7 @@ export class DatabaseUserRepository implements UserRepository {
             },
         };
 
-        const collection = client.db().collection<UserDbModel>(this.DATABASE_COLLECTION_NAME);
+        const collection = client.db().collection<UserDbModel>(this.collectionName);
         const [count, users] = await Promise.all([
             collection.countDocuments(filter, { ignoreUndefined: true }),
             collection
@@ -167,7 +149,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         const users = await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .find({ _id: { $in: validIds } })
             .toArray();
         return users.map(DatabaseUserRepository.mapUserDbModelToEntity);
@@ -177,7 +159,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .updateOne(
                 { _id: new ObjectId(user.id) },
                 { $set: DatabaseUserRepository.mapUserEntityToDbModel(user) },
@@ -190,7 +172,7 @@ export class DatabaseUserRepository implements UserRepository {
         const client = await this.getMongoClient();
         await client
             .db()
-            .collection<UserDbModel>(this.DATABASE_COLLECTION_NAME)
+            .collection<UserDbModel>(this.collectionName)
             .bulkWrite(
                 users.map((user) => ({
                     updateOne: {

@@ -1,9 +1,9 @@
 import { DeleteInstance } from '../../../application/use-cases/instance/delete-instance';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
-import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
 import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
-import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 

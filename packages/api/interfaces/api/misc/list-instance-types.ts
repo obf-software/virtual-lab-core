@@ -1,8 +1,8 @@
 import { ListInstanceTypes } from '../../../application/use-cases/misc/list-instance-types';
 import { CognitoAuth } from '../../../infrastructure/auth/cognito-auth';
 import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-vault';
-import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lambaLayerConfigVault';
-import { LambdaHandlerAdapter } from '../../../infrastructure/lambda-handler-adapter';
+import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
+import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 

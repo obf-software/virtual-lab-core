@@ -9,13 +9,15 @@ import { Errors } from '../../domain/dtos/errors';
 
 export class GuacamoleConnectionEncoder implements ConnectionEncoder {
     constructor(
-        private readonly configVault: ConfigVault,
-        private readonly GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: string,
+        private readonly deps: {
+            readonly configVault: ConfigVault;
+            readonly GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: string;
+        },
     ) {}
 
     private createConnectionString = async (connectionData: unknown) => {
-        const guacamoleCypherKey = await this.configVault.getParameter(
-            this.GUACAMOLE_CYPHER_KEY_PARAMETER_NAME,
+        const guacamoleCypherKey = await this.deps.configVault.getParameter(
+            this.deps.GUACAMOLE_CYPHER_KEY_PARAMETER_NAME,
         );
         if (!guacamoleCypherKey) throw Errors.internalError('Guacamole cypher key not found');
 
