@@ -25,13 +25,13 @@ const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const instanceTemplateRepository = new DatabaseInstanceTemplateRepository(
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const instanceTemplateRepository = new DatabaseInstanceTemplateRepository({
     configVault,
     DATABASE_URL_PARAMETER_NAME,
-);
-const virtualizationGateway = new AwsVirtualizationGateway(
+});
+const virtualizationGateway = new AwsVirtualizationGateway({
     configVault,
     AWS_REGION,
     SNS_TOPIC_ARN,
@@ -39,7 +39,7 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
     EVENT_BUS_PUBLISHER_ROLE_ARN,
-);
+});
 const createInstanceTemplate = new CreateInstanceTemplate(
     logger,
     auth,

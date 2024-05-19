@@ -10,9 +10,9 @@ const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } =
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const userRepository = new DatabaseUserRepository({ configVault, DATABASE_URL_PARAMETER_NAME });
 const signInUser = new SignInUser(logger, userRepository);
 
 export const handler = LambdaHandlerAdapter.adaptCustom<PreTokenGenerationTriggerHandler>(

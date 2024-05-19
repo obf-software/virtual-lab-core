@@ -14,9 +14,9 @@ const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const userRepository = new DatabaseUserRepository({ configVault, DATABASE_URL_PARAMETER_NAME });
 const listUsers = new ListUsers(logger, auth, userRepository);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(

@@ -12,12 +12,12 @@ const logger = new AWSLogger();
 const auth = new CognitoAuth();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const instanceTemplateRepository = new DatabaseInstanceTemplateRepository(
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const instanceTemplateRepository = new DatabaseInstanceTemplateRepository({
     configVault,
     DATABASE_URL_PARAMETER_NAME,
-);
+});
 const getInstanceTemplate = new GetInstanceTemplate(logger, auth, instanceTemplateRepository);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(

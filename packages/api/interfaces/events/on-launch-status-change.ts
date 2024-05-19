@@ -24,11 +24,14 @@ const {
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const virtualizationGateway = new AwsVirtualizationGateway(
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const userRepository = new DatabaseUserRepository({ configVault, DATABASE_URL_PARAMETER_NAME });
+const instanceRepository = new DatabaseInstanceRepository({
+    configVault,
+    DATABASE_URL_PARAMETER_NAME,
+});
+const virtualizationGateway = new AwsVirtualizationGateway({
     configVault,
     AWS_REGION,
     SNS_TOPIC_ARN,
@@ -36,8 +39,13 @@ const virtualizationGateway = new AwsVirtualizationGateway(
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
     EVENT_BUS_PUBLISHER_ROLE_ARN,
-);
-const eventPublisher = new AWSEventPublisher(logger, AWS_REGION, EVENT_BUS_NAME, APP_SYNC_API_URL);
+});
+const eventPublisher = new AWSEventPublisher({
+    logger,
+    AWS_REGION,
+    EVENT_BUS_NAME,
+    APP_SYNC_API_URL,
+});
 const linkLaunchedInstance = new LinkLaunchedInstance(
     logger,
     userRepository,

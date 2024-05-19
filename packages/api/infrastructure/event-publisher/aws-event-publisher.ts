@@ -19,8 +19,8 @@ export class AWSEventPublisher implements EventPublisher {
         private readonly deps: {
             readonly logger: Logger;
             readonly AWS_REGION: string;
-            readonly AWS_EVENT_BUS_NAME: string;
-            readonly AWS_APPSYNC_API_URL: string;
+            readonly EVENT_BUS_NAME: string;
+            readonly APP_SYNC_API_URL: string;
         },
     ) {
         this.eventBridgeClient = new EventBridgeClient({ region: deps.AWS_REGION });
@@ -31,7 +31,7 @@ export class AWSEventPublisher implements EventPublisher {
 
         const command = new PutEventsCommand({
             Entries: events.map((event) => ({
-                EventBusName: this.deps.AWS_EVENT_BUS_NAME,
+                EventBusName: this.deps.EVENT_BUS_NAME,
                 Source: 'virtualLabCore.api',
                 DetailType: event.type,
                 Detail: JSON.stringify(event.detail),
@@ -65,7 +65,7 @@ export class AWSEventPublisher implements EventPublisher {
     private async publishToAppSync(...events: ApplicationEvent[]): Promise<void> {
         if (events.length === 0) return;
 
-        const url = new URL(this.deps.AWS_APPSYNC_API_URL);
+        const url = new URL(this.deps.APP_SYNC_API_URL);
         const signer = new SignatureV4({
             credentials: defaultProvider({}),
             region: this.deps.AWS_REGION,

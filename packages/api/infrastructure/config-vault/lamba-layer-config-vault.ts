@@ -3,7 +3,7 @@ import { ConfigVault } from '../../application/config-vault';
 import { Errors } from '../../domain/dtos/errors';
 
 export class LambdaLayerConfigVault implements ConfigVault {
-    constructor(private readonly AWS_SESSION_TOKEN: string) {}
+    constructor(private readonly deps: { readonly AWS_SESSION_TOKEN: string }) {}
 
     getParameter = async (name: string): Promise<string | undefined> => {
         const url = new URL('http://localhost:2773/systemsmanager/parameters/get');
@@ -12,7 +12,7 @@ export class LambdaLayerConfigVault implements ConfigVault {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'X-Aws-Parameters-Secrets-Token': this.AWS_SESSION_TOKEN,
+                'X-Aws-Parameters-Secrets-Token': this.deps.AWS_SESSION_TOKEN,
             },
         });
 

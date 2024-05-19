@@ -20,11 +20,22 @@ const {
 const logger = new AWSLogger();
 const configVault =
     IS_LOCAL === 'true'
-        ? new AWSConfigVault(AWS_REGION)
-        : new LambdaLayerConfigVault(AWS_SESSION_TOKEN);
-const instanceRepository = new DatabaseInstanceRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const userRepository = new DatabaseUserRepository(configVault, DATABASE_URL_PARAMETER_NAME);
-const eventPublisher = new AWSEventPublisher(logger, AWS_REGION, EVENT_BUS_NAME, APP_SYNC_API_URL);
+        ? new AWSConfigVault({ AWS_REGION })
+        : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
+const instanceRepository = new DatabaseInstanceRepository({
+    configVault,
+    DATABASE_URL_PARAMETER_NAME,
+});
+const userRepository = new DatabaseUserRepository({
+    configVault,
+    DATABASE_URL_PARAMETER_NAME,
+});
+const eventPublisher = new AWSEventPublisher({
+    logger,
+    AWS_REGION,
+    EVENT_BUS_NAME,
+    APP_SYNC_API_URL,
+});
 const notifyInstanceStateChange = new NotifyInstanceStateChange(
     logger,
     instanceRepository,
