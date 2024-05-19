@@ -7,6 +7,7 @@ import { AppSyncApi } from './stacks/AppSyncApi';
 import { ServiceCatalog } from './stacks/ServiceCatalog';
 import { ConnectionGateway } from './stacks/ConnectionGateway';
 import { featureFlagIsEnabled } from './stacks/config/feature-flags';
+import { Docs } from './stacks/Docs';
 
 export default {
     config() {
@@ -30,6 +31,7 @@ export default {
         app.stack(Auth);
         app.stack(AppSyncApi);
         app.stack(Api);
+        app.stack(Docs);
         app.stack(ServiceCatalog);
         app.stack(ConnectionGateway);
         app.stack(Client);

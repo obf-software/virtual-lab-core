@@ -4,6 +4,7 @@ import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Auth } from './Auth';
 import { Core } from './Core';
 import { AppSyncApi } from './AppSyncApi';
+import { OpenApiSpecs } from './OpenApiSpecs';
 
 export const Api = ({ stack }: sst.StackContext) => {
     const {
@@ -97,87 +98,200 @@ export const Api = ({ stack }: sst.StackContext) => {
     /**
      * Instance module
      */
-    api.addRoutes(stack, {
+    const instanceModulePaths = OpenApiSpecs.addHttpApiRoutes(stack, api, {
         'DELETE /api/v1/instances/{instanceId}': {
-            function: 'packages/api/interfaces/api/instance/delete-instance.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/delete-instance.handler',
+            },
+            specs: {
+                summary: 'Deletar instância',
+                tags: ['Instâncias'],
+            },
         },
         'GET /api/v1/instances/{instanceId}/connection': {
-            function: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/get-instance-connection.handler',
+            },
+            specs: {
+                summary: 'Obter informações de conexão',
+                tags: ['Instâncias'],
+            },
         },
         'POST /api/v1/instances': {
-            function: 'packages/api/interfaces/api/instance/launch-instance.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/launch-instance.handler',
+            },
+            specs: {
+                summary: 'Criar instância',
+                tags: ['Instâncias'],
+            },
         },
         'GET /api/v1/instances': {
-            function: 'packages/api/interfaces/api/instance/list-instances.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/list-instances.handler',
+            },
+            specs: {
+                summary: 'Listar instâncias',
+                tags: ['Instâncias'],
+            },
         },
         'POST /api/v1/instances/{instanceId}/reboot': {
-            function: 'packages/api/interfaces/api/instance/reboot-instance.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/reboot-instance.handler',
+            },
+            specs: {
+                summary: 'Reiniciar instância',
+                tags: ['Instâncias'],
+            },
         },
         'POST /api/v1/instances/{instanceId}/turn-off': {
-            function: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/turn-instance-off.handler',
+            },
+            specs: {
+                summary: 'Desligar instância',
+                tags: ['Instâncias'],
+            },
         },
         'POST /api/v1/instances/{instanceId}/turn-on': {
-            function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/instance/turn-instance-on.handler',
+            },
+            specs: {
+                summary: 'Ligar instância',
+                tags: ['Instâncias'],
+            },
         },
     });
 
     /**
      * Instance template module
      */
-    api.addRoutes(stack, {
+    const instanceTemplateModulePaths = OpenApiSpecs.addHttpApiRoutes(stack, api, {
         'POST /api/v1/instances/{instanceId}/create-instance-template': {
-            function:
-                'packages/api/interfaces/api/instance-templates/create-instance-template-from-instance.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/create-instance-template-from-instance.handler',
+            },
+            specs: {
+                summary: 'Criar template de instância a partir de instância',
+                tags: ['Templates de instâncias'],
+            },
         },
         'POST /api/v1/instance-templates': {
-            function:
-                'packages/api/interfaces/api/instance-templates/create-instance-template.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/create-instance-template.handler',
+            },
+            specs: {
+                summary: 'Criar template de instância',
+                tags: ['Templates de instâncias'],
+            },
         },
         'DELETE /api/v1/instance-templates/{instanceTemplateId}': {
-            function:
-                'packages/api/interfaces/api/instance-templates/delete-instance-template.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/delete-instance-template.handler',
+            },
+            specs: {
+                summary: 'Deletar template de instância',
+                tags: ['Templates de instâncias'],
+            },
         },
         'GET /api/v1/instance-templates/{instanceTemplateId}': {
-            function:
-                'packages/api/interfaces/api/instance-templates/get-instance-template.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/get-instance-template.handler',
+            },
+            specs: {
+                summary: 'Obter template de instância',
+                tags: ['Templates de instâncias'],
+            },
         },
         'GET /api/v1/instance-templates': {
-            function:
-                'packages/api/interfaces/api/instance-templates/list-instance-templates.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/list-instance-templates.handler',
+            },
+            specs: {
+                summary: 'Listar templates de instâncias',
+                tags: ['Templates de instâncias'],
+            },
         },
         'PATCH /api/v1/instance-templates/{instanceTemplateId}': {
-            function:
-                'packages/api/interfaces/api/instance-templates/update-instance-templates.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/instance-templates/update-instance-templates.handler',
+            },
+            specs: {
+                summary: 'Atualizar template de instância',
+                tags: ['Templates de instâncias'],
+            },
         },
     });
 
     /**
      * User module
      */
-    api.addRoutes(stack, {
+    const userModulePaths = OpenApiSpecs.addHttpApiRoutes(stack, api, {
         'GET /api/v1/users/{userId}': {
-            function: 'packages/api/interfaces/api/user/get-user.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/user/get-user.handler',
+            },
+            specs: {
+                summary: 'Obter usuário',
+                tags: ['Usuários'],
+            },
         },
         'GET /api/v1/users': {
-            function: 'packages/api/interfaces/api/user/list-users.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/user/list-users.handler',
+            },
+            specs: {
+                summary: 'Listar usuários',
+                tags: ['Usuários'],
+            },
         },
         'PATCH /api/v1/users/{userId}/quotas': {
-            function: 'packages/api/interfaces/api/user/update-user-quotas.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/user/update-user-quotas.handler',
+            },
+            specs: {
+                summary: 'Atualizar quotas de usuário',
+                tags: ['Usuários'],
+            },
         },
         'PATCH /api/v1/users/{userId}/role': {
-            function: 'packages/api/interfaces/api/user/update-user-role.handler',
+            handler: {
+                function: 'packages/api/interfaces/api/user/update-user-role.handler',
+            },
+            specs: {
+                summary: 'Atualizar cargo de usuário',
+                tags: ['Usuários'],
+            },
         },
     });
 
     /**
      * Misc module
      */
-    api.addRoutes(stack, {
+    const miscModulePaths = OpenApiSpecs.addHttpApiRoutes(stack, api, {
         'GET /api/v1/instance-types': {
-            function: 'packages/api/interfaces/api/misc/list-instance-types.handler',
+            handler: { function: 'packages/api/interfaces/api/misc/list-instance-types.handler' },
+            specs: {
+                summary: 'Listar tipos de instância',
+                tags: ['Outros'],
+            },
         },
         'GET /api/v1/recommended-machine-images': {
-            function: 'packages/api/interfaces/api/misc/list-recommended-machine-images.handler',
+            handler: {
+                function:
+                    'packages/api/interfaces/api/misc/list-recommended-machine-images.handler',
+            },
+            specs: {
+                summary: 'Listar imagens de máquinas recomendadas',
+                tags: ['Outros'],
+            },
         },
     });
 
@@ -266,6 +380,12 @@ export const Api = ({ stack }: sst.StackContext) => {
 
     return {
         api,
+        pathsObjects: [
+            instanceModulePaths,
+            instanceTemplateModulePaths,
+            userModulePaths,
+            miscModulePaths,
+        ],
         apiLambdaDefaultRole,
         apiUrlParameter,
     };
