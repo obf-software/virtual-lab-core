@@ -8,7 +8,6 @@ import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization
 import { LaunchInstance } from '../../../application/use-cases/instance/launch-instance';
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
-import { Errors } from '../../../domain/dtos/errors';
 import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/instance-template-repository/database-instance-template-repository';
 
 const {
@@ -57,26 +56,32 @@ const launchInstance = new LaunchInstance(
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const body = z
-            .object({
-                ownerId: z.string().optional(),
+        const { body } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            bodySchema: z.object({
+                ownerId: z
+                    .string()
+                    .transform((v) => {
+                        if (v === 'me') return undefined;
+                        return v;
+                    })
+                    .optional(),
                 name: z.string(),
                 description: z.string(),
                 templateId: z.string(),
                 instanceType: z.string(),
                 canHibernate: z.boolean(),
-            })
-            .safeParse(JSON.parse(event.body ?? '{}'));
-        if (!body.success) throw Errors.validationError(body.error);
+            }),
+        });
 
         const output = await launchInstance.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            ownerId: body.data.ownerId === 'me' ? undefined : body.data.ownerId,
-            templateId: body.data.templateId,
-            name: body.data.name,
-            description: body.data.description,
-            instanceType: body.data.instanceType,
-            canHibernate: body.data.canHibernate,
+            ownerId: body.ownerId,
+            templateId: body.templateId,
+            name: body.name,
+            description: body.description,
+            instanceType: body.instanceType,
+            canHibernate: body.canHibernate,
         });
 
         return {

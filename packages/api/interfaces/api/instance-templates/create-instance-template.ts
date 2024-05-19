@@ -7,7 +7,6 @@ import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/inst
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
-import { Errors } from '../../../domain/dtos/errors';
 
 const {
     IS_LOCAL,
@@ -49,16 +48,15 @@ const createInstanceTemplate = new CreateInstanceTemplate(
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const bodyValidation = z
-            .object({
+        const { body } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            bodySchema: z.object({
                 name: z.string(),
                 description: z.string(),
                 machineImageId: z.string(),
                 storageInGb: z.number().optional(),
-            })
-            .safeParse(JSON.parse(event.body ?? '{}'));
-        if (!bodyValidation.success) throw Errors.validationError(bodyValidation.error);
-        const { data: body } = bodyValidation;
+            }),
+        });
 
         const output = await createInstanceTemplate.execute({
             principal: CognitoAuth.extractPrincipal(event),

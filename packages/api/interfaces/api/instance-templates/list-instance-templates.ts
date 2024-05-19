@@ -6,7 +6,6 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/instance-template-repository/database-instance-template-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
-import { Errors } from '../../../domain/dtos/errors';
 import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
@@ -24,19 +23,19 @@ const listInstanceTemplates = new ListInstanceTemplates(logger, auth, instanceTe
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const queryValidation = z
-            .object({
-                createdBy: z.string().optional(),
-                textSearch: z.string().optional(),
-                orderBy: z
-                    .enum(['creationDate', 'lastUpdateDate', 'alphabetical'])
-                    .default('creationDate'),
-                order: z.enum(['asc', 'desc']).default('asc'),
-            })
-            .extend(seekPaginationInputSchema.shape)
-            .safeParse({ ...event.queryStringParameters });
-        if (!queryValidation.success) throw Errors.validationError(queryValidation.error);
-        const { data: query } = queryValidation;
+        const { query } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            querySchema: z
+                .object({
+                    createdBy: z.string().optional(),
+                    textSearch: z.string().optional(),
+                    orderBy: z
+                        .enum(['creationDate', 'lastUpdateDate', 'alphabetical'])
+                        .default('creationDate'),
+                    order: z.enum(['asc', 'desc']).default('asc'),
+                })
+                .extend(seekPaginationInputSchema.shape),
+        });
 
         const output = await listInstanceTemplates.execute({
             principal: CognitoAuth.extractPrincipal(event),

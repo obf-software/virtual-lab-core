@@ -5,6 +5,7 @@ import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
+import { z } from 'zod';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 const logger = new AWSLogger();
@@ -18,11 +19,16 @@ const getUser = new GetUser(logger, auth, userRepository);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const userId = event.pathParameters?.userId;
+        const { path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            pathSchema: z.object({
+                userId: z.string().transform((value) => (value === 'me' ? undefined : value)),
+            }),
+        });
 
         const output = await getUser.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            userId: userId === 'me' ? undefined : userId,
+            userId: path.userId,
         });
 
         return {

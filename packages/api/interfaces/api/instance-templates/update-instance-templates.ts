@@ -5,7 +5,6 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/instance-template-repository/database-instance-template-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
-import { Errors } from '../../../domain/dtos/errors';
 import { UpdateInstanceTemplate } from '../../../application/use-cases/instance-template/update-instance-template';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
@@ -24,20 +23,20 @@ const updateInstanceTemplate = new UpdateInstanceTemplate(logger, auth, instance
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const bodyValidation = z
-            .object({
+        const { body, path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            bodySchema: z.object({
                 name: z.string().optional(),
                 description: z.string().optional(),
-            })
-            .safeParse(JSON.parse(event.body ?? '{}'));
-        if (!bodyValidation.success) throw Errors.validationError(bodyValidation.error);
-        const { data: body } = bodyValidation;
-
-        const instanceTemplateId = event.pathParameters?.instanceTemplateId;
+            }),
+            pathSchema: z.object({
+                instanceTemplateId: z.string(),
+            }),
+        });
 
         const output = await updateInstanceTemplate.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceTemplateId: instanceTemplateId ?? '',
+            instanceTemplateId: path.instanceTemplateId,
             name: body.name,
             description: body.description,
         });

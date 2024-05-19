@@ -5,6 +5,7 @@ import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/inst
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { DeleteInstanceTemplate } from '../../../application/use-cases/instance-template/delete-instance-template';
+import { z } from 'zod';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 
@@ -22,11 +23,16 @@ const deleteInstanceTemplate = new DeleteInstanceTemplate(logger, auth, instance
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const instanceTemplateId = event.pathParameters?.instanceTemplateId;
+        const { path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            pathSchema: z.object({
+                instanceTemplateId: z.string(),
+            }),
+        });
 
         await deleteInstanceTemplate.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceTemplateId: instanceTemplateId ?? '',
+            instanceTemplateId: path.instanceTemplateId,
         });
 
         return {

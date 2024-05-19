@@ -6,6 +6,7 @@ import { DatabaseInstanceRepository } from '../../../infrastructure/instance-rep
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { z } from 'zod';
 
 const {
     IS_LOCAL,
@@ -41,9 +42,16 @@ const rebootInstance = new RebootInstance(logger, auth, instanceRepository, virt
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
+        const { path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            pathSchema: z.object({
+                instanceId: z.string(),
+            }),
+        });
+
         await rebootInstance.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceId: event.pathParameters?.instanceId ?? '',
+            instanceId: path.instanceId,
         });
 
         return {

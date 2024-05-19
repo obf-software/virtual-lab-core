@@ -5,6 +5,7 @@ import { DatabaseInstanceTemplateRepository } from '../../../infrastructure/inst
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { GetInstanceTemplate } from '../../../application/use-cases/instance-template/get-instance-template';
+import { z } from 'zod';
 
 const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
 
@@ -22,11 +23,16 @@ const getInstanceTemplate = new GetInstanceTemplate(logger, auth, instanceTempla
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const instanceTemplateId = event.pathParameters?.instanceTemplateId;
+        const { path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            pathSchema: z.object({
+                instanceTemplateId: z.string(),
+            }),
+        });
 
         const output = await getInstanceTemplate.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceTemplateId: instanceTemplateId ?? '',
+            instanceTemplateId: path.instanceTemplateId,
         });
 
         return {

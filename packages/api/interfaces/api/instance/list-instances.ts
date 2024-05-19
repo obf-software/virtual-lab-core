@@ -7,7 +7,6 @@ import { DatabaseInstanceRepository } from '../../../infrastructure/instance-rep
 import { ListInstances } from '../../../application/use-cases/instance/list-instances';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
-import { Errors } from '../../../domain/dtos/errors';
 import { seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 
 const {
@@ -49,29 +48,30 @@ const listUserInstances = new ListInstances(
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const query = z
-            .object({
-                orderBy: z
-                    .enum(['creationDate', 'lastConnectionDate', 'alphabetical'])
-                    .default('creationDate'),
-                order: z.enum(['asc', 'desc']).default('asc'),
-                ownerId: z.string().optional(),
-                textSearch: z.string().optional(),
-            })
-            .extend(seekPaginationInputSchema.shape)
-            .safeParse({ ...event.queryStringParameters });
-        if (!query.success) throw Errors.validationError(query.error);
+        const { query } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            querySchema: z
+                .object({
+                    orderBy: z
+                        .enum(['creationDate', 'lastConnectionDate', 'alphabetical'])
+                        .default('creationDate'),
+                    order: z.enum(['asc', 'desc']).default('asc'),
+                    ownerId: z.string().optional(),
+                    textSearch: z.string().optional(),
+                })
+                .extend(seekPaginationInputSchema.shape),
+        });
 
         const output = await listUserInstances.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            orderBy: query.data.orderBy,
-            order: query.data.order,
+            orderBy: query.orderBy,
+            order: query.order,
             pagination: {
-                resultsPerPage: query.data.resultsPerPage,
-                page: query.data.page,
+                resultsPerPage: query.resultsPerPage,
+                page: query.page,
             },
-            ownerId: query.data.ownerId,
-            textSearch: query.data.textSearch,
+            ownerId: query.ownerId,
+            textSearch: query.textSearch,
         });
 
         return {

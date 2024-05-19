@@ -6,6 +6,7 @@ import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lam
 import { DatabaseInstanceRepository } from '../../../infrastructure/instance-repository/database-instance-repository';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
+import { z } from 'zod';
 
 const {
     IS_LOCAL,
@@ -46,9 +47,16 @@ const turnInstanceOff = new TurnInstanceOff(
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
+        const { path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            pathSchema: z.object({
+                instanceId: z.string(),
+            }),
+        });
+
         const output = await turnInstanceOff.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            instanceId: event.pathParameters?.instanceId ?? '',
+            instanceId: path.instanceId,
         });
 
         return {

@@ -6,7 +6,6 @@ import { AWSConfigVault } from '../../../infrastructure/config-vault/aws-config-
 import { LambdaLayerConfigVault } from '../../../infrastructure/config-vault/lamba-layer-config-vault';
 import { DatabaseUserRepository } from '../../../infrastructure/user-repository/database-user-repository';
 import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/lambda-handler-adapter';
-import { Errors } from '../../../domain/dtos/errors';
 import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
 const {
@@ -40,23 +39,24 @@ const updateUserQuotas = new UpdateUserQuotas(logger, auth, userRepository, virt
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {
-        const body = z
-            .object({
+        const { body, path } = LambdaHandlerAdapter.parseAPIRequest({
+            event,
+            bodySchema: z.object({
                 maxInstances: z.number().optional(),
                 allowedInstanceTypes: z.array(z.string()).optional(),
                 canLaunchInstanceWithHibernation: z.boolean().optional(),
-            })
-            .safeParse(JSON.parse(event.body ?? '{}'));
-        if (!body.success) throw Errors.validationError(body.error);
-
-        const userId = event.pathParameters?.userId;
+            }),
+            pathSchema: z.object({
+                userId: z.string().transform((value) => (value === 'me' ? undefined : value)),
+            }),
+        });
 
         const output = await updateUserQuotas.execute({
             principal: CognitoAuth.extractPrincipal(event),
-            userId: userId === 'me' ? undefined : userId,
-            maxInstances: body.data.maxInstances,
-            allowedInstanceTypes: body.data.allowedInstanceTypes,
-            canLaunchInstanceWithHibernation: body.data.canLaunchInstanceWithHibernation,
+            userId: path.userId,
+            maxInstances: body.maxInstances,
+            allowedInstanceTypes: body.allowedInstanceTypes,
+            canLaunchInstanceWithHibernation: body.canLaunchInstanceWithHibernation,
         });
 
         return {
