@@ -514,6 +514,31 @@ export function Docs({ stack }: sst.StackContext) {
                         },
                     },
                 },
+                MachineImage: {
+                    type: 'object',
+                    title: 'Imagem da máquina virtual',
+                    description: 'Uma imagem de máquina virtual',
+                    required: ['id', 'storageInGb', 'platform', 'distribution'],
+                    properties: {
+                        id: {
+                            type: 'string',
+                            title: 'Id da imagem da máquina virtual',
+                        },
+                        storageInGb: {
+                            type: 'number',
+                            title: 'Armazenamento em GB',
+                        },
+                        platform: {
+                            type: 'string',
+                            title: 'Plataforma da imagem',
+                            $ref: '#/components/schemas/InstancePlatform',
+                        },
+                        distribution: {
+                            type: 'string',
+                            title: 'Distribuição da imagem',
+                        },
+                    },
+                },
             },
             securitySchemes: {
                 UserPool: {

@@ -36,8 +36,8 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
         });
 
         return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Instance template deleted' }),
+            statusCode: 204,
+            body: JSON.stringify({}),
             headers: {
                 'Content-Type': 'application/json',
             },

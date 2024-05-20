@@ -402,6 +402,47 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['name', 'description'],
+                                properties: {
+                                    name: {
+                                        type: 'string',
+                                        description: 'Nome do template de instância',
+                                    },
+                                    description: {
+                                        type: 'string',
+                                        description: 'Descrição do template de instância',
+                                    },
+                                    storageInGb: {
+                                        type: 'number',
+                                        description:
+                                            'Tamanho do disco em GB. Caso não informado, o armazenamento será o mesmo da instância',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '201': {
+                        description: 'Template de instância criado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/InstanceTemplate',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'POST /api/v1/instance-templates': {
@@ -414,6 +455,49 @@ export const Api = ({ stack }: sst.StackContext) => {
                 description: 'Cria um template de instância com as configurações informadas',
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['name', 'description', 'machineImageId'],
+                                properties: {
+                                    name: {
+                                        type: 'string',
+                                        description: 'Nome do template de instância',
+                                    },
+                                    description: {
+                                        type: 'string',
+                                        description: 'Descrição do template de instância',
+                                    },
+                                    machineImageId: {
+                                        type: 'string',
+                                        description: 'Id da imagem de máquina a ser utilizada',
+                                    },
+                                    storageInGb: {
+                                        type: 'number',
+                                        description: 'Tamanho do disco em GB',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '201': {
+                        description: 'Template de instância criado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/InstanceTemplate',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                },
             },
         },
         'DELETE /api/v1/instance-templates/{instanceTemplateId}': {
@@ -427,6 +511,15 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
+                responses: {
+                    '204': {
+                        description: 'Template de instância deletado com sucesso',
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'GET /api/v1/instance-templates/{instanceTemplateId}': {
@@ -440,6 +533,22 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
+                responses: {
+                    '200': {
+                        description: 'Template de instância obtido com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/InstanceTemplate',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'GET /api/v1/instance-templates': {
@@ -453,6 +562,66 @@ export const Api = ({ stack }: sst.StackContext) => {
                     'Lista todos os templates de instâncias que satisfazem os filtros informados',
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
+                parameters: [
+                    {
+                        in: 'query',
+                        name: 'createdBy',
+                        description: 'Filtrar templates de instâncias pelo id do criador',
+                        required: false,
+                        schema: {
+                            type: 'string',
+                            $ref: '#/components/schemas/Id',
+                        },
+                    },
+                    {
+                        $ref: '#/components/parameters/TextSearchQueryParameter',
+                        required: false,
+                    },
+                    {
+                        in: 'query',
+                        name: 'orderBy',
+                        description: 'Campo pelo qual a lista será ordenada',
+                        required: false,
+                        schema: {
+                            type: 'string',
+                            enum: ['creationDate', 'lastUpdateDate', 'alphabetical'],
+                            default: 'creationDate',
+                        },
+                    },
+                    {
+                        $ref: '#/components/parameters/PaginationOrderQueryParameter',
+                        required: false,
+                    },
+                ],
+                responses: {
+                    '200': {
+                        description: 'Templates de instâncias listados com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    allOf: [
+                                        { $ref: '#/components/schemas/SeekPaginated' },
+                                        {
+                                            type: 'object',
+                                            description: 'Lista de templates de instâncias',
+                                            properties: {
+                                                data: {
+                                                    type: 'array',
+                                                    items: {
+                                                        $ref: '#/components/schemas/InstanceTemplate',
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                },
             },
         },
         'PATCH /api/v1/instance-templates/{instanceTemplateId}': {
@@ -466,6 +635,42 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Templates de instâncias'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: [],
+                                properties: {
+                                    name: {
+                                        type: 'string',
+                                        description: 'Nome do template de instância',
+                                    },
+                                    description: {
+                                        type: 'string',
+                                        description: 'Descrição do template de instância',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Template de instância atualizado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/InstanceTemplate',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
     });
@@ -485,6 +690,22 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Usuários'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
+                responses: {
+                    '200': {
+                        description: 'Usuário obtido com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/User',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'GET /api/v1/users': {
@@ -496,6 +717,58 @@ export const Api = ({ stack }: sst.StackContext) => {
                 description: 'Lista todos os usuários que satisfazem os filtros informados',
                 tags: ['Usuários'],
                 security: [{ UserPool: [] }],
+                parameters: [
+                    {
+                        in: 'query',
+                        name: 'orderBy',
+                        description: 'Campo pelo qual a lista será ordenada',
+                        required: false,
+                        schema: {
+                            type: 'string',
+                            enum: [
+                                'creationDate',
+                                'lastUpdateDate',
+                                'lastLoginDate',
+                                'alphabetical',
+                            ],
+                            default: 'creationDate',
+                        },
+                    },
+                    {
+                        $ref: '#/components/parameters/PaginationOrderQueryParameter',
+                        required: false,
+                    },
+                    {
+                        $ref: '#/components/parameters/TextSearchQueryParameter',
+                        required: false,
+                    },
+                ],
+                responses: {
+                    '200': {
+                        description: 'Usuários listados com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    allOf: [
+                                        { $ref: '#/components/schemas/SeekPaginated' },
+                                        {
+                                            type: 'object',
+                                            description: 'Lista de usuários',
+                                            properties: {
+                                                data: {
+                                                    type: 'array',
+                                                    items: {
+                                                        $ref: '#/components/schemas/User',
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
             },
         },
         'PATCH /api/v1/users/{userId}/quotas': {
@@ -509,6 +782,50 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Usuários'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: [],
+                                properties: {
+                                    maxInstances: {
+                                        type: 'number',
+                                        description: 'Número máximo de instâncias permitidas',
+                                    },
+                                    allowedInstanceTypes: {
+                                        type: 'array',
+                                        items: {
+                                            type: 'string',
+                                        },
+                                        description: 'Tipos de instância permitidos',
+                                    },
+                                    canLaunchInstanceWithHibernation: {
+                                        type: 'boolean',
+                                        description:
+                                            'Se o usuário pode lançar instâncias com hibernação',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Quotas de usuário atualizadas com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/User',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'PATCH /api/v1/users/{userId}/role': {
@@ -522,6 +839,38 @@ export const Api = ({ stack }: sst.StackContext) => {
                 tags: ['Usuários'],
                 security: [{ UserPool: [] }],
                 parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: ['role'],
+                                properties: {
+                                    role: {
+                                        type: 'string',
+                                        $ref: '#/components/schemas/UserRole',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Cargo de usuário atualizado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/User',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
     });
@@ -537,6 +886,23 @@ export const Api = ({ stack }: sst.StackContext) => {
                 description: 'Lista todos os tipos de instância disponíveis',
                 tags: ['Outros'],
                 security: [{ UserPool: [] }],
+                responses: {
+                    '200': {
+                        description: 'Tipos de instância listados com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'array',
+                                    items: {
+                                        $ref: '#/components/schemas/InstanceType',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                },
             },
         },
         'GET /api/v1/recommended-machine-images': {
@@ -550,6 +916,23 @@ export const Api = ({ stack }: sst.StackContext) => {
                     'Lista todas as imagens de máquinas recomendadas para criação de templates de instância',
                 tags: ['Outros'],
                 security: [{ UserPool: [] }],
+                responses: {
+                    '200': {
+                        description: 'Imagens de máquinas recomendadas listadas com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'array',
+                                    items: {
+                                        $ref: '#/components/schemas/MachineImage',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                },
             },
         },
     });

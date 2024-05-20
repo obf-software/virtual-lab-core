@@ -67,7 +67,7 @@ export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
         });
 
         return {
-            statusCode: 200,
+            statusCode: 201,
             body: JSON.stringify(output),
             headers: {
                 'Content-Type': 'application/json',
