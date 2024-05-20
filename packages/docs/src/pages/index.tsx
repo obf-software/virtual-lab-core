@@ -1,9 +1,8 @@
-import Link from '@docusaurus/Link';
 import React from 'react';
 import Layout from '@theme/Layout';
+import Loading from '@theme/Loading';
 
 import ExecutionEnvironment from '@docusaurus/ExecutionEnvironment';
-import styles from './index.module.css';
 
 export default function Home(): JSX.Element {
     const docsPath = 'docs/introduction';
@@ -14,14 +13,14 @@ export default function Home(): JSX.Element {
 
     return (
         <Layout>
-            <div className={styles.redirectContainer}>
-                <Link
-                    className='button button--primary button--lg'
-                    to={docsPath}
-                >
-                    Redirecionando para a documentação...
-                </Link>
-            </div>
+            <Loading
+                error={false}
+                isLoading={true}
+                pastDelay={true}
+                timedOut={false}
+                // eslint-disable-next-line @typescript-eslint/no-empty-function
+                retry={() => {}}
+            />
         </Layout>
     );
 }

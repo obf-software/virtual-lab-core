@@ -62,8 +62,9 @@ const config: Config = {
             logo: {
                 src: 'img/logo-light.png',
                 srcDark: 'img/logo-dark.png',
+                height: 150,
             },
-            copyright: `Copyright © ${new Date().getFullYear()} OBF Software`,
+            copyright: `Copyright © ${new Date().getFullYear()} | OBF Software`,
         },
         prism: {
             theme: prismThemes.github,

@@ -10,13 +10,29 @@ export function Docs({ stack }: sst.StackContext) {
 
     const openApiSpecs = new OpenApiSpecs(stack, 'OpenApiSpecs', {
         info: {
-            title: 'Virtual Lab API',
+            title: 'API',
             version: '1.0.0',
+            description: `
+                Essa API é utilizada para gerenciar todos os recursos do sistema Virtual Lab.
+
+                A documentação é dividida em quatro categorias principais:
+
+                - Instâncias: Rotas para manipulação das instâncias de máquinas virtuais.
+
+                - Templates de instâncias: Rotas para manipulação dos templates de instâncias de máquinas virtuais. Templates são modelos de instâncias que podem ser utilizados para criar instâncias.
+
+                - Usuários: Rotas para manipulação dos usuários do sistema.
+
+                - Outros: Rotas para obtenção de informações adicionais sobre a API.
+
+
+                Todas as rotas são protegidas através de autenticação JWT. Para obter um token, é necessário realizar login através do sistema de autenticação do AWS Cognito.
+            `,
         },
         servers: [
             {
                 url: ssm.StringParameter.valueForStringParameter(stack, ssmParameters.apiUrl.name),
-                description: `Virtual Lab API (${stack.stage})`,
+                description: `Ambiente ${stack.stage}`,
             },
         ],
         tags: [
