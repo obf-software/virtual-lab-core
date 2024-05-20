@@ -83,16 +83,17 @@ export class OpenApiSpecs extends Construct {
                 .reduce((acc, curr) => ({ ...acc, ...curr }), {}),
         );
 
-        return Object.entries(routes)
-            .map(([route, { specs }]) => {
-                const [method, path] = route.replace(/^\//, '').split(' ');
+        return Object.entries(routes).reduce((acc, [route, { specs }]) => {
+            const [upperCaseMethod, path] = route.replace(/^\//, '').split(' ');
+            const method = upperCaseMethod.toLowerCase();
 
-                return {
-                    [path]: {
-                        [method.toLowerCase()]: { ...specs },
-                    },
-                };
-            })
-            .reduce((acc, curr) => ({ ...acc, ...curr }), {});
+            return {
+                ...acc,
+                [path]: {
+                    ...acc[path],
+                    [method]: { ...specs },
+                },
+            };
+        }, {} as PathsObject);
     };
 }
