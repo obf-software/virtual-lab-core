@@ -3,5 +3,5 @@
     "compilerOptions": {
         "noEmit": true
     },
-    "include": ["packages", "stacks", "*.config.ts", "*.d.ts", "**/__tests___/**/*.ts"]
+    "include": ["packages", "stacks", "*.config.ts", "*.d.ts", "__tests__/**/*.ts"]
 }
