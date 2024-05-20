@@ -38,8 +38,483 @@ export function Docs({ stack }: sst.StackContext) {
             },
         ],
         components: {
-            parameters: {},
-            schemas: {},
+            parameters: {
+                InstanceIdPathParameter: {
+                    in: 'path',
+                    name: 'instanceId',
+                    description: 'O id da instância',
+                    required: true,
+                    schema: {
+                        $ref: '#/components/schemas/Id',
+                    },
+                },
+                InstanceTemplateIdPathParameter: {
+                    in: 'path',
+                    name: 'instanceTemplateId',
+                    description: 'O id do template de instância',
+                    required: true,
+                    schema: {
+                        $ref: '#/components/schemas/Id',
+                    },
+                },
+                UserIdPathParameter: {
+                    in: 'path',
+                    name: 'userId',
+                    description: 'O id do usuário',
+                    required: true,
+                    schema: {
+                        $ref: '#/components/schemas/Id',
+                    },
+                },
+                PaginationOrderQueryParameter: {
+                    in: 'query',
+                    name: 'order',
+                    description: 'A ordem dos resultados',
+                    schema: {
+                        type: 'string',
+                        enum: ['asc', 'desc'],
+                        default: 'asc',
+                    },
+                },
+                TextSearchQueryParameter: {
+                    in: 'query',
+                    name: 'textSearch',
+                    description: 'Texto utilizado para filtrar os resultados',
+                    schema: {
+                        type: 'string',
+                    },
+                },
+            },
+            schemas: {
+                Id: {
+                    type: 'string',
+                    title: 'Id',
+                    description: 'Um identificador hexadecimal único de 24 caracteres',
+                    example: '000000000000000000000000',
+                },
+                SeekPaginated: {
+                    description: 'Resultados paginados',
+                    type: 'object',
+                    required: ['data', 'resultsPerPage', 'numberOfPages', 'numberOfResults'],
+                    properties: {
+                        data: {
+                            type: 'array',
+                        },
+                        resultsPerPage: {
+                            description: 'Número de resultados por página',
+                            type: 'number',
+                        },
+                        numberOfPages: {
+                            description: 'O total de páginas',
+                            type: 'number',
+                        },
+                        numberOfResults: {
+                            description: 'O total de resultados',
+                            type: 'number',
+                        },
+                    },
+                },
+                InstanceConnectionType: {
+                    type: 'string',
+                    title: 'Tipo de conexão da instância',
+                    description: 'O tipo de conexão que a instância possui',
+                    enum: ['RDP', 'VNC'],
+                },
+                InstancePlatform: {
+                    type: 'string',
+                    title: 'Plataforma da instância',
+                    description: 'A plataforma da instância',
+                    enum: ['LINUX', 'WINDOWS', 'UNKNOWN'],
+                },
+                VirtualInstanceType: {
+                    type: 'object',
+                    title: 'Tipo de instância virtual',
+                    required: [
+                        'name',
+                        'cpu',
+                        'ram',
+                        'gpu',
+                        'hibernationSupport',
+                        'networkPerformance',
+                    ],
+                    properties: {
+                        name: {
+                            type: 'string',
+                            title: 'Nome do tipo de instância',
+                            example: 't2.micro',
+                        },
+                        cpu: {
+                            type: 'object',
+                            title: 'Informações do CPU da instância',
+                            required: [
+                                'cores',
+                                'threadsPerCore',
+                                'vCpus',
+                                'manufacturer',
+                                'clockSpeedInGhz',
+                            ],
+                            properties: {
+                                cores: {
+                                    type: 'number',
+                                    title: 'Número de núcleos',
+                                    example: 1,
+                                },
+                                threadsPerCore: {
+                                    type: 'number',
+                                    title: 'Número de threads por núcleo',
+                                    example: 1,
+                                },
+                                vCpus: {
+                                    type: 'number',
+                                    title: 'Número de vCPUs',
+                                    example: 1,
+                                },
+                                manufacturer: {
+                                    type: 'string',
+                                    title: 'Fabricante',
+                                    example: 'Intel',
+                                },
+                                clockSpeedInGhz: {
+                                    type: 'number',
+                                    title: 'Velocidade do clock em GHz',
+                                    example: 2.5,
+                                },
+                            },
+                        },
+                        ram: {
+                            type: 'object',
+                            title: 'Informações da memória RAM da instância',
+                            required: ['sizeInMb'],
+                            properties: {
+                                sizeInMb: {
+                                    type: 'number',
+                                    title: 'Tamanho em MB',
+                                    example: 1024,
+                                },
+                            },
+                        },
+                        gpu: {
+                            type: 'object',
+                            title: 'Informações dos dispositivos de GPU da instância',
+                            required: ['totalGpuMemoryInMb', 'devices'],
+                            properties: {
+                                totalGpuMemoryInMb: {
+                                    type: 'number',
+                                    title: 'Memória total da GPU em MB',
+                                    example: 1024,
+                                },
+                                devices: {
+                                    type: 'array',
+                                    title: 'Dispositivos de GPU',
+                                    items: {
+                                        type: 'object',
+                                        title: 'Dispositivo de GPU',
+                                        required: ['count', 'name', 'manufacturer', 'memoryInMb'],
+                                        properties: {
+                                            count: {
+                                                type: 'number',
+                                                title: 'Número de dispositivos',
+                                                example: 1,
+                                            },
+                                            name: {
+                                                type: 'string',
+                                                title: 'Nome do dispositivo',
+                                                example: 'Tesla T4',
+                                            },
+                                            manufacturer: {
+                                                type: 'string',
+                                                title: 'Fabricante',
+                                                example: 'NVIDIA',
+                                            },
+                                            memoryInMb: {
+                                                type: 'number',
+                                                title: 'Memória em MB',
+                                                example: 1024,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        hibernationSupport: {
+                            type: 'boolean',
+                            title: 'Suporte a hibernação',
+                            description: 'Indica se a instância suporta hibernação',
+                        },
+                        networkPerformance: {
+                            type: 'string',
+                            title: 'Performance de rede',
+                            description: 'A performance de rede da instância',
+                        },
+                    },
+                },
+                InstanceState: {
+                    type: 'string',
+                    title: 'Estado da instância',
+                    description: 'O estado da instância',
+                    enum: [
+                        'PENDING',
+                        'RUNNING',
+                        'STOPPING',
+                        'STOPPED',
+                        'SHUTTING_DOWN',
+                        'TERMINATED',
+                    ],
+                },
+                Instance: {
+                    type: 'object',
+                    title: 'Instância',
+                    description: 'Uma instância de máquina virtual',
+                    required: [
+                        'id',
+                        'productId',
+                        'machineImageId',
+                        'ownerId',
+                        'launchToken',
+                        'name',
+                        'description',
+                        'canHibernate',
+                        'platform',
+                        'distribution',
+                        'instanceType',
+                        'storageInGb',
+                        'createdAt',
+                        'updatedAt',
+                    ],
+                    properties: {
+                        id: {
+                            type: 'string',
+                            title: 'Id da instância',
+                            $ref: '#/components/schemas/Id',
+                        },
+                        virtualId: {
+                            type: 'string',
+                            title: 'Id da instância virtual',
+                        },
+                        productId: {
+                            type: 'string',
+                            title: 'Id do produto do AWS Service Catalog utilizado para criar a instância',
+                        },
+                        machineImageId: {
+                            type: 'string',
+                            title: 'Id da imagem da máquina virtual utilizada para criar a instância',
+                        },
+                        ownerId: {
+                            type: 'string',
+                            title: 'Id do usuário proprietário da instância',
+                            $ref: '#/components/schemas/Id',
+                        },
+                        launchToken: {
+                            type: 'string',
+                            title: 'Token de criação da instância',
+                            description:
+                                'No momento da criação da instância, um token de idenpotência é gerado para garantir que a instância seja criada apenas uma vez',
+                        },
+                        name: {
+                            type: 'string',
+                            title: 'Nome da instância',
+                        },
+                        description: {
+                            type: 'string',
+                            title: 'Descrição da instância',
+                        },
+                        connectionType: {
+                            type: 'string',
+                            title: 'Tipo de conexão da instância',
+                            $ref: '#/components/schemas/InstanceConnectionType',
+                        },
+                        canHibernate: {
+                            type: 'boolean',
+                            title: 'Capacidade de hibernação da instância',
+                            description: 'Indica se a instância pode ser hibernada',
+                        },
+                        platform: {
+                            type: 'string',
+                            title: 'Plataforma da instância',
+                            $ref: '#/components/schemas/InstancePlatform',
+                        },
+                        distribution: {
+                            type: 'string',
+                            title: 'Distribuição da instância',
+                        },
+                        instanceType: {
+                            type: 'object',
+                            title: 'Tipo de instância virtual',
+                            $ref: '#/components/schemas/VirtualInstanceType',
+                        },
+                        storageInGb: {
+                            type: 'string',
+                            title: 'Armazenamento em GB',
+                        },
+                        createdAt: {
+                            type: 'string',
+                            title: 'Data de criação',
+                            format: 'date-time',
+                        },
+                        updatedAt: {
+                            type: 'string',
+                            title: 'Data da última atualização',
+                            format: 'date-time',
+                        },
+                        lastConnectionAt: {
+                            type: 'string',
+                            title: 'Data da última conexão',
+                            format: 'date-time',
+                        },
+                        state: {
+                            type: 'string',
+                            title: 'Estado da instância',
+                            $ref: '#/components/schemas/InstanceState',
+                        },
+                    },
+                },
+                InstanceTemplate: {
+                    type: 'object',
+                    title: 'Template de instância',
+                    description: 'Um template de instância de máquina virtual',
+                    required: [
+                        'id',
+                        'createdBy',
+                        'name',
+                        'description',
+                        'productId',
+                        'machineImageId',
+                        'platform',
+                        'distribution',
+                        'storageInGb',
+                        'createdAt',
+                        'updatedAt',
+                    ],
+                    properties: {
+                        id: {
+                            type: 'string',
+                            title: 'Id do template de instância',
+                            $ref: '#/components/schemas/Id',
+                        },
+                        createdBy: {
+                            type: 'string',
+                            title: 'Id do usuário que criou o template',
+                            $ref: '#/components/schemas/Id',
+                        },
+                        name: {
+                            type: 'string',
+                            title: 'Nome do template',
+                        },
+                        description: {
+                            type: 'string',
+                            title: 'Descrição do template',
+                        },
+                        productId: {
+                            type: 'string',
+                            title: 'Id do produto do AWS Service Catalog atribuído ao template',
+                        },
+                        machineImageId: {
+                            type: 'string',
+                            title: 'Id da imagem da máquina virtual atribuída ao template',
+                        },
+                        platform: {
+                            type: 'string',
+                            title: 'Plataforma do template',
+                            $ref: '#/components/schemas/InstancePlatform',
+                        },
+                        distribution: {
+                            type: 'string',
+                            title: 'Distribuição do template',
+                        },
+                        storageInGb: {
+                            type: 'number',
+                            title: 'Armazenamento em GB',
+                        },
+                        createdAt: {
+                            type: 'string',
+                            title: 'Data de criação',
+                            format: 'date-time',
+                        },
+                        updatedAt: {
+                            type: 'string',
+                            title: 'Data da última atualização',
+                            format: 'date-time',
+                        },
+                    },
+                },
+                Role: {
+                    type: 'string',
+                    title: 'Cargo do usuário',
+                    description: 'O cargo do usuário no sistema',
+                    enum: ['NONE', 'PENDING', 'USER', 'ADMIN'],
+                },
+                User: {
+                    type: 'object',
+                    title: 'Usuário',
+                    description: 'Um usuário do sistema',
+                    required: ['id', 'username', 'role', 'createdAt', 'updatedAt', 'quotas'],
+                    properties: {
+                        id: {
+                            type: 'string',
+                            title: 'Id do usuário',
+                            $ref: '#/components/schemas/Id',
+                        },
+                        username: {
+                            type: 'string',
+                            title: 'Identificador que liga o usuário do banco de dados ao usuário do AWS Cognito',
+                        },
+                        name: {
+                            type: 'string',
+                            title: 'Nome do usuário',
+                        },
+                        preferredUsername: {
+                            type: 'string',
+                            title: 'Nome de usuário preferido, utilizado como alternativa para login',
+                        },
+                        role: {
+                            type: 'string',
+                            title: 'Cargo do usuário',
+                            $ref: '#/components/schemas/Role',
+                        },
+                        createdAt: {
+                            type: 'string',
+                            title: 'Data de criação',
+                            format: 'date-time',
+                        },
+                        updatedAt: {
+                            type: 'string',
+                            title: 'Data da última atualização',
+                            format: 'date-time',
+                        },
+                        lastLoginAt: {
+                            type: 'string',
+                            title: 'Data do último login',
+                            format: 'date-time',
+                        },
+                        quotas: {
+                            type: 'object',
+                            title: 'Cotas de utilização de recursos do sistema',
+                            required: [
+                                'maxInstances',
+                                'allowedInstanceTypes',
+                                'canLaunchInstanceWithHibernation',
+                            ],
+                            properties: {
+                                maxInstances: {
+                                    type: 'number',
+                                    title: 'Número máximo de instâncias',
+                                },
+                                allowedInstanceTypes: {
+                                    type: 'array',
+                                    title: 'Tipos de instância permitidos',
+                                    items: {
+                                        $ref: '#/components/schemas/VirtualInstanceType',
+                                    },
+                                },
+                                canLaunchInstanceWithHibernation: {
+                                    type: 'boolean',
+                                    title: 'Permissão para lançar instâncias com hibernação',
+                                },
+                            },
+                        },
+                    },
+                },
+            },
             securitySchemes: {
                 UserPool: {
                     type: 'http',

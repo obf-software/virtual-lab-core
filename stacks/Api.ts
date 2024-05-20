@@ -105,7 +105,20 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Deletar instância',
+                description:
+                    'Deleta a instância e todos os recursos associados a ela permanentemente',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                responses: {
+                    '204': {
+                        description: 'Instância deletada com sucesso',
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'GET /api/v1/instances/{instanceId}/connection': {
@@ -114,7 +127,33 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Obter informações de conexão',
+                description:
+                    'Obtém as informações necessárias para iniciar uma conexão com a instância',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                responses: {
+                    '200': {
+                        description: 'Informações de conexão obtidas com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        connectionString: {
+                                            type: 'string',
+                                            description: 'String de conexão para a instância',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'POST /api/v1/instances': {
@@ -123,7 +162,68 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Criar instância',
+                description: 'Cria uma instância de acordo com os parâmetros informados',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                requestBody: {
+                    content: {
+                        'application/json': {
+                            schema: {
+                                type: 'object',
+                                required: [
+                                    'name',
+                                    'description',
+                                    'templateId',
+                                    'instanceType',
+                                    'canHibernate',
+                                ],
+                                properties: {
+                                    ownerId: {
+                                        type: 'string',
+                                        description:
+                                            'Id do dono da instância. Caso seja "me", o dono será o usuário autenticado',
+                                    },
+                                    name: {
+                                        type: 'string',
+                                        description: 'Nome da instância',
+                                    },
+                                    description: {
+                                        type: 'string',
+                                        description: 'Descrição da instância',
+                                    },
+                                    templateId: {
+                                        type: 'string',
+                                        description: 'Id do template de instância a ser utilizado',
+                                    },
+                                    instanceType: {
+                                        type: 'string',
+                                        description: 'Tipo de instância',
+                                    },
+                                    canHibernate: {
+                                        type: 'boolean',
+                                        description: 'Se a instância pode hibernar',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    '200': {
+                        description: 'Instância criada com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    $ref: '#/components/schemas/Instance',
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'GET /api/v1/instances': {
@@ -132,7 +232,69 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Listar instâncias',
+                description: 'Lista todas as instâncias que satisfazem os filtros informados',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [
+                    {
+                        in: 'query',
+                        name: 'orderBy',
+                        description: 'Campo pelo qual a lista será ordenada',
+                        required: false,
+                        schema: {
+                            type: 'string',
+                            enum: ['creationDate', 'lastConnectionDate', 'alphabetical'],
+                            default: 'creationDate',
+                        },
+                    },
+                    {
+                        $ref: '#/components/parameters/PaginationOrderQueryParameter',
+                        required: false,
+                    },
+                    {
+                        in: 'query',
+                        name: 'ownerId',
+                        description: 'Filtrar instâncias pelo id do dono',
+                        required: false,
+                        schema: {
+                            type: 'string',
+                            $ref: '#/components/schemas/Id',
+                        },
+                    },
+                    {
+                        $ref: '#/components/parameters/TextSearchQueryParameter',
+                        required: false,
+                    },
+                ],
+                responses: {
+                    '200': {
+                        description: 'Instâncias listadas com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    allOf: [
+                                        { $ref: '#/components/schemas/SeekPaginated' },
+                                        {
+                                            type: 'object',
+                                            description: 'Lista de instâncias',
+                                            properties: {
+                                                data: {
+                                                    type: 'array',
+                                                    items: {
+                                                        $ref: '#/components/schemas/Instance',
+                                                    },
+                                                },
+                                            },
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                },
             },
         },
         'POST /api/v1/instances/{instanceId}/reboot': {
@@ -141,7 +303,19 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Reiniciar instância',
+                description: 'Reinicia a instância caso ela esteja ligada',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                responses: {
+                    '204': {
+                        description: 'Instância reiniciada com sucesso',
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'POST /api/v1/instances/{instanceId}/turn-off': {
@@ -150,7 +324,31 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Desligar instância',
+                description: 'Desliga a instância caso ela esteja ligada',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                responses: {
+                    '200': {
+                        description: 'Processo de desligamento iniciado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        state: {
+                                            $ref: '#/components/schemas/InstanceState',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
         'POST /api/v1/instances/{instanceId}/turn-on': {
@@ -159,7 +357,31 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Ligar instância',
+                description: 'Liga a instância caso ela esteja desligada',
                 tags: ['Instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
+                responses: {
+                    '200': {
+                        description: 'Processo de inicialização da instância iniciado com sucesso',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        state: {
+                                            $ref: '#/components/schemas/InstanceState',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    '400': { $ref: '#/components/responses/400' },
+                    '401': { $ref: '#/components/responses/401' },
+                    '403': { $ref: '#/components/responses/403' },
+                    '404': { $ref: '#/components/responses/404' },
+                },
             },
         },
     });
@@ -175,7 +397,11 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Criar template de instância a partir de instância',
+                description:
+                    'A partir de uma instância existente, cria um template de instância com as configurações atuais da instância',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceIdPathParameter' }],
             },
         },
         'POST /api/v1/instance-templates': {
@@ -185,7 +411,9 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Criar template de instância',
+                description: 'Cria um template de instância com as configurações informadas',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
             },
         },
         'DELETE /api/v1/instance-templates/{instanceTemplateId}': {
@@ -195,7 +423,10 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Deletar template de instância',
+                description: 'Deleta o template de instância permanentemente',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
             },
         },
         'GET /api/v1/instance-templates/{instanceTemplateId}': {
@@ -205,7 +436,10 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Obter template de instância',
+                description: 'Obtém as informações do template de instância',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
             },
         },
         'GET /api/v1/instance-templates': {
@@ -215,7 +449,10 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Listar templates de instâncias',
+                description:
+                    'Lista todos os templates de instâncias que satisfazem os filtros informados',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
             },
         },
         'PATCH /api/v1/instance-templates/{instanceTemplateId}': {
@@ -225,7 +462,10 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Atualizar template de instância',
+                description: 'Atualiza as informações do template de instância',
                 tags: ['Templates de instâncias'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/InstanceTemplateIdPathParameter' }],
             },
         },
     });
@@ -240,7 +480,11 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Obter usuário',
+                description:
+                    "Obtém as informações do usuário. Caso o id do usuário seja 'me', retorna as informações do usuário autenticado",
                 tags: ['Usuários'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
             },
         },
         'GET /api/v1/users': {
@@ -249,7 +493,9 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Listar usuários',
+                description: 'Lista todos os usuários que satisfazem os filtros informados',
                 tags: ['Usuários'],
+                security: [{ UserPool: [] }],
             },
         },
         'PATCH /api/v1/users/{userId}/quotas': {
@@ -258,7 +504,11 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Atualizar quotas de usuário',
+                description:
+                    "Atualiza as quotas do usuário. Caso o id do usuário seja 'me', atualiza as quotas do usuário autenticado",
                 tags: ['Usuários'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
             },
         },
         'PATCH /api/v1/users/{userId}/role': {
@@ -267,7 +517,11 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Atualizar cargo de usuário',
+                description:
+                    "Atualiza o cargo do usuário. Caso o id do usuário seja 'me', atualiza o cargo do usuário autenticado",
                 tags: ['Usuários'],
+                security: [{ UserPool: [] }],
+                parameters: [{ $ref: '#/components/parameters/UserIdPathParameter' }],
             },
         },
     });
@@ -280,7 +534,9 @@ export const Api = ({ stack }: sst.StackContext) => {
             handler: { function: 'packages/api/interfaces/api/misc/list-instance-types.handler' },
             specs: {
                 summary: 'Listar tipos de instância',
+                description: 'Lista todos os tipos de instância disponíveis',
                 tags: ['Outros'],
+                security: [{ UserPool: [] }],
             },
         },
         'GET /api/v1/recommended-machine-images': {
@@ -290,7 +546,10 @@ export const Api = ({ stack }: sst.StackContext) => {
             },
             specs: {
                 summary: 'Listar imagens de máquinas recomendadas',
+                description:
+                    'Lista todas as imagens de máquinas recomendadas para criação de templates de instância',
                 tags: ['Outros'],
+                security: [{ UserPool: [] }],
             },
         },
     });
