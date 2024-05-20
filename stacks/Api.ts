@@ -894,7 +894,7 @@ export const Api = ({ stack }: sst.StackContext) => {
                                 schema: {
                                     type: 'array',
                                     items: {
-                                        $ref: '#/components/schemas/InstanceType',
+                                        $ref: '#/components/schemas/VirtualInstanceType',
                                     },
                                 },
                             },

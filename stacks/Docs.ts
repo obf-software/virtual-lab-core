@@ -93,37 +93,39 @@ export function Docs({ stack }: sst.StackContext) {
                     example: '000000000000000000000000',
                 },
                 SeekPaginated: {
-                    description: 'Resultados paginados',
                     type: 'object',
+                    title: 'Resultados paginados',
+                    description: 'Estrutura de dados para resultados paginados',
                     required: ['data', 'resultsPerPage', 'numberOfPages', 'numberOfResults'],
                     properties: {
                         data: {
                             type: 'array',
                         },
                         resultsPerPage: {
-                            description: 'Número de resultados por página',
                             type: 'number',
+                            title: 'Resultados por página',
+                            example: 1,
                         },
                         numberOfPages: {
-                            description: 'O total de páginas',
                             type: 'number',
+                            title: 'Número total de páginas disponíveis',
+                            example: 1,
                         },
                         numberOfResults: {
-                            description: 'O total de resultados',
                             type: 'number',
+                            title: 'Número total de resultados disponíveis',
+                            example: 1,
                         },
                     },
                 },
                 InstanceConnectionType: {
                     type: 'string',
                     title: 'Tipo de conexão da instância',
-                    description: 'O tipo de conexão que a instância possui',
                     enum: ['RDP', 'VNC'],
                 },
                 InstancePlatform: {
                     type: 'string',
                     title: 'Plataforma da instância',
-                    description: 'A plataforma da instância',
                     enum: ['LINUX', 'WINDOWS', 'UNKNOWN'],
                 },
                 VirtualInstanceType: {
@@ -251,7 +253,6 @@ export function Docs({ stack }: sst.StackContext) {
                 InstanceState: {
                     type: 'string',
                     title: 'Estado da instância',
-                    description: 'O estado da instância',
                     enum: [
                         'PENDING',
                         'RUNNING',
