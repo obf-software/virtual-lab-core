@@ -5,6 +5,8 @@ import * as sst from 'sst/constructs';
 import * as events from 'aws-cdk-lib/aws-events';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import { randomUUID, generateKeySync } from 'crypto';
 
 export const Core = ({ stack }: sst.StackContext) => {
     const ssmParameters = {
@@ -27,6 +29,28 @@ export const Core = ({ stack }: sst.StackContext) => {
             name: `/virtual-lab/${stack.stage}/service-catalog-windows-product-id`,
         },
     } satisfies Record<string, { name: string }>;
+
+    new ssm.StringParameter(stack, 'CoreDatabaseUrlParameter', {
+        parameterName: ssmParameters.databaseUrl.name,
+        description: `Virtual Lab Database URL - ${stack.stage}`,
+        dataType: ssm.ParameterDataType.TEXT,
+        stringValue: 'CHANGE_ME',
+    });
+
+    new ssm.StringParameter(stack, 'CoreInstancePasswordParameter', {
+        parameterName: ssmParameters.instancePassword.name,
+        description: `Virtual Lab Instance Password - ${stack.stage}`,
+        dataType: ssm.ParameterDataType.TEXT,
+        stringValue: randomUUID().replace(/-/g, ''),
+    });
+
+    new ssm.StringParameter(stack, 'CoreGuacamoleCypherKeyParameter', {
+        parameterName: ssmParameters.guacamoleCypherKey.name,
+        description: `Virtual Lab Guacamole Cypher Key - ${stack.stage}`,
+        allowedPattern: '^.{32}$',
+        dataType: ssm.ParameterDataType.TEXT,
+        stringValue: generateKeySync('aes', { length: 128 }).export().toString('hex'),
+    });
 
     const paramsAndSecretsLambdaExtension = lambda.ParamsAndSecretsLayerVersion.fromVersion(
         lambda.ParamsAndSecretsVersions.V1_0_103,

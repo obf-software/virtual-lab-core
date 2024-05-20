@@ -128,13 +128,13 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         const issuerUrl = process.env.USER_POOL_IDENTITY_PROVIDER_ISSUER_URL;
 
         if (!clientId || !clientSecret || !issuerUrl) {
-            throw new Error(`Invalid Auth stack user pool identity provider configuration`, {
-                cause: {
+            throw new Error(
+                `Invalid Auth stack user pool identity provider configuration: ${JSON.stringify({
                     clientId: !!clientId,
                     clientSecret: !!clientSecret,
                     issuerUrl: !!issuerUrl,
-                },
-            });
+                })}`,
+            );
         }
 
         userPoolIdentityProvider = new cognito.UserPoolIdentityProviderOidc(

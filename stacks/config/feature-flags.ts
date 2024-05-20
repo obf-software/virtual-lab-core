@@ -26,8 +26,8 @@ export const featureFlagIsEnabled = (input: {
     let featureFlagValue = featureFlagDefaultValue;
     let usingDefaultValue = true;
 
-    const truthyValues = ['true', '1', 'yes'];
-    const falsyValues = ['false', '0', 'no'];
+    const truthyValues = ['true', '1', 'yes', 'on'];
+    const falsyValues = ['false', '0', 'no', 'off'];
 
     if (truthyValues.includes(rawFeatureFlagValue)) {
         featureFlagValue = true;
