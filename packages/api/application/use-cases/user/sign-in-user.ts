@@ -3,6 +3,7 @@ import { User } from '../../../domain/entities/user';
 import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const signInUserInputSchema = z
     .object({
@@ -16,25 +17,20 @@ export type SignInUserOutput = User;
 
 export class SignInUser {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly userRepository: UserRepository,
     ) {}
 
-    execute = async (input: SignInUserInput): Promise<SignInUserOutput> => {
-        this.logger.debug('SignInUser.execute', { input });
+    @useCaseExecute(signInUserInputSchema)
+    async execute(input: SignInUserInput): Promise<SignInUserOutput> {
+        const user = await this.userRepository.getByUsername(input.username);
+        if (!user) throw Errors.resourceNotFound('User', input.username);
 
-        const inputValidation = signInUserInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        const user = await this.userRepository.getByUsername(validInput.username);
-        if (!user) throw Errors.resourceNotFound('User', validInput.username);
-
-        if (validInput.shouldUpdateLastLoginAt) {
+        if (input.shouldUpdateLastLoginAt) {
             user.onSignIn();
             await this.userRepository.update(user);
         }
 
         return user;
-    };
+    }
 }

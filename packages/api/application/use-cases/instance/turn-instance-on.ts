@@ -6,6 +6,7 @@ import { VirtualizationGateway } from '../../virtualization-gateway';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceState } from '../../../domain/dtos/instance-state';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const turnInstanceOnInput = z
     .object({
@@ -21,30 +22,25 @@ export interface TurnInstanceOnOutput {
 
 export class TurnInstanceOn {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: TurnInstanceOnInput): Promise<TurnInstanceOnOutput> => {
-        this.logger.debug('TurnInstanceOn.execute', { input });
+    @useCaseExecute(turnInstanceOnInput)
+    async execute(input: TurnInstanceOnInput): Promise<TurnInstanceOnOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = turnInstanceOnInput.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const instance = await this.instanceRepository.getById(validInput.instanceId);
+        const instance = await this.instanceRepository.getById(input.instanceId);
 
         if (!instance) {
-            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+            throw Errors.resourceNotFound('Instance', input.instanceId);
         }
 
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
-            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', input.instanceId);
         }
 
         const { virtualId } = instance.getData();
@@ -67,5 +63,5 @@ export class TurnInstanceOn {
 
         const state = await this.virtualizationGateway.startInstance(virtualId);
         return { state };
-    };
+    }
 }

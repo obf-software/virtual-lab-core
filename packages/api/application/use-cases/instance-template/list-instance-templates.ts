@@ -5,7 +5,7 @@ import { InstanceTemplateRepository } from '../../instance-template-repository';
 import { SeekPaginated, seekPaginationInputSchema } from '../../../domain/dtos/seek-paginated';
 import { InstanceTemplate } from '../../../domain/entities/instance-template';
 import { principalSchema } from '../../../domain/dtos/principal';
-import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const listInstanceTemplatesInputSchema = z.object({
     principal: principalSchema,
@@ -22,31 +22,26 @@ export type ListInstanceTemplatesOutput = SeekPaginated<InstanceTemplate>;
 
 export class ListInstanceTemplates {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
     ) {}
 
+    @useCaseExecute(listInstanceTemplatesInputSchema)
     async execute(input: ListInstanceTemplatesInput): Promise<ListInstanceTemplatesOutput> {
-        this.logger.debug('ListInstanceTemplates.execute', { input });
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = listInstanceTemplatesInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const createdBy = validInput.createdBy === 'me' ? id : validInput.createdBy;
+        const createdBy = input.createdBy === 'me' ? id : input.createdBy;
 
         const instanceTemplates = await this.instanceTemplateRepository.list(
             {
                 createdBy,
-                textSearch: validInput.textSearch,
+                textSearch: input.textSearch,
             },
-            validInput.orderBy,
-            validInput.order,
-            validInput.pagination,
+            input.orderBy,
+            input.order,
+            input.pagination,
         );
 
         return instanceTemplates;

@@ -5,7 +5,7 @@ import { User } from '../../../domain/entities/user';
 import { Auth } from '../../auth';
 import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
-import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const listUsersInputSchema = z
     .object({
@@ -22,28 +22,23 @@ export type ListUsersOutput = SeekPaginated<User>;
 
 export class ListUsers {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
     ) {}
 
-    execute = async (input: ListUsersInput): Promise<ListUsersOutput> => {
-        this.logger.debug('ListUsers.execute', { input });
-
-        const inputValidation = listUsersInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
+    @useCaseExecute(listUsersInputSchema)
+    async execute(input: ListUsersInput): Promise<ListUsersOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
 
         const paginatedUsers = await this.userRepository.list(
             {
-                textSearch: validInput.textSearch,
+                textSearch: input.textSearch,
             },
-            validInput.orderBy,
-            validInput.order,
-            validInput.pagination,
+            input.orderBy,
+            input.order,
+            input.pagination,
         );
         return paginatedUsers;
-    };
+    }
 }

@@ -25,7 +25,7 @@ describe('GetUser use case', () => {
 
         const execute = async () => useCase.execute(input);
 
-        await expect(execute()).rejects.toThrow(Errors.validationError().message);
+        await expect(execute).rejects.toThrow(Errors.validationError().message);
     });
 
     it('When principal role is below PENDING, then throw insufficientRole', async () => {
@@ -37,7 +37,7 @@ describe('GetUser use case', () => {
 
         const execute = async () => useCase.execute(input);
 
-        await expect(execute()).rejects.toThrow(Errors.insufficientRole().message);
+        await expect(execute).rejects.toThrow(Errors.insufficientRole().message);
     });
 
     it('When principal role is not ADMIN and userId is different from principal id, then throw insufficientRole', async () => {
@@ -51,7 +51,7 @@ describe('GetUser use case', () => {
 
         const execute = async () => useCase.execute(input);
 
-        await expect(execute()).rejects.toThrow(Errors.insufficientRole().message);
+        await expect(execute).rejects.toThrow(Errors.insufficientRole().message);
     });
 
     it('When user is not found, then throw resourceNotFound', async () => {
@@ -64,7 +64,7 @@ describe('GetUser use case', () => {
 
         const execute = async () => useCase.execute(input);
 
-        await expect(execute()).rejects.toThrow(Errors.resourceNotFound().message);
+        await expect(execute).rejects.toThrow(Errors.resourceNotFound().message);
     });
 
     it('When user is found, then return user', async () => {

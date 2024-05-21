@@ -5,6 +5,7 @@ import { MachineImage } from '../../../domain/dtos/machine-image';
 import { Logger } from '../../logger';
 import { Auth } from '../../auth';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const listRecommendedMachineImagesInputSchema = z.object({
     principal: principalSchema,
@@ -18,16 +19,15 @@ export type ListRecommendedMachineImagesOutput = MachineImage[];
 
 export class ListRecommendedMachineImages {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
+    @useCaseExecute(listRecommendedMachineImagesInputSchema)
     async execute(
         input: ListRecommendedMachineImagesInput,
     ): Promise<ListRecommendedMachineImagesOutput> {
-        this.logger.debug('ListRecommendedMachineImages.execute', { input });
-
         this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
 
         const machineImages = await this.virtualizationGateway.listRecommendedMachineImages();

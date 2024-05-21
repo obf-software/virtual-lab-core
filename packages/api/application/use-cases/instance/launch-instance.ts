@@ -8,6 +8,7 @@ import { InstanceRepository } from '../../instance-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceTemplateRepository } from '../../instance-template-repository';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const launchInstanceInputSchema = z
     .object({
@@ -26,7 +27,7 @@ export type LaunchInstanceOutput = Instance;
 
 export class LaunchInstance {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
         private readonly instanceRepository: InstanceRepository,
@@ -34,22 +35,17 @@ export class LaunchInstance {
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: LaunchInstanceInput): Promise<LaunchInstanceOutput> => {
-        this.logger.debug('LaunchInstance.execute', { input });
-
-        const inputValidation = launchInstanceInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-        const ownerId = validInput.ownerId ?? id;
+    @useCaseExecute(launchInstanceInputSchema)
+    async execute(input: LaunchInstanceInput): Promise<LaunchInstanceOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
+        const ownerId = input.ownerId ?? id;
 
         const [user, userInstanceCount, instanceTemplate, instanceType] = await Promise.all([
             this.userRepository.getById(ownerId),
             this.instanceRepository.count({ ownerId: ownerId }),
-            this.instanceTemplateRepository.getById(validInput.templateId),
-            this.virtualizationGateway.getInstanceType(validInput.instanceType),
+            this.instanceTemplateRepository.getById(input.templateId),
+            this.virtualizationGateway.getInstanceType(input.instanceType),
         ]);
 
         if (!user) {
@@ -57,11 +53,11 @@ export class LaunchInstance {
         }
 
         if (!instanceTemplate) {
-            throw Errors.resourceNotFound('InstanceTemplate', validInput.templateId);
+            throw Errors.resourceNotFound('InstanceTemplate', input.templateId);
         }
 
         if (!instanceType) {
-            throw Errors.resourceNotFound('InstanceType', validInput.instanceType);
+            throw Errors.resourceNotFound('InstanceType', input.instanceType);
         }
 
         const instanceMachineImage = await this.virtualizationGateway.getMachineImageById(
@@ -75,7 +71,7 @@ export class LaunchInstance {
             );
         }
 
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN')) {
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN')) {
             if (ownerId !== id) {
                 throw Errors.insufficientRole('ADMIN');
             }
@@ -88,11 +84,11 @@ export class LaunchInstance {
 
             if (!user.canUseInstanceType(instanceType)) {
                 throw Errors.businessRuleViolation(
-                    `Instance type "${validInput.instanceType}" not allowed`,
+                    `Instance type "${input.instanceType}" not allowed`,
                 );
             }
 
-            if (!canLaunchInstanceWithHibernation && validInput.canHibernate) {
+            if (!canLaunchInstanceWithHibernation && input.canHibernate) {
                 throw Errors.businessRuleViolation('Hibernation not allowed');
             }
         }
@@ -100,8 +96,8 @@ export class LaunchInstance {
         const launchToken = await this.virtualizationGateway.launchInstance(
             instanceTemplate.getData().productId,
             {
-                instanceType: validInput.instanceType,
-                canHibernate: validInput.canHibernate,
+                instanceType: input.instanceType,
+                canHibernate: input.canHibernate,
                 machineImageId: instanceTemplate.getData().machineImageId,
                 storageInGb: instanceTemplate.getData().storageInGb,
             },
@@ -112,9 +108,9 @@ export class LaunchInstance {
             machineImageId: instanceTemplate.getData().machineImageId,
             ownerId,
             launchToken,
-            name: validInput.name,
-            description: validInput.description,
-            canHibernate: validInput.canHibernate,
+            name: input.name,
+            description: input.description,
+            canHibernate: input.canHibernate,
             platform: instanceMachineImage.platform,
             distribution: instanceMachineImage.distribution,
             instanceType,
@@ -123,5 +119,5 @@ export class LaunchInstance {
         instance.id = await this.instanceRepository.save(instance);
 
         return instance;
-    };
+    }
 }

@@ -5,6 +5,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const deleteInstanceInputSchema = z
     .object({
@@ -18,35 +19,30 @@ export type DeleteInstanceOutput = void;
 
 export class DeleteInstance {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: DeleteInstanceInput): Promise<DeleteInstanceOutput> => {
-        this.logger.debug('DeleteInstance.execute', { input });
+    @useCaseExecute(deleteInstanceInputSchema)
+    async execute(input: DeleteInstanceInput): Promise<DeleteInstanceOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = deleteInstanceInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const instance = await this.instanceRepository.getById(validInput.instanceId);
+        const instance = await this.instanceRepository.getById(input.instanceId);
 
         if (instance === undefined) {
-            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+            throw Errors.resourceNotFound('Instance', input.instanceId);
         }
 
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
-            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', input.instanceId);
         }
 
         await Promise.allSettled([
             this.instanceRepository.delete(instance),
             this.virtualizationGateway.terminateInstance(instance.getData().launchToken),
         ]);
-    };
+    }
 }

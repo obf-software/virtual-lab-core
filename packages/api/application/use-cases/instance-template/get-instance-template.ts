@@ -5,6 +5,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 import { Errors } from '../../../domain/dtos/errors';
 import { Auth } from '../../auth';
 import { InstanceTemplateRepository } from '../../instance-template-repository';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const getInstanceTemplateInputSchema = z.object({
     principal: principalSchema,
@@ -17,26 +18,21 @@ export type GetInstanceTemplateOutput = InstanceTemplate;
 
 export class GetInstanceTemplate {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
     ) {}
 
+    @useCaseExecute(getInstanceTemplateInputSchema)
     async execute(input: GetInstanceTemplateInput): Promise<GetInstanceTemplateOutput> {
-        this.logger.debug('GetInstanceTemplate.execute', { input });
-
-        const inputValidation = getInstanceTemplateInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
 
         const instanceTemplate = await this.instanceTemplateRepository.getById(
-            validInput.instanceTemplateId,
+            input.instanceTemplateId,
         );
 
         if (!instanceTemplate) {
-            throw Errors.resourceNotFound('InstanceTemplate', validInput.instanceTemplateId);
+            throw Errors.resourceNotFound('InstanceTemplate', input.instanceTemplateId);
         }
 
         return instanceTemplate;

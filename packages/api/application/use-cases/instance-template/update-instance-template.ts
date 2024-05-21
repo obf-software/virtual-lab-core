@@ -5,6 +5,7 @@ import { InstanceTemplateRepository } from '../../instance-template-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceTemplate } from '../../../domain/entities/instance-template';
 import { principalSchema } from '../../../domain/dtos/principal';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const updateInstanceTemplateInputSchema = z
     .object({
@@ -23,36 +24,31 @@ export type UpdateInstanceTemplateOutput = InstanceTemplate;
 
 export class UpdateInstanceTemplate {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
     ) {}
 
+    @useCaseExecute(updateInstanceTemplateInputSchema)
     async execute(input: UpdateInstanceTemplateInput): Promise<UpdateInstanceTemplateOutput> {
-        this.logger.debug('UpdateInstanceTemplate.execute', { input });
-
-        const inputValidation = updateInstanceTemplateInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const { id } = this.auth.getClaims(validInput.principal);
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(input.principal);
 
         const instanceTemplate = await this.instanceTemplateRepository.getById(
-            validInput.instanceTemplateId,
+            input.instanceTemplateId,
         );
 
         if (!instanceTemplate) {
-            throw Errors.resourceNotFound('InstanceTemplate', validInput.instanceTemplateId);
+            throw Errors.resourceNotFound('InstanceTemplate', input.instanceTemplateId);
         }
 
         if (!instanceTemplate.wasCreatedBy(id)) {
-            throw Errors.resourceAccessDenied('InstanceTemplate', validInput.instanceTemplateId);
+            throw Errors.resourceAccessDenied('InstanceTemplate', input.instanceTemplateId);
         }
 
         instanceTemplate.update({
-            name: validInput.name,
-            description: validInput.description,
+            name: input.name,
+            description: input.description,
         });
 
         await this.instanceTemplateRepository.update(instanceTemplate);

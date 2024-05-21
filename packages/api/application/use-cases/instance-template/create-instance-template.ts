@@ -6,6 +6,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceTemplate } from '../../../domain/entities/instance-template';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const createInstanceTemplateInputSchema = z.object({
     principal: principalSchema,
@@ -21,28 +22,23 @@ export type CreateInstanceTemplateOutput = InstanceTemplate;
 
 export class CreateInstanceTemplate {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
+    @useCaseExecute(createInstanceTemplateInputSchema)
     async execute(input: CreateInstanceTemplateInput): Promise<CreateInstanceTemplateOutput> {
-        this.logger.debug('CreateInstanceTemplate.execute', { input });
-
-        const inputValidation = createInstanceTemplateInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const { id } = this.auth.getClaims(validInput.principal);
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(input.principal);
 
         const machineImage = await this.virtualizationGateway.getMachineImageById(
-            validInput.machineImageId,
+            input.machineImageId,
         );
 
         if (!machineImage) {
-            throw Errors.resourceNotFound('MachineImage', validInput.machineImageId);
+            throw Errors.resourceNotFound('MachineImage', input.machineImageId);
         }
 
         if (machineImage.platform === 'UNKNOWN') {
@@ -53,7 +49,7 @@ export class CreateInstanceTemplate {
             machineImage.platform,
         );
 
-        const storageInGb = validInput.storageInGb ?? machineImage.storageInGb;
+        const storageInGb = input.storageInGb ?? machineImage.storageInGb;
 
         if (storageInGb < machineImage.storageInGb) {
             throw Errors.businessRuleViolation(
@@ -63,8 +59,8 @@ export class CreateInstanceTemplate {
 
         const instanceTemplate = InstanceTemplate.create({
             createdBy: id,
-            name: validInput.name,
-            description: validInput.description,
+            name: input.name,
+            description: input.description,
             productId: product.id,
             machineImageId: machineImage.id,
             platform: machineImage.platform,

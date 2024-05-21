@@ -7,6 +7,7 @@ import { Logger } from '../../logger';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const listInstancesInputSchema = z
     .object({
@@ -24,36 +25,31 @@ export type ListInstancesOutput = SeekPaginated<Instance>;
 
 export class ListInstances {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: ListInstancesInput): Promise<ListInstancesOutput> => {
-        this.logger.debug('ListInstances.execute', { input });
+    @useCaseExecute(listInstancesInputSchema)
+    async execute(input: ListInstancesInput): Promise<ListInstancesOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = listInstancesInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
+        const ownerId = input.ownerId === 'me' ? id : input.ownerId;
 
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const ownerId = validInput.ownerId === 'me' ? id : validInput.ownerId;
-
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && ownerId !== id) {
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && ownerId !== id) {
             throw Errors.insufficientRole('ADMIN');
         }
 
         const paginatedInstances = await this.instanceRepository.list(
             {
                 ownerId,
-                textSearch: validInput.textSearch,
+                textSearch: input.textSearch,
             },
-            validInput.orderBy,
-            validInput.order,
-            validInput.pagination,
+            input.orderBy,
+            input.order,
+            input.pagination,
         );
 
         const instanceVirtualIdToStateMap = await this.virtualizationGateway.listInstancesStates(
@@ -71,5 +67,5 @@ export class ListInstances {
             ...paginatedInstances,
             data: instancesWithStates,
         };
-    };
+    }
 }

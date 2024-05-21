@@ -6,6 +6,7 @@ import { Logger } from '../../logger';
 import { roleSchema } from '../../../domain/dtos/role';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const updateUserRoleInputSchema = z
     .object({
@@ -20,27 +21,22 @@ export type UpdateUserRoleOutput = User;
 
 export class UpdateUserRole {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
     ) {}
 
-    execute = async (input: UpdateUserRoleInput): Promise<UpdateUserRoleOutput> => {
-        this.logger.debug('UpdateUserRole.execute', { input });
-
-        const inputValidation = updateUserRoleInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const { id } = this.auth.getClaims(validInput.principal);
-        const userId = validInput.userId ?? id;
+    @useCaseExecute(updateUserRoleInputSchema)
+    async execute(input: UpdateUserRoleInput): Promise<UpdateUserRoleOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(input.principal);
+        const userId = input.userId ?? id;
 
         const user = await this.userRepository.getById(userId);
         if (!user) throw Errors.resourceNotFound('User', userId);
 
-        user.update({ role: validInput.role });
+        user.update({ role: input.role });
         await this.userRepository.update(user);
         return user;
-    };
+    }
 }

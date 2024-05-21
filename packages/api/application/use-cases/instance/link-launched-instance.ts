@@ -1,4 +1,5 @@
 import { InstanceLaunched } from '../../../domain/application-events/instance-launched';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 import { Errors } from '../../../domain/dtos/errors';
 import { EventPublisher } from '../../event-publisher';
 import { InstanceRepository } from '../../instance-repository';
@@ -16,23 +17,16 @@ export type LinkLaunchedInstanceOutput = void;
 
 export class LinkLaunchedInstance {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly userRepository: UserRepository,
         private readonly instanceRepository: InstanceRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
         private readonly eventPublisher: EventPublisher,
     ) {}
 
-    execute = async (input: LinkLaunchedInstanceInput): Promise<LinkLaunchedInstanceOutput> => {
-        this.logger.debug('LinkLaunchedInstance.execute', { input });
-
-        const inputValidation = linkLaunchedInstanceInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        const instanceStack = await this.virtualizationGateway.getInstanceStack(
-            validInput.stackName,
-        );
+    @useCaseExecute(linkLaunchedInstanceInputSchema)
+    async execute(input: LinkLaunchedInstanceInput): Promise<LinkLaunchedInstanceOutput> {
+        const instanceStack = await this.virtualizationGateway.getInstanceStack(input.stackName);
 
         const [virtualInstance, instance] = await Promise.all([
             this.virtualizationGateway.getInstance(instanceStack.virtualId),
@@ -68,5 +62,5 @@ export class LinkLaunchedInstance {
                 state: virtualInstance.state,
             }),
         );
-    };
+    }
 }

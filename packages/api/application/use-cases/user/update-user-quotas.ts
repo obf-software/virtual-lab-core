@@ -6,6 +6,7 @@ import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const updateUserQuotasInput = z
     .object({
@@ -34,41 +35,34 @@ export type UpdateUserQuotasOutput = User;
 
 export class UpdateUserQuotas {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: UpdateUserQuotasInput): Promise<UpdateUserQuotasOutput> => {
-        this.logger.debug('UpdateUserQuotas.execute', { input });
+    @useCaseExecute(updateUserQuotasInput)
+    async execute(input: UpdateUserQuotasInput): Promise<UpdateUserQuotasOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = updateUserQuotasInput.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const userId = validInput.userId ?? id;
+        const userId = input.userId ?? id;
 
         const user = await this.userRepository.getById(userId);
         if (!user) throw Errors.resourceNotFound('User', userId);
 
         const instanceTypes =
-            validInput.allowedInstanceTypes !== undefined
-                ? await this.virtualizationGateway.listInstanceTypes(
-                      validInput.allowedInstanceTypes,
-                  )
+            input.allowedInstanceTypes !== undefined
+                ? await this.virtualizationGateway.listInstanceTypes(input.allowedInstanceTypes)
                 : undefined;
 
         user.update({
-            maxInstances: validInput.maxInstances,
+            maxInstances: input.maxInstances,
             allowedInstanceTypes: instanceTypes,
-            canLaunchInstanceWithHibernation: validInput.canLaunchInstanceWithHibernation,
+            canLaunchInstanceWithHibernation: input.canLaunchInstanceWithHibernation,
         });
 
         await this.userRepository.update(user);
         return user;
-    };
+    }
 }

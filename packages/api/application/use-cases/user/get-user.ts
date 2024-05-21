@@ -5,6 +5,7 @@ import { Auth } from '../../auth';
 import { z } from 'zod';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const getUserInputSchema = z
     .object({
@@ -18,29 +19,24 @@ export type GetUserOutput = User;
 
 export class GetUser {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly userRepository: UserRepository,
     ) {}
 
-    execute = async (input: GetUserInput): Promise<GetUserOutput> => {
-        this.logger.debug('GetUser.execute', { input });
+    @useCaseExecute(getUserInputSchema)
+    async execute(input: GetUserInput): Promise<GetUserOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'PENDING');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = getUserInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
+        const userId = input.userId ?? id;
 
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'PENDING');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const userId = validInput.userId ?? id;
-
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && userId !== id) {
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && userId !== id) {
             throw Errors.insufficientRole('ADMIN');
         }
 
         const user = await this.userRepository.getById(userId);
         if (!user) throw Errors.resourceNotFound('User', userId);
         return user;
-    };
+    }
 }

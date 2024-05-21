@@ -7,6 +7,7 @@ import { principalSchema } from '../../../domain/dtos/principal';
 import { InstanceRepository } from '../../instance-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { ConfigVault } from '../../config-vault';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const getInstanceConnectionInputSchema = z
     .object({
@@ -22,7 +23,7 @@ export interface GetInstanceConnectionOutput {
 
 export class GetInstanceConnection {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
         private readonly connectionEncoder: ConnectionEncoder,
@@ -31,23 +32,18 @@ export class GetInstanceConnection {
         private readonly INSTANCE_PASSWORD_PARAMETER_NAME: string,
     ) {}
 
-    execute = async (input: GetInstanceConnectionInput): Promise<GetInstanceConnectionOutput> => {
-        this.logger.debug('GetInstanceConnection.execute', { input });
-
-        const inputValidation = getInstanceConnectionInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'USER');
-        const { id } = this.auth.getClaims(validInput.principal);
+    @useCaseExecute(getInstanceConnectionInputSchema)
+    async execute(input: GetInstanceConnectionInput): Promise<GetInstanceConnectionOutput> {
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'USER');
+        const { id } = this.auth.getClaims(input.principal);
 
         const [instancePassword, instance] = await Promise.all([
             this.configVault.getParameter(this.INSTANCE_PASSWORD_PARAMETER_NAME),
-            this.instanceRepository.getById(validInput.instanceId),
+            this.instanceRepository.getById(input.instanceId),
         ]);
 
         if (!instance) {
-            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+            throw Errors.resourceNotFound('Instance', input.instanceId);
         }
 
         if (!instancePassword) {
@@ -58,8 +54,8 @@ export class GetInstanceConnection {
 
         const { virtualId } = instance.getData();
 
-        if (!this.auth.hasRoleOrAbove(validInput.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
-            throw Errors.resourceAccessDenied('Instance', validInput.instanceId);
+        if (!this.auth.hasRoleOrAbove(input.principal, 'ADMIN') && !instance.isOwnedBy(id)) {
+            throw Errors.resourceAccessDenied('Instance', input.instanceId);
         }
 
         if (!instance.hasBeenLaunched() || virtualId === undefined) {
@@ -106,5 +102,5 @@ export class GetInstanceConnection {
         return {
             connectionString: `${connectionString}&virtualId=${virtualId}`,
         };
-    };
+    }
 }

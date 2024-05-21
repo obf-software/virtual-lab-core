@@ -4,6 +4,7 @@ import { Logger } from '../../logger';
 import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { VirtualizationGateway } from '../../virtualization-gateway';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const signUpUserInputSchema = z
     .object({
@@ -19,25 +20,20 @@ export type SignUpUserOutput = User;
 
 export class SignUpUser {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly userRepository: UserRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
-    execute = async (input: SignUpUserInput): Promise<SignUpUserOutput> => {
-        this.logger.debug('SignUpUser.execute', { input });
-
-        const inputValidation = signUpUserInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        const existingUser = await this.userRepository.getByUsername(validInput.username);
+    @useCaseExecute(signUpUserInputSchema)
+    async execute(input: SignUpUserInput): Promise<SignUpUserOutput> {
+        const existingUser = await this.userRepository.getByUsername(input.username);
 
         if (existingUser) {
             existingUser.update({
-                name: validInput.name,
-                preferredUsername: validInput.preferredUsername,
-                role: validInput.isExternalProvider ? 'USER' : 'PENDING',
+                name: input.name,
+                preferredUsername: input.preferredUsername,
+                role: input.isExternalProvider ? 'USER' : 'PENDING',
             });
 
             await this.userRepository.update(existingUser);
@@ -51,14 +47,14 @@ export class SignUpUser {
         }
 
         const newUser = User.create({
-            username: validInput.username,
-            name: validInput.name,
-            preferredUsername: validInput.preferredUsername,
-            role: validInput.isExternalProvider ? 'USER' : 'PENDING',
+            username: input.username,
+            name: input.name,
+            preferredUsername: input.preferredUsername,
+            role: input.isExternalProvider ? 'USER' : 'PENDING',
             allowedInstanceTypes: [instanceType],
         });
         newUser.id = await this.userRepository.save(newUser);
 
         return newUser;
-    };
+    }
 }

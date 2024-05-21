@@ -7,6 +7,7 @@ import { InstanceRepository } from '../../instance-repository';
 import { InstanceTemplateRepository } from '../../instance-template-repository';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
+import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
 
 export const createInstanceTemplateFromInstanceInputSchema = z.object({
     principal: principalSchema,
@@ -24,34 +25,28 @@ export type CreateInstanceTemplateFromInstanceOutput = InstanceTemplate;
 
 export class CreateInstanceTemplateFromInstance {
     constructor(
-        private readonly logger: Logger,
+        readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceRepository: InstanceRepository,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
         private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
+    @useCaseExecute(createInstanceTemplateFromInstanceInputSchema)
     async execute(
         input: CreateInstanceTemplateFromInstanceInput,
     ): Promise<CreateInstanceTemplateFromInstanceOutput> {
-        this.logger.debug('CreateInstanceTemplateFromInstance.execute', { input });
+        this.auth.assertThatHasRoleOrAbove(input.principal, 'ADMIN');
+        const { id } = this.auth.getClaims(input.principal);
 
-        const inputValidation = createInstanceTemplateFromInstanceInputSchema.safeParse(input);
-        if (!inputValidation.success) throw Errors.validationError(inputValidation.error);
-        const { data: validInput } = inputValidation;
-
-        this.auth.assertThatHasRoleOrAbove(validInput.principal, 'ADMIN');
-        const { id } = this.auth.getClaims(validInput.principal);
-
-        const instance = await this.instanceRepository.getById(validInput.instanceId);
+        const instance = await this.instanceRepository.getById(input.instanceId);
 
         if (!instance) {
-            throw Errors.resourceNotFound('Instance', validInput.instanceId);
+            throw Errors.resourceNotFound('Instance', input.instanceId);
         }
 
         const instanceVirtualId = instance.getData().virtualId;
-        const instanceStorageInGb =
-            validInput.storageInGb ?? Number(instance.getData().storageInGb);
+        const instanceStorageInGb = input.storageInGb ?? Number(instance.getData().storageInGb);
 
         if (!instanceVirtualId) {
             throw Errors.businessRuleViolation(`Instance is not ready to create a template from.`);
@@ -70,8 +65,8 @@ export class CreateInstanceTemplateFromInstance {
 
         const instanceTemplate = InstanceTemplate.create({
             createdBy: id,
-            name: validInput.name,
-            description: validInput.description,
+            name: input.name,
+            description: input.description,
             productId: instance.getData().productId,
             machineImageId,
             platform: instance.getData().platform,
