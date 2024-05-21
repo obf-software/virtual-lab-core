@@ -22,6 +22,14 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         private storage: {
             virtualInstances?: (VirtualInstance & { launchToken: string })[];
             instanceTypes?: VirtualInstanceType[];
+            machineImages?: MachineImage[];
+            instanceOperations?: {
+                name: string;
+                operation: VirtualizationGatewayScheduleOperation;
+                scheduledAt: Date;
+                runAt: Date;
+            }[];
+            instancePlatformToProductMap?: Record<InstancePlatform, Product | undefined>;
         } = {},
     ) {}
 
@@ -62,6 +70,67 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
 
         this.storage.instanceTypes ??= [];
         this.storage.instanceTypes.push(record);
+
+        return record;
+    };
+
+    addMachineImageTestRecord = (data: Partial<MachineImage> = {}) => {
+        const record: MachineImage = {
+            id: data.id ?? randomUUID(),
+            distribution: data.distribution ?? 'Ubuntu',
+            platform: data.platform ?? 'UNKNOWN',
+            storageInGb: data.storageInGb ?? 8,
+        };
+
+        this.storage.machineImages ??= [];
+        this.storage.machineImages.push(record);
+
+        return record;
+    };
+
+    addInstanceOperationTestRecord = (data: {
+        virtualId: string;
+        operation?: VirtualizationGatewayScheduleOperation;
+        scheduledAt?: Date;
+        runAt?: Date;
+    }) => {
+        const record: {
+            name: string;
+            operation: VirtualizationGatewayScheduleOperation;
+            scheduledAt: Date;
+            runAt: Date;
+        } = {
+            name: this.getScheduledOperationName(
+                data.virtualId ?? randomUUID(),
+                data.operation ?? 'turnOff',
+            ),
+            operation: data.operation ?? 'turnOff',
+            scheduledAt: data.scheduledAt ?? new Date(),
+            runAt: data.runAt ?? new Date(),
+        };
+
+        this.storage.instanceOperations ??= [];
+        this.storage.instanceOperations.push(record);
+
+        return record;
+    };
+
+    addInstancePlatformToProductMapTestRecord = (data: {
+        platform: InstancePlatform;
+        product: Partial<Product>;
+    }) => {
+        const record: Product = {
+            id: data.product.id ?? randomUUID(),
+            name: data.product.name ?? `Product ${randomUUID()}`,
+            description: data.product.description ?? `Description ${randomUUID()}`,
+        };
+
+        this.storage.instancePlatformToProductMap ??= {
+            LINUX: undefined,
+            WINDOWS: undefined,
+            UNKNOWN: undefined,
+        };
+        this.storage.instancePlatformToProductMap[data.platform] = record;
 
         return record;
     };
@@ -122,7 +191,9 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
 
     stopInstance = async (
         virtualId: string,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         hibernate: boolean,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         force: boolean,
     ): Promise<InstanceState> => {
         const instance = this.storage.virtualInstances?.find((i) => i.virtualId === virtualId);
@@ -188,19 +259,35 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
     };
 
     getProductByInstancePlatform = async (platform: InstancePlatform): Promise<Product> => {
-        throw new Error('Method not implemented.');
+        const product = this.storage.instancePlatformToProductMap?.[platform];
+
+        if (!product) {
+            throw new Error('Product not found');
+        }
+
+        return Promise.resolve(product);
     };
 
     getMachineImageById = async (machineImageId: string): Promise<MachineImage | undefined> => {
-        throw new Error('Method not implemented.');
+        return Promise.resolve(this.storage.machineImages?.find((i) => i.id === machineImageId));
     };
 
     listRecommendedMachineImages = async (): Promise<MachineImage[]> => {
-        throw new Error('Method not implemented.');
+        return Promise.resolve(this.storage.machineImages ?? []);
     };
 
     createMachineImage = async (virtualId: string, storageInGb: number): Promise<string> => {
-        throw new Error('Method not implemented.');
+        const id = randomUUID();
+
+        this.storage.machineImages ??= [];
+        this.storage.machineImages.push({
+            id,
+            distribution: `Ubuntu from ${virtualId}`,
+            platform: 'UNKNOWN',
+            storageInGb,
+        });
+
+        return Promise.resolve(id);
     };
 
     getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {
@@ -220,13 +307,27 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         operation: VirtualizationGatewayScheduleOperation,
         afterMinutes: number,
     ): Promise<void> => {
-        throw new Error('Method not implemented.');
+        const dateNow = dayjs.utc();
+
+        this.storage.instanceOperations ??= [];
+        this.storage.instanceOperations.push({
+            name: this.getScheduledOperationName(virtualId, operation),
+            operation,
+            scheduledAt: dateNow.toDate(),
+            runAt: dateNow.add(afterMinutes, 'minutes').toDate(),
+        });
+
+        return Promise.resolve();
     };
 
     unscheduleInstanceOperation = async (
         virtualId: string,
         operation: VirtualizationGatewayScheduleOperation,
     ): Promise<void> => {
-        throw new Error('Method not implemented.');
+        this.storage.instanceOperations = this.storage.instanceOperations?.filter(
+            (i) => i.name !== this.getScheduledOperationName(virtualId, operation),
+        );
+
+        return Promise.resolve();
     };
 }
