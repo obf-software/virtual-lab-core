@@ -18,10 +18,7 @@ describe('GetUser use case', () => {
     });
 
     it('When input is invalid, then throw validationError', async () => {
-        const input = {
-            principal: InMemoryAuth.createTestUserPrincipal(),
-            userId: null as unknown,
-        } as GetUserInput;
+        const input = {} as GetUserInput;
 
         const execute = async () => useCase.execute(input);
 
