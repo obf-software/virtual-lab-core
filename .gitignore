@@ -34,3 +34,6 @@ logs
 
 # CDK
 cdk.context.json
+
+# Tests
+coverage

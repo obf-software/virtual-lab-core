@@ -4,7 +4,7 @@ import { Instance, InstanceData } from '../../domain/entities/instance';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 import { randomUUID } from 'node:crypto';
 
-export class DatabaseInstanceRepository implements InstanceRepository {
+export class InMemoryInstanceRepository implements InstanceRepository {
     constructor(private storage: InstanceData[] = []) {}
 
     addTestRecord = (data: Partial<InstanceData> = {}) => {

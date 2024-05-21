@@ -4,7 +4,7 @@ import { InstanceTemplateRepository } from '../../application/instance-template-
 import { InstanceTemplate, InstanceTemplateData } from '../../domain/entities/instance-template';
 import { randomUUID } from 'node:crypto';
 
-export class DatabaseInstanceTemplateRepository implements InstanceTemplateRepository {
+export class InMemoryInstanceTemplateRepository implements InstanceTemplateRepository {
     constructor(private storage: InstanceTemplateData[] = []) {}
 
     addTestRecord = (data: Partial<InstanceTemplateData> = {}) => {

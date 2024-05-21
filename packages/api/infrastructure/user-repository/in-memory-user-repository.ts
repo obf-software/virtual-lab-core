@@ -4,11 +4,11 @@ import { User, UserData } from '../../domain/entities/user';
 import { SeekPaginated, SeekPaginationInput } from '../../domain/dtos/seek-paginated';
 import { randomUUID } from 'node:crypto';
 
-export class DatabaseUserRepository implements UserRepository {
+export class InMemoryUserRepository implements UserRepository {
     constructor(private storage: UserData[] = []) {}
 
     addTestRecord = (data: Partial<UserData> = {}) => {
-        const record: UserData = {
+        const record = {
             id: data.id ?? new ObjectId().toHexString(),
             createdAt: data.createdAt ?? new Date(),
             role: data.role ?? 'USER',
@@ -22,10 +22,14 @@ export class DatabaseUserRepository implements UserRepository {
                 canLaunchInstanceWithHibernation: false,
                 maxInstances: 1,
             },
-        };
+        } satisfies UserData;
 
         this.storage.push(record);
         return record;
+    };
+
+    reset = () => {
+        this.storage = [];
     };
 
     save = async (user: User): Promise<string> => {

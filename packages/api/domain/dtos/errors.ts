@@ -1,33 +1,43 @@
 import createHttpError from 'http-errors';
 import { ZodError } from 'zod';
+import { Role } from './role';
 
 export class Errors {
-    static validationError = (error?: ZodError) =>
-        new createHttpError.BadRequest(
-            `Validation error: ${
-                error?.errors.map((e) => `[${e.path.join(', ')}] ${e.message}`).join(', ') ?? ''
-            }`,
-        );
+    static readonly validationError = (error?: ZodError | string) => {
+        const reasonMessage =
+            typeof error === 'string'
+                ? error
+                : error?.errors.map((e) => `[${e.path.join(', ')}] ${e.message}`).join(', ') ?? '';
+        return new createHttpError.BadRequest(`Validation error: ${reasonMessage}`);
+    };
 
-    static internalError = (message?: string) =>
-        new createHttpError.InternalServerError(`Internal error: ${message ?? ''}`);
+    static readonly internalError = (message?: string) => {
+        const reasonMessage = message ?? '';
+        return new createHttpError.InternalServerError(`Internal error: ${reasonMessage}`);
+    };
 
-    static insufficientRole = (minimumRole: string) =>
-        new createHttpError.Forbidden(
-            `Insufficient role. The minimum required role is "${minimumRole}"`,
-        );
+    static readonly insufficientRole = (minimumRole?: Role) => {
+        const reasonMessage = minimumRole ? `The minimum required role is "${minimumRole}"` : '';
+        return new createHttpError.Forbidden(`Insufficient role: ${reasonMessage}`);
+    };
 
-    static unauthorizedPrincipal = (reason?: string) =>
-        new createHttpError.Unauthorized(`Unauthorized principal${reason ? `: ${reason}` : ''}`);
+    static readonly unauthorizedPrincipal = (reason?: string) => {
+        const reasonMessage = reason ?? '';
+        return new createHttpError.Unauthorized(`Unauthorized principal: ${reasonMessage}`);
+    };
 
-    static resourceAccessDenied = (resource: string, resourceId: string) =>
-        new createHttpError.Forbidden(
-            `Access to resource "${resource}" denied (id: "${resourceId}")`,
-        );
+    static readonly resourceAccessDenied = (resource?: string, resourceId?: string) => {
+        const reasonMessage = resource && resourceId ? `${resource} (id: ${resourceId})` : '';
+        return new createHttpError.Forbidden(`Access to resource denied: ${reasonMessage}`);
+    };
 
-    static resourceNotFound = (resource: string, resourceId: string) =>
-        new createHttpError.NotFound(`Resource "${resource}" not found (id: "${resourceId}")`);
+    static readonly resourceNotFound = (resource?: string, resourceId?: string) => {
+        const reasonMessage = resource && resourceId ? `${resource} (id: ${resourceId})` : '';
+        return new createHttpError.NotFound(`Resource not found: ${reasonMessage}`);
+    };
 
-    static businessRuleViolation = (message?: string) =>
-        new createHttpError.BadRequest(`Business rule violation${message ? `: ${message}` : ''}`);
+    static readonly businessRuleViolation = (message?: string) => {
+        const reasonMessage = message ?? '';
+        return new createHttpError.BadRequest(`Business rule violation: ${reasonMessage}`);
+    };
 }
