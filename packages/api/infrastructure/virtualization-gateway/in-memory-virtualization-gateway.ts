@@ -17,11 +17,12 @@ import { randomUUID } from 'node:crypto';
 
 dayjs.extend(utc);
 
-export class AwsVirtualizationGateway implements VirtualizationGateway {
+export class InMemoryVirtualizationGateway implements VirtualizationGateway {
     constructor(
-        private readonly storage: {
+        private storage: {
             virtualInstances?: (VirtualInstance & { launchToken: string })[];
-        },
+            instanceTypes?: VirtualInstanceType[];
+        } = {},
     ) {}
 
     addInstanceTestRecord = (data: Partial<VirtualInstance & { launchToken: string }> = {}) => {
@@ -36,6 +37,37 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         this.storage.virtualInstances.push(record);
 
         return record;
+    };
+
+    addInstanceTypeTestRecord = (data: Partial<VirtualInstanceType> = {}) => {
+        const record: VirtualInstanceType = {
+            name: data.name ?? randomUUID(),
+            cpu: {
+                clockSpeedInGhz: data.cpu?.clockSpeedInGhz ?? 2.3,
+                cores: data.cpu?.cores ?? 1,
+                manufacturer: data.cpu?.manufacturer ?? 'Intel',
+                threadsPerCore: data.cpu?.threadsPerCore ?? 1,
+                vCpus: data.cpu?.vCpus ?? 1,
+            },
+            ram: {
+                sizeInMb: data.ram?.sizeInMb ?? 2048,
+            },
+            gpu: {
+                totalGpuMemoryInMb: data.gpu?.totalGpuMemoryInMb ?? 0,
+                devices: data.gpu?.devices ?? [],
+            },
+            hibernationSupport: data.hibernationSupport ?? false,
+            networkPerformance: data.networkPerformance ?? 'LOW',
+        };
+
+        this.storage.instanceTypes ??= [];
+        this.storage.instanceTypes.push(record);
+
+        return record;
+    };
+
+    reset = () => {
+        this.storage = {};
     };
 
     private getScheduledOperationName = (
@@ -172,11 +204,15 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     };
 
     getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {
-        throw new Error('Method not implemented.');
+        return Promise.resolve(this.storage.instanceTypes?.find((i) => i.name === instanceType));
     };
 
     listInstanceTypes = async (instanceTypes?: string[]): Promise<VirtualInstanceType[]> => {
-        throw new Error('Method not implemented.');
+        return Promise.resolve(
+            instanceTypes !== undefined
+                ? this.storage.instanceTypes?.filter((i) => instanceTypes.includes(i.name)) ?? []
+                : this.storage.instanceTypes ?? [],
+        );
     };
 
     scheduleInstanceOperation = async (
