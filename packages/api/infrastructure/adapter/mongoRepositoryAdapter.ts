@@ -63,7 +63,6 @@ export abstract class MongoRepositoryAdapter {
         return newClient;
     };
 
-    // eslint-disable-next-line class-methods-use-this
     disconnect = async (): Promise<void> => {
         if (MongoRepositoryAdapter.mongoDbClient !== undefined) {
             await MongoRepositoryAdapter.mongoDbClient.close();
