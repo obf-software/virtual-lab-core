@@ -3,3 +3,4 @@ _dev
 coverage
 node_modules
 dist
+.docusaurus

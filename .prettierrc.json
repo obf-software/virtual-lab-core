@@ -5,5 +5,13 @@
     "singleQuote": true,
     "printWidth": 100,
     "jsxSingleQuote": true,
-    "singleAttributePerLine": true
+    "singleAttributePerLine": true,
+    "overrides": [
+        {
+            "files": "*.{yml,yaml}",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }

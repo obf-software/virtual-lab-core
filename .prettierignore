@@ -2,3 +2,5 @@
 .build
 .open-next
 sst-env.d.ts
+.docusaurus
+coverage
