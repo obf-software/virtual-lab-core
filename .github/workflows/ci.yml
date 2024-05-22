@@ -17,7 +17,7 @@ jobs:
           node-version-file: '.nvmrc'
 
       - name: Install dependencies, typecheck, lint, format, test
-      - run: |
+        run: |
           npm ci
           npm run typecheck
           npm run lint
