@@ -10,13 +10,13 @@ export class InMemoryUserRepository implements UserRepository {
     addTestRecord = (data: Partial<UserData> = {}) => {
         const record = {
             id: data.id ?? new ObjectId().toHexString(),
-            createdAt: data.createdAt ?? new Date(),
-            role: data.role ?? 'USER',
-            name: data.name ?? randomUUID(),
-            updatedAt: data.updatedAt ?? new Date(),
             username: data.username ?? randomUUID(),
-            lastLoginAt: data.lastLoginAt ?? undefined,
-            preferredUsername: data.preferredUsername ?? randomUUID(),
+            name: data.name,
+            preferredUsername: data.preferredUsername,
+            role: data.role ?? 'USER',
+            createdAt: data.createdAt ?? new Date(),
+            updatedAt: data.updatedAt ?? new Date(),
+            lastLoginAt: data.lastLoginAt,
             quotas: data.quotas ?? {
                 allowedInstanceTypes: [],
                 canLaunchInstanceWithHibernation: false,

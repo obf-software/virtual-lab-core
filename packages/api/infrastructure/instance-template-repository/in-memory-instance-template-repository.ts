@@ -8,22 +8,26 @@ export class InMemoryInstanceTemplateRepository implements InstanceTemplateRepos
     constructor(private storage: InstanceTemplateData[] = []) {}
 
     addTestRecord = (data: Partial<InstanceTemplateData> = {}) => {
-        const record: InstanceTemplateData = {
+        const record = {
             id: data.id ?? new ObjectId().toHexString(),
-            createdAt: data.createdAt ?? new Date(),
             createdBy: data.createdBy ?? new ObjectId().toHexString(),
-            description: data.description ?? randomUUID(),
             name: data.name ?? randomUUID(),
-            updatedAt: data.updatedAt ?? new Date(),
-            distribution: data.distribution ?? 'UBUNTU',
+            description: data.description ?? randomUUID(),
+            productId: data.productId ?? randomUUID(),
             machineImageId: data.machineImageId ?? randomUUID(),
             platform: data.platform ?? 'LINUX',
-            productId: data.productId ?? randomUUID(),
+            distribution: data.distribution ?? 'UBUNTU',
             storageInGb: data.storageInGb ?? 8,
-        };
+            createdAt: data.createdAt ?? new Date(),
+            updatedAt: data.updatedAt ?? new Date(),
+        } satisfies InstanceTemplateData;
 
         this.storage.push(record);
         return record;
+    };
+
+    reset = () => {
+        this.storage = [];
     };
 
     save = async (instanceTemplate: InstanceTemplate): Promise<string> => {

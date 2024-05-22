@@ -8,24 +8,19 @@ export class InMemoryInstanceRepository implements InstanceRepository {
     constructor(private storage: InstanceData[] = []) {}
 
     addTestRecord = (data: Partial<InstanceData> = {}) => {
-        const record: InstanceData = {
+        const record = {
             id: data.id ?? new ObjectId().toHexString(),
-            canHibernate: data.canHibernate ?? false,
-            createdAt: data.createdAt ?? new Date(),
-            description: data.description ?? randomUUID(),
-            lastConnectionAt: data.lastConnectionAt ?? undefined,
+            virtualId: data.virtualId,
+            productId: data.productId ?? randomUUID(),
+            machineImageId: data.machineImageId ?? randomUUID(),
+            ownerId: data.ownerId ?? new ObjectId().toHexString(),
             launchToken: data.launchToken ?? randomUUID(),
             name: data.name ?? randomUUID(),
-            ownerId: data.ownerId ?? new ObjectId().toHexString(),
+            description: data.description ?? randomUUID(),
+            connectionType: data.connectionType,
+            canHibernate: data.canHibernate ?? false,
             platform: data.platform ?? 'LINUX',
             distribution: data.distribution ?? 'UBUNTU',
-            machineImageId: data.machineImageId ?? randomUUID(),
-            state: data.state ?? 'STOPPED',
-            productId: data.productId ?? randomUUID(),
-            storageInGb: data.storageInGb ?? '8',
-            virtualId: data.virtualId ?? randomUUID(),
-            updatedAt: data.updatedAt ?? new Date(),
-            connectionType: data.connectionType ?? 'RDP',
             instanceType: data.instanceType ?? {
                 cpu: {
                     clockSpeedInGhz: 5,
@@ -45,10 +40,19 @@ export class InMemoryInstanceRepository implements InstanceRepository {
                     sizeInMb: 512,
                 },
             },
-        };
+            storageInGb: data.storageInGb ?? '8',
+            createdAt: data.createdAt ?? new Date(),
+            updatedAt: data.updatedAt ?? new Date(),
+            lastConnectionAt: data.lastConnectionAt,
+            state: data.state,
+        } satisfies InstanceData;
 
         this.storage.push(record);
         return record;
+    };
+
+    reset = () => {
+        this.storage = [];
     };
 
     save = async (instance: Instance): Promise<string> => {
