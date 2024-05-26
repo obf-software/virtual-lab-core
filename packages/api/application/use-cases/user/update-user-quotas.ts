@@ -19,11 +19,11 @@ export const updateUserQuotasInput = z
     .strict()
     .refine(
         (data) =>
-            !!(
-                data.maxInstances !== undefined ||
-                data.allowedInstanceTypes !== undefined ||
-                data.canLaunchInstanceWithHibernation !== undefined
-            ),
+            ![
+                data.maxInstances,
+                data.allowedInstanceTypes,
+                data.canLaunchInstanceWithHibernation,
+            ].every((key) => key === undefined),
         {
             message: 'At least one quota must be provided',
             path: ['maxInstances', 'allowedInstanceTypes', 'canLaunchInstanceWithHibernation'],
