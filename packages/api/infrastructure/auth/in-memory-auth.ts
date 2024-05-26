@@ -1,4 +1,3 @@
-import { APIGatewayProxyEventV2WithJWTAuthorizer } from 'aws-lambda';
 import { Auth } from '../../application/auth';
 import { Principal } from '../../domain/dtos/principal';
 import { Role } from '../../domain/dtos/role';
@@ -14,19 +13,11 @@ export class InMemoryAuth extends Auth {
         });
     }
 
-    static extractPrincipal(event: APIGatewayProxyEventV2WithJWTAuthorizer): Principal {
-        return {
-            claims: event.requestContext.authorizer.jwt.claims,
-        };
-    }
-
-    static readonly createTestUserPrincipal = (
-        data: {
-            username?: string;
-            role?: Role;
-            userId?: string;
-        } = {},
-    ): Principal => ({
+    static readonly createTestUserPrincipal = (data: {
+        username?: string;
+        role?: Role;
+        userId?: string;
+    }): Principal => ({
         claims: {
             username: data.username ?? randomUUID(),
             role: data.role ?? 'NONE',
