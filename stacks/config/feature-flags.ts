@@ -2,12 +2,14 @@ const enum FeatureFlag {
     READABLE_LOG_FORMAT,
     RETAIN_USER_POOL_ON_DELETE,
     USER_POOL_IDENTITY_PROVIDER,
+    NEW_RELIC_LAMBDA_INSTRUMENTATION,
 }
 
 const featureFlagToDefaultValueMap: Record<keyof typeof FeatureFlag, boolean> = {
     READABLE_LOG_FORMAT: false,
     RETAIN_USER_POOL_ON_DELETE: true,
     USER_POOL_IDENTITY_PROVIDER: false,
+    NEW_RELIC_LAMBDA_INSTRUMENTATION: false,
 };
 
 export const featureFlagIsEnabled = (input: {

@@ -55,3 +55,25 @@ Essa _feature flag_ é utilizada em conjunto com outras variáveis de ambiente p
 -   `USER_POOL_IDENTITY_PROVIDER_ISSUER_URL`: URL do provedor de identidade.
 
 :::
+
+### `NEW_RELIC_LAMBDA_INSTRUMENTATION`
+
+A _feature flag_ `NEW_RELIC_LAMBDA_INSTRUMENTATION` é utilizada para habilitar a instrumentação de funções Lambda com o New Relic.
+
+-   **Valor Padrão**: `false`
+
+:::info
+
+Essa _feature flag_ é utilizada em conjunto com outras variáveis de ambiente para configurar o New Relic. **Caso essas variáveis de ambiente não sejam configuradas corretamente, a instrumentação do New Relic falhará.**
+
+-   `NEW_RELIC_ACCOUNT_ID`: ID da conta do New Relic.
+-   `NEW_RELIC_TRUSTED_ACCOUNT_KEY`: Chave da conta confiável do New Relic. Caso a conta do New Relic tenha uma conta pai, essa chave deve ser configurada.
+-   `NEW_RELIC_LICENSE_KEY`: Chave de licença do New Relic.
+
+:::
+
+:::warning
+
+Essa _feature flag_ é desabilitada automaticamente quando a aplicação é executada com o comando `npm run dev`, pois a instrumentação do New Relic impacta na conexão das lambdas com o ambiente local.
+
+:::
