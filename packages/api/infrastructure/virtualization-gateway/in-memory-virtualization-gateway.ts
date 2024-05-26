@@ -30,6 +30,7 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
                 runAt: Date;
             }[];
             instancePlatformToProductMap?: Record<InstancePlatform, Product | undefined>;
+            instanceStacks?: Record<string, VirtualInstanceStack>;
         } = {},
     ) {}
 
@@ -133,6 +134,24 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         this.storage.instancePlatformToProductMap[data.platform] = record;
 
         return record;
+    };
+
+    addInstanceStackTestRecord = (data: Partial<VirtualInstanceStack> = {}) => {
+        const stackName = randomUUID();
+
+        const record: VirtualInstanceStack = {
+            virtualId: data.virtualId ?? randomUUID(),
+            launchToken: data.launchToken ?? randomUUID(),
+            connectionType: data.connectionType ?? 'VNC',
+        };
+
+        this.storage.instanceStacks ??= {};
+        this.storage.instanceStacks[stackName] = record;
+
+        return {
+            ...record,
+            stackName,
+        };
     };
 
     reset = () => {
@@ -251,11 +270,27 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         productId: string,
         parameters: VirtualInstanceLaunchParameters,
     ): Promise<string> => {
-        throw new Error('Method not implemented.');
+        const launchToken = randomUUID();
+
+        this.storage.virtualInstances ??= [];
+        this.storage.virtualInstances.push({
+            virtualId: randomUUID(),
+            hostname: `hostname-${JSON.stringify(parameters)}-${productId}`,
+            launchToken,
+            state: 'PENDING',
+        });
+
+        return Promise.resolve(launchToken);
     };
 
     getInstanceStack = async (stackName: string): Promise<VirtualInstanceStack> => {
-        throw new Error('Method not implemented.');
+        const stack = this.storage.instanceStacks?.[stackName];
+
+        if (!stack) {
+            throw new Error('Stack not found');
+        }
+
+        return Promise.resolve(stack);
     };
 
     getProductByInstancePlatform = async (platform: InstancePlatform): Promise<Product> => {

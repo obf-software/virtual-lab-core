@@ -11,6 +11,6 @@ export type InstanceConnectionEndedDetail = z.infer<typeof instanceConnectionEnd
 
 export class InstanceConnectionEnded extends ApplicationEvent<InstanceConnectionEndedDetail> {
     constructor(public detail: InstanceConnectionEndedDetail) {
-        super('NONE', 'INSTANCE_CONNECTION_ENDED', instanceConnectionEndedSchema);
+        super('BUS', 'INSTANCE_CONNECTION_ENDED', instanceConnectionEndedSchema);
     }
 }

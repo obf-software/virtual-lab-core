@@ -26,6 +26,7 @@ export class AutoTurnInstanceOff {
 
         if (!instance) {
             this.logger.warn('Instance not found', { virtualId: input.virtualId });
+            return;
         }
 
         await this.virtualizationGateway.stopInstance(

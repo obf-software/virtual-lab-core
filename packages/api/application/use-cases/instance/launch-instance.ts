@@ -66,7 +66,7 @@ export class LaunchInstance {
 
         if (!instanceMachineImage) {
             throw Errors.resourceNotFound(
-                'MachineImageId',
+                'MachineImage',
                 instanceTemplate.getData().machineImageId,
             );
         }

@@ -52,7 +52,7 @@ export class TurnInstanceOff {
         const virtualInstance = await this.virtualizationGateway.getInstance(virtualId);
 
         if (!virtualInstance) {
-            throw Errors.resourceNotFound('VirtualInstance', virtualId);
+            throw Errors.internalError('Virtual instance not found');
         }
 
         instance.onStateRetrieved(virtualInstance.state);
