@@ -66,6 +66,8 @@ describe('UpdateUserQuotas use case', () => {
             }),
             userId: '000000000000000000000000',
             maxInstances: 1,
+            canLaunchInstanceWithHibernation: true,
+            allowedInstanceTypes: [],
         };
 
         const execute = async () => useCase.execute(input);
@@ -85,6 +87,7 @@ describe('UpdateUserQuotas use case', () => {
                 username: user.username,
             }),
             allowedInstanceTypes: ['t2.nano'],
+            canLaunchInstanceWithHibernation: true,
         };
 
         const output = await useCase.execute(input);

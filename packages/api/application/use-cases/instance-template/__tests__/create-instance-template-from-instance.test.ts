@@ -87,7 +87,10 @@ describe('CreateInstanceTemplateFromInstance use case', () => {
     });
 
     it('When storageInGb is less than instance storageInGb, then throw businessRuleViolation', async () => {
-        const instance = instanceRepository.addTestRecord({ storageInGb: '8' });
+        const instance = instanceRepository.addTestRecord({
+            storageInGb: '8',
+            virtualId: 'virtualId',
+        });
         const input: CreateInstanceTemplateFromInstanceInput = {
             principal: InMemoryAuth.createTestUserPrincipal({
                 role: 'ADMIN',
@@ -100,7 +103,9 @@ describe('CreateInstanceTemplateFromInstance use case', () => {
 
         const execute = async () => useCase.execute(input);
 
-        await expect(execute).rejects.toThrow(Errors.businessRuleViolation().message);
+        await expect(execute).rejects.toThrow(
+            Errors.businessRuleViolation('Storage size must be').message,
+        );
     });
 
     it('When input is valid, then create instance template and return it', async () => {

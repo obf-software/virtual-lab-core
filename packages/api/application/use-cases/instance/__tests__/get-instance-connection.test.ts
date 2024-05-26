@@ -164,10 +164,31 @@ describe('GetInstanceConnection use case', () => {
         await expect(execute).rejects.toThrow(Errors.businessRuleViolation().message);
     });
 
-    it('When everything is correct, then return connection string', async () => {
+    it('When everything is correct and connection type is RDP, then return connection string', async () => {
         const virtualInstance = virtualizationGateway.addInstanceTestRecord({ state: 'RUNNING' });
         const { id, ownerId } = instanceRepository.addTestRecord({
             virtualId: virtualInstance.virtualId,
+            connectionType: 'RDP',
+        });
+        const input: DeleteInstanceInput = {
+            principal: InMemoryAuth.createTestUserPrincipal({
+                role: 'USER',
+                userId: ownerId,
+            }),
+            instanceId: id,
+        };
+
+        const output = await usecase.execute(input);
+
+        expect(output).toBeDefined();
+        expect(output.connectionString).toBeDefined();
+    });
+
+    it('When everything is correct and connection type is VNC, then return connection string', async () => {
+        const virtualInstance = virtualizationGateway.addInstanceTestRecord({ state: 'RUNNING' });
+        const { id, ownerId } = instanceRepository.addTestRecord({
+            virtualId: virtualInstance.virtualId,
+            connectionType: 'VNC',
         });
         const input: DeleteInstanceInput = {
             principal: InMemoryAuth.createTestUserPrincipal({
