@@ -3,11 +3,9 @@ import { ZodError } from 'zod';
 import { Role } from './role';
 
 export class Errors {
-    static readonly validationError = (error?: ZodError | string) => {
+    static readonly validationError = (error?: ZodError) => {
         const reasonMessage =
-            typeof error === 'string'
-                ? error
-                : error?.errors.map((e) => `[${e.path.join(', ')}] ${e.message}`).join(', ') ?? '';
+            error?.errors.map((e) => `[${e.path.join(', ')}] ${e.message}`).join(', ') ?? '';
         return new createHttpError.BadRequest(`Validation error: ${reasonMessage}`);
     };
 
