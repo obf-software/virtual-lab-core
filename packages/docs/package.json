@@ -6,7 +6,7 @@
         "docusaurus": "docusaurus",
         "start": "AWS_PROFILE=virtual-lab sst bind docusaurus start",
         "dev": "AWS_PROFILE=virtual-lab sst bind docusaurus start",
-        "build": "AWS_PROFILE=virtual-lab sst bind docusaurus build",
+        "build": "sst bind docusaurus build",
         "swizzle": "docusaurus swizzle",
         "deploy": "docusaurus deploy",
         "clear": "docusaurus clear",

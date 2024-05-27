@@ -1,12 +1,12 @@
 ---
-sidebar_position: 3
+sidebar_position: 5
 ---
 
 # Referências
 
 Este guia contém referências para os principais conceitos e tecnologias utilizadas no projeto.
 
-:::tip
+:::tip Dica
 
 É de extrema importância que você tenha conhecimento sobre os tópicos abordados neste guia para
 compreender o funcionamento do projeto e contribuir com o desenvolvimento.

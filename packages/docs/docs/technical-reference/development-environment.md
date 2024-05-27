@@ -1,5 +1,5 @@
 ---
-sidebar_position: 0
+sidebar_position: 1
 ---
 
 # Ambiente de Desenvolvimento
@@ -18,7 +18,7 @@ correta para garantir que tudo funcione corretamente.
 A versão utilizada no projeto pode ser encontrada no arquivo `.nvmrc`, que é um arquivo que indica a
 versão do Node.js que deve ser utilizada no projeto.
 
-:::tip
+:::tip Dica
 Recomendamos o uso da ferramenta `nvm` para gerenciar as versões do Node.js. Você pode encontrar mais
 informações sobre o `nvm` [aqui](https://github.com/nvm-sh/nvm).
 :::
@@ -39,7 +39,7 @@ desenvolvimento localmente.
 Para instalar o AWS CLI, siga as instruções disponíveis na
 [documentação oficial](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions).
 
-:::warning
+:::warning Atenção
 Para concluir a instalação do AWS CLI, você precisará configurar suas credenciais de acesso à AWS.
 :::
 
@@ -102,8 +102,21 @@ Você precisa alterar o valor de algumas variáveis de ambiente no Parameter Sto
 ## Execução do Projeto
 
 Depois de instalar as dependências e configurar a conta AWS, você pode executar o projeto localmente
-rodando o seguinte comando:
+rodando os comandos abaixo em terminais separados:
 
-```bash
+```bash title="Executar a API"
 npm run dev
+```
+
+```bash title="Executar o Cliente"
+cd packages/client && npm run dev
+```
+
+```bash title="Executar o Gateway de Conexão"
+
+cd packages/connection-gateway && npm run dev
+```
+
+```bash title="Executar a documentação"
+cd packages/docs && npm run dev
 ```

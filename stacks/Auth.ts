@@ -78,7 +78,10 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
             otp: true,
             sms: true,
         },
-        selfSignUpEnabled: true,
+        selfSignUpEnabled: featureFlagIsEnabled({
+            featureFlag: 'USER_POOL_SELF_SIGN_UP',
+            components: ['User Pool Self Sign Up'],
+        }),
         lambdaTriggers: {
             preTokenGeneration: preTokenGenerationTrigger,
             preSignUp: preSignUpTrigger,

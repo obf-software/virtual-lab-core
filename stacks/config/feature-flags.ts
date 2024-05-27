@@ -2,6 +2,7 @@ const enum FeatureFlag {
     READABLE_LOG_FORMAT,
     RETAIN_USER_POOL_ON_DELETE,
     USER_POOL_IDENTITY_PROVIDER,
+    USER_POOL_SELF_SIGN_UP,
     NEW_RELIC_LAMBDA_INSTRUMENTATION,
 }
 
@@ -9,6 +10,7 @@ const featureFlagToDefaultValueMap: Record<keyof typeof FeatureFlag, boolean> = 
     READABLE_LOG_FORMAT: false,
     RETAIN_USER_POOL_ON_DELETE: true,
     USER_POOL_IDENTITY_PROVIDER: false,
+    USER_POOL_SELF_SIGN_UP: true,
     NEW_RELIC_LAMBDA_INSTRUMENTATION: false,
 };
 

@@ -5,6 +5,7 @@ import { signInWithRedirect } from 'aws-amplify/auth';
 
 export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
     const enableIdentityProvider = import.meta.env.VITE_APP_ENABLE_IDENTITY_PROVIDER === 'true';
+    const hideSignUp = import.meta.env.VITE_APP_AWS_USER_POOL_SELF_SIGN_UP === 'false';
     const [isIdentityProviderButtonLoading, setIsIdentityProviderButtonLoading] =
         React.useState<boolean>(false);
 
@@ -13,7 +14,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
             initialState='signIn'
             loginMechanisms={['username', 'email']}
             variation='modal'
-            hideSignUp
+            hideSignUp={hideSignUp}
             components={{
                 Header: () => {
                     return (

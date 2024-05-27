@@ -3,6 +3,7 @@ import { Api } from './Api';
 import { Auth } from './Auth';
 import { AppSyncApi } from './AppSyncApi';
 import { ConnectionGateway } from './ConnectionGateway';
+import { featureFlagIsEnabled } from './config/feature-flags';
 
 export const Client = ({ stack, app }: sst.StackContext) => {
     const { userPool, userPoolClient, userPoolDomain, identityPoolId, userPoolIdentityProvider } =
@@ -21,6 +22,12 @@ export const Client = ({ stack, app }: sst.StackContext) => {
             VITE_APP_AWS_USER_POOL_CLIENT_ID: userPoolClient.userPoolClientId,
             VITE_APP_AWS_IDENTITY_POOL_ID: identityPoolId ?? '',
             VITE_APP_AWS_USER_POOL_DOMAIN: userPoolDomain.baseUrl().split('//')[1],
+            VITE_APP_AWS_USER_POOL_SELF_SIGN_UP: featureFlagIsEnabled({
+                featureFlag: 'USER_POOL_SELF_SIGN_UP',
+                components: ['Client Sign Up Component'],
+            })
+                ? 'true'
+                : 'false',
             VITE_APP_ENABLE_IDENTITY_PROVIDER: userPoolIdentityProvider ? 'true' : 'false',
             VITE_APP_AWS_IDENTITY_PROVIDER_NAME: userPoolIdentityProvider?.providerName ?? '',
             VITE_APP_API_URL: api.url,
