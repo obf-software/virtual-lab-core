@@ -1,4 +1,5 @@
 import * as sst from 'sst/constructs';
+import * as cdk from 'aws-cdk-lib';
 import { Core } from './Core';
 
 export const ConnectionGateway = ({ stack }: sst.StackContext) => {
@@ -25,6 +26,9 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
         },
         cdk: {
             vpc,
+            applicationLoadBalancerTargetGroup: {
+                stickinessCookieDuration: cdk.Duration.days(1),
+            },
         },
     });
 
