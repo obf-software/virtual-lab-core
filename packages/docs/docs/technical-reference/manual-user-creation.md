@@ -15,7 +15,7 @@ habilitado.
 
 :::
 
-## AWS Console
+## Console do Amazon Cognito
 
 Aceessando página do [Amazon Cognito](console.aws.amazon.com/cognito/v2/idp/user-pools), você pode
 criar um usuário seguindo os passos abaixo:
@@ -26,7 +26,14 @@ criar um usuário seguindo os passos abaixo:
 
 3. Preencha os campos obrigatórios e clique em **Create user**.
 
-## AWS CLI
+:::warning Alerta
+
+Esse método não é recomendado, já que não é possível definir o cargo do usuário no momento da criação.
+Necessitando de um administrador para realizar essa configuração posteriormente.
+
+:::
+
+## Interface de Linha de Comando (CLI) da AWS
 
 Você também pode criar usuários utilizando o AWS CLI. Para isso, execute o seguinte comando:
 
@@ -36,6 +43,7 @@ USERNAME=<REPLACE>
 EMAIL=<REPLACE>
 NAME=<REPLACE>
 TEMP_PASSWORD=<REPLACE>
+ROLE=<REPLACE> # PENDING, USER, ADMIN
 
 aws cognito-idp admin-create-user \
     --user-pool-id $USER_POOL_ID \
@@ -43,5 +51,5 @@ aws cognito-idp admin-create-user \
     --user-attributes Name=name,Value=$NAME,Name=email,Value=$EMAIL \
     --temporary-password $TEMP_PASSWORD \
     --no-force-alias-creation \
-    --message-action SUPPRESS
+    --client-metadata role=$ROLE
 ```
