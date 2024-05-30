@@ -11,9 +11,16 @@ const config: Config = {
     baseUrl: '/',
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
+    markdown: {
+        mermaid: true,
+        anchors: {
+            maintainCase: false,
+        },
+    },
+    themes: ['@docusaurus/theme-mermaid'],
     i18n: {
-        defaultLocale: 'en',
-        locales: ['en'],
+        defaultLocale: 'pt',
+        locales: ['pt'],
     },
     customFields: {
         apiDocumentationSpecUrl: process.env.API_DOCUMENTATION_SPEC_URL,
@@ -24,6 +31,7 @@ const config: Config = {
             {
                 docs: {
                     sidebarPath: './sidebars.ts',
+                    showLastUpdateTime: true,
                 },
                 theme: {
                     customCss: './src/css/custom.css',
@@ -32,6 +40,12 @@ const config: Config = {
         ],
     ],
     themeConfig: {
+        mermaid: {
+            theme: {
+                light: 'default',
+                dark: 'dark',
+            },
+        },
         navbar: {
             title: 'Virtual Lab',
             logo: {
@@ -49,7 +63,7 @@ const config: Config = {
                 {
                     label: 'API',
                     position: 'left',
-                    href: '/api',
+                    to: '/api',
                 },
                 {
                     href: 'https://github.com/obf-software/virtual-lab-core',
