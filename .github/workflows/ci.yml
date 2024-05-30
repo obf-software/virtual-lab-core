@@ -3,7 +3,7 @@ name: CI
 on: ['push', 'pull_request']
 
 jobs:
-  build:
+  continuous-integration:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
