@@ -6,6 +6,8 @@ import { LambdaHandlerAdapter } from '../../infrastructure/handler-adapter/lambd
 import { AWSLogger } from '../../infrastructure/logger/aws-logger';
 import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
 import { AwsVirtualizationGateway } from '../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { z } from 'zod';
+import { Role, roleSchema } from '../../domain/dtos/role';
 
 const {
     IS_LOCAL,
@@ -37,14 +39,25 @@ const signUpUser = new SignUpUser(logger, userRepository, virtualizationGateway)
 
 export const handler = LambdaHandlerAdapter.adaptCustom<PostConfirmationTriggerHandler>(
     async (event) => {
-        const isExternalProvider =
-            event.request.userAttributes['cognito:user_status'] === 'EXTERNAL_PROVIDER';
+        const clientMetadataValidation = z
+            .object({
+                role: roleSchema.optional(),
+            })
+            .safeParse(event.request.clientMetadata);
+
+        let role: Role | undefined;
+
+        role = clientMetadataValidation.success ? clientMetadataValidation.data.role : undefined;
+
+        if (event.request.userAttributes['cognito:user_status'] === 'EXTERNAL_PROVIDER') {
+            role = 'USER';
+        }
 
         await signUpUser.execute({
             username: event.userName,
             name: event.request.userAttributes.name,
             preferredUsername: event.request.userAttributes.preferred_username,
-            isExternalProvider,
+            role,
         });
 
         return event;

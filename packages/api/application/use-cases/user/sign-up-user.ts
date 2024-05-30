@@ -5,14 +5,14 @@ import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
-import { Role } from '../../../domain/dtos/role';
+import { Role, roleSchema } from '../../../domain/dtos/role';
 
 export const signUpUserInputSchema = z
     .object({
         username: z.string().min(1),
         name: z.string().optional(),
         preferredUsername: z.string().optional(),
-        isExternalProvider: z.boolean(),
+        role: roleSchema.optional(),
     })
     .strict();
 export type SignUpUserInput = z.infer<typeof signUpUserInputSchema>;
@@ -30,7 +30,7 @@ export class SignUpUser {
     async execute(input: SignUpUserInput): Promise<SignUpUserOutput> {
         const existingUser = await this.userRepository.getByUsername(input.username);
 
-        const role: Role = input.isExternalProvider ? 'USER' : 'PENDING';
+        const role: Role = input.role ?? 'PENDING';
 
         if (existingUser) {
             existingUser.update({

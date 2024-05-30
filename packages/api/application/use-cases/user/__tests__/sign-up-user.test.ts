@@ -30,9 +30,9 @@ describe('SignUpUser use case', () => {
         const { username, id } = userRepository.addTestRecord();
         const input: SignUpUserInput = {
             username,
-            isExternalProvider: false,
             name: 'John Doe',
             preferredUsername: 'john',
+            role: 'USER',
         };
 
         const user = await useCase.execute(input);
@@ -48,7 +48,6 @@ describe('SignUpUser use case', () => {
         });
         const input: SignUpUserInput = {
             username: 'john',
-            isExternalProvider: false,
             name: 'John Doe',
             preferredUsername: 'john',
         };
@@ -57,12 +56,12 @@ describe('SignUpUser use case', () => {
 
         expect(user.getData().name).toBe(input.name);
         expect(user.getData().preferredUsername).toBe(input.preferredUsername);
+        expect(user.getData().role).toBe('PENDING');
     });
 
     it('When instance type is not found, then throw internalError', async () => {
         const input: SignUpUserInput = {
             username: 'john',
-            isExternalProvider: false,
             name: 'John Doe',
             preferredUsername: 'john',
         };

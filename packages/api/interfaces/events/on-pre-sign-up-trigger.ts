@@ -6,6 +6,8 @@ import { LambdaHandlerAdapter } from '../../infrastructure/handler-adapter/lambd
 import { AWSLogger } from '../../infrastructure/logger/aws-logger';
 import { DatabaseUserRepository } from '../../infrastructure/user-repository/database-user-repository';
 import { AwsVirtualizationGateway } from '../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
+import { z } from 'zod';
+import { roleSchema } from '../../domain/dtos/role';
 
 const {
     IS_LOCAL,
@@ -37,11 +39,21 @@ const signUpUser = new SignUpUser(logger, userRepository, virtualizationGateway)
 
 export const handler = LambdaHandlerAdapter.adaptCustom<PreSignUpTriggerHandler>(
     async (event) => {
+        const clientMetadataValidation = z
+            .object({
+                role: roleSchema.optional(),
+            })
+            .safeParse(event.request.clientMetadata);
+
+        const role = clientMetadataValidation.success
+            ? clientMetadataValidation.data.role
+            : undefined;
+
         await signUpUser.execute({
             username: event.userName,
             name: event.request.userAttributes.name,
             preferredUsername: event.request.userAttributes.preferred_username,
-            isExternalProvider: false,
+            role,
         });
 
         return event;

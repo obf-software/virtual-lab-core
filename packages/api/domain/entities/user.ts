@@ -34,7 +34,7 @@ export class User {
         username: string;
         name?: string;
         preferredUsername?: string;
-        role: 'PENDING' | 'USER';
+        role: Role;
         allowedInstanceTypes?: VirtualInstanceType[];
     }): User {
         const dateNow = dayjs.utc().toDate();
