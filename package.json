@@ -7,7 +7,7 @@
         "node": "18"
     },
     "scripts": {
-        "postinstall": "npm run install:client && npm run install:docs",
+        "postinstall": "if [ \"$CI\" != \"true\" ]; then npm run install:client && npm run install:docs; fi",
         "install:client": "cd packages/client && npm install",
         "install:docs": "cd packages/docs && npm install",
         "dev": "AWS_PROFILE=virtual-lab sst dev",
