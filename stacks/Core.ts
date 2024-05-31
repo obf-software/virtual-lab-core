@@ -6,7 +6,6 @@ import * as events from 'aws-cdk-lib/aws-events';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { randomUUID, generateKeySync } from 'crypto';
 
 export const Core = ({ stack }: sst.StackContext) => {
     const ssmParameters = {
@@ -41,7 +40,7 @@ export const Core = ({ stack }: sst.StackContext) => {
         parameterName: ssmParameters.instancePassword.name,
         description: `Virtual Lab Instance Password - ${stack.stage}`,
         dataType: ssm.ParameterDataType.TEXT,
-        stringValue: randomUUID().replace(/-/g, ''),
+        stringValue: 'CHANGE_ME',
     });
 
     new ssm.StringParameter(stack, 'CoreGuacamoleCypherKeyParameter', {
@@ -49,7 +48,7 @@ export const Core = ({ stack }: sst.StackContext) => {
         description: `Virtual Lab Guacamole Cypher Key - ${stack.stage}`,
         allowedPattern: '^.{32}$',
         dataType: ssm.ParameterDataType.TEXT,
-        stringValue: generateKeySync('aes', { length: 128 }).export().toString('hex'),
+        stringValue: 'CHANGE_ME-CHANGE_ME-CHANGE_ME-CH',
     });
 
     const paramsAndSecretsLambdaExtension = lambda.ParamsAndSecretsLayerVersion.fromVersion(

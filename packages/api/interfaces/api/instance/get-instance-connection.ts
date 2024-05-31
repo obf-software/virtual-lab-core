@@ -37,6 +37,7 @@ const connectionEncoder = new GuacamoleConnectionEncoder({
     GUACAMOLE_CYPHER_KEY_PARAMETER_NAME,
 });
 const virtualizationGateway = new AwsVirtualizationGateway({
+    logger,
     configVault,
     AWS_REGION,
     SNS_TOPIC_ARN,

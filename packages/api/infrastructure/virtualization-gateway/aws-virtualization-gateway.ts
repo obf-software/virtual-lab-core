@@ -1,15 +1,17 @@
 import {
     CreateImageCommand,
     DescribeImagesCommand,
-    DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
     DescribeInstancesCommand,
     EC2Client,
+    EC2ServiceException,
+    InstanceStatus,
     InstanceTypeInfo,
     RebootInstancesCommand,
     StartInstancesCommand,
     StopInstancesCommand,
     _InstanceType,
+    paginateDescribeInstanceStatus,
 } from '@aws-sdk/client-ec2';
 import {
     VirtualizationGateway,
@@ -49,6 +51,7 @@ import {
     ResourceNotFoundException,
     SchedulerClient,
 } from '@aws-sdk/client-scheduler';
+import { Logger } from '../../application/logger';
 
 dayjs.extend(utc);
 
@@ -69,6 +72,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
 
     constructor(
         private readonly deps: {
+            readonly logger: Logger;
             readonly configVault: ConfigVault;
             readonly AWS_REGION: string;
             readonly SNS_TOPIC_ARN: string;
@@ -164,18 +168,68 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
     listInstancesStates = async (virtualIds: string[]): Promise<Record<string, InstanceState>> => {
         if (virtualIds.length === 0) return {};
 
-        const command = new DescribeInstanceStatusCommand({
-            IncludeAllInstances: true,
-            InstanceIds: virtualIds,
-        });
-        const { InstanceStatuses } = await this.ec2Client.send(command);
-        const instanceStates: Record<string, InstanceState> = {};
-        InstanceStatuses?.forEach((instanceStatus) => {
-            instanceStates[instanceStatus.InstanceId ?? ''] = this.mapInstanceState(
-                instanceStatus.InstanceState?.Name,
-            );
-        });
-        return instanceStates;
+        const execute = async (
+            ids: string[],
+            invalidIds: string[],
+        ): Promise<Record<string, InstanceState>> => {
+            try {
+                const results: InstanceStatus[] = [];
+
+                const idsToFecth = ids.filter((id) => !invalidIds.includes(id));
+
+                if (idsToFecth.length !== 0) {
+                    for await (const page of paginateDescribeInstanceStatus(
+                        { client: this.ec2Client },
+                        { InstanceIds: ids.filter((id) => !invalidIds.includes(id)) },
+                    )) {
+                        results.push(...(page.InstanceStatuses ?? []));
+                    }
+                }
+
+                const instanceStates: Record<string, InstanceState> = {};
+                results.forEach((instanceStatus) => {
+                    instanceStates[instanceStatus.InstanceId ?? ''] = this.mapInstanceState(
+                        instanceStatus.InstanceState?.Name,
+                    );
+                });
+
+                invalidIds.forEach((id) => {
+                    instanceStates[id] = 'TERMINATED';
+                });
+
+                return instanceStates;
+            } catch (error) {
+                this.deps.logger.error('Failed to list instances states', { error });
+
+                if (error instanceof EC2ServiceException) {
+                    if (error.name === 'InvalidInstanceID.NotFound') {
+                        const instanceId = error.message.slice(
+                            error.message.indexOf("'") + 1,
+                            error.message.lastIndexOf("'"),
+                        );
+
+                        return execute(ids, [...invalidIds, instanceId]);
+                    }
+                }
+
+                throw error;
+            }
+        };
+
+        return await execute(virtualIds, []);
+
+        // const command = new DescribeInstanceStatusCommand({
+        //     IncludeAllInstances: true,
+        //     InstanceIds: virtualIds,
+        // });
+        // const { InstanceStatuses } = await this.ec2Client.send(command);
+        // const instanceStates: Record<string, InstanceState> = {};
+        // InstanceStatuses?.forEach((instanceStatus) => {
+        //     instanceStates[instanceStatus.InstanceId ?? ''] = this.mapInstanceState(
+        //         instanceStatus.InstanceState?.Name,
+        //     );
+        // });
+        // return instanceStates;
     };
 
     startInstance = async (virtualId: string): Promise<InstanceState> => {

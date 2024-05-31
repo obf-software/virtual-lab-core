@@ -27,6 +27,7 @@ const configVault =
         : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
 const userRepository = new DatabaseUserRepository({ configVault, DATABASE_URL_PARAMETER_NAME });
 const virtualizationGateway = new AwsVirtualizationGateway({
+    logger,
     configVault,
     AWS_REGION,
     SNS_TOPIC_ARN,

@@ -22,6 +22,7 @@ const configVault =
         ? new AWSConfigVault({ AWS_REGION })
         : new LambdaLayerConfigVault({ AWS_SESSION_TOKEN });
 const virtualizationGateway = new AwsVirtualizationGateway({
+    logger,
     configVault,
     AWS_REGION,
     SNS_TOPIC_ARN,
