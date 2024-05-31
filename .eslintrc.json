@@ -25,6 +25,11 @@
         {
             "files": ["packages/client/**/*"],
             "env": { "browser": true, "es2020": true },
+            "settings": {
+                "react": {
+                    "version": "detect"
+                }
+            },
             "plugins": ["react-refresh"],
             "extends": [
                 "eslint:recommended",
