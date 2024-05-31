@@ -20,9 +20,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
-          cache-dependency-path:
-            - 'package-lock.json'
-            - packages/*/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            packages/*/package-lock.json
 
       - name: Install dependencies, typecheck, lint, format, test
         run: |
