@@ -25,7 +25,6 @@ export const Api = ({ stack }: sst.StackContext) => {
                 'service-role/AWSLambdaVPCAccessExecutionRole',
             ),
             iam.ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogEndUserFullAccess'),
-            iam.ManagedPolicy.fromAwsManagedPolicyName('AWSServiceCatalogAdminFullAccess'),
         ],
     });
 
@@ -49,7 +48,6 @@ export const Api = ({ stack }: sst.StackContext) => {
         'ssm:*',
         'secretsmanager:*',
         'cloudformation:*',
-        'servicecatalog:*',
         'ec2:*',
         's3:*',
         'iam:*',
