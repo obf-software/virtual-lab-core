@@ -16,5 +16,6 @@ namespace NodeJS {
         EVENT_BUS_ARN: string;
         EVENT_BUS_PUBLISHER_ROLE_ARN: string;
         APP_SYNC_API_URL: string;
+        COGNITO_USER_POOL_ID: string;
     }
 }
