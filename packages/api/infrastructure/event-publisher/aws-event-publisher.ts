@@ -58,6 +58,7 @@ export class AWSEventPublisher implements EventPublisher {
         if (successEntries.length > 0) {
             this.deps.logger.info(`Successfully published events to AWS EventBridge`, {
                 successEntries,
+                events,
             });
         }
     }
@@ -107,17 +108,16 @@ export class AWSEventPublisher implements EventPublisher {
                 const signedRequest = await signer.sign(request);
                 const response = await fetch(url, { ...signedRequest });
                 return {
-                    requestBody,
                     statusCode: response.status,
-                    responseBody: await response.text(),
+                    username: event.detail.username,
+                    type: event.type,
+                    data: event.detail,
                 };
             }),
         );
 
-        const failResults: { requestBody: unknown; statusCode: number; responseBody: string }[] =
-            [];
-        const successResults: { requestBody: unknown; statusCode: number; responseBody: string }[] =
-            [];
+        const failResults: Record<string, unknown>[] = [];
+        const successResults: Record<string, unknown>[] = [];
 
         results.forEach((result) => {
             if (result.status === 'fulfilled') {
