@@ -1,4 +1,12 @@
-import { Flex, FlexProps, HStack, IconButton, Text, useColorModeValue } from '@chakra-ui/react';
+import {
+    Flex,
+    FlexProps,
+    Heading,
+    HStack,
+    IconButton,
+    Image,
+    useColorModeValue,
+} from '@chakra-ui/react';
 import React from 'react';
 import { FiMenu } from 'react-icons/fi';
 import { NavbarNotificationsButton } from './notifications-button';
@@ -29,14 +37,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenSidebar, ...rest }) => {
                 icon={<FiMenu />}
             />
 
-            <Text
+            <Image
                 display={{ base: 'flex', md: 'none' }}
-                fontSize='2xl'
+                src='/emblem-light.png'
+                alt='Virtual Lab'
+                height='10'
+                width='10'
+            />
+
+            <Heading
+                display={{ base: 'flex', md: 'none' }}
+                fontSize='x-large'
                 fontFamily='monospace'
                 fontWeight='bold'
             >
                 Virtual Lab
-            </Text>
+            </Heading>
 
             <HStack
                 spacing={{ base: '4', md: '6' }}

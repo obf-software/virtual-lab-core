@@ -4,7 +4,9 @@ import {
     BoxProps,
     CloseButton,
     Flex,
+    Heading,
     Icon,
+    Image,
     SlideFade,
     Text,
     useColorModeValue,
@@ -44,13 +46,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose, ...rest }) => {
                 mx='8'
                 justifyContent='space-between'
             >
-                <Text
-                    fontSize='2xl'
+                <Image
+                    src='/emblem-light.png'
+                    alt='Virtual Lab'
+                    height='10'
+                    width='10'
+                    ml={-3}
+                />
+
+                <Heading
+                    fontSize='x-large'
                     fontFamily='monospace'
                     fontWeight='bold'
                 >
                     Virtual Lab
-                </Text>
+                </Heading>
 
                 <CloseButton
                     display={{ base: 'flex', md: 'none' }}
