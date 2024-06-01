@@ -42,7 +42,7 @@ Para criar um template de instância do zero, siga os passos abaixo:
 
         É recomendado escolher entre as imagens recomendadas que são apresentadas no campo de seleção.
 
-        Caso deseje utilizar uma imagem personalizada, informe o ID (Obtido na página de [AMIs da AWS](console.aws.amazon.com/ec2/home#Images)) da imagem desejada no campo de texto.
+        Caso deseje utilizar uma imagem personalizada, informe o ID (Obtido na página de [AMIs da AWS](https://console.aws.amazon.com/ec2/home#Images)) da imagem desejada no campo de texto.
 
         Não existe garantia de que uma imagem personalizada irá funcionar corretamente.
 

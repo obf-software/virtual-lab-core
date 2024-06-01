@@ -17,7 +17,7 @@ habilitado.
 
 ## Console do Amazon Cognito
 
-Aceessando página do [Amazon Cognito](console.aws.amazon.com/cognito/v2/idp/user-pools), você pode
+Acessando página do [Amazon Cognito](https://console.aws.amazon.com/cognito/v2/idp/user-pools), você pode
 criar um usuário seguindo os passos abaixo:
 
 1. Selecione a _User Pool_ desejada.

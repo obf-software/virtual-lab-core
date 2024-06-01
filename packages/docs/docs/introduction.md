@@ -80,8 +80,8 @@ Agora que você já conhece a arquitetura do **Virtual Lab**, você pode começa
 documentação para aprender como utilizar o sistema.
 
 Se você é um **contribuidor do projeto**, você pode começar a explorar a seção de
-[Referência Técnica](/docs/technical-reference) para entender como o sistema foi construído e como
+[Referência Técnica](/docs/category/referência-técnica) para entender como o sistema foi construído e como
 você pode contribuir para o projeto.
 
 Se você é um **usuário do sistema**, você pode começar a explorar a seção de
-[Guia do Usuário](/docs/user-guide) para aprender como utilizar o sistema.
+[Guia do Usuário](/docs/category/guia-do-usuário) para aprender como utilizar o sistema.
