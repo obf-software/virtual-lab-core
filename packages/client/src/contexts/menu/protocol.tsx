@@ -1,9 +1,8 @@
 import { IconType } from 'react-icons';
 import { BiBookBookmark } from 'react-icons/bi';
-import { FiHome, FiMonitor, FiUser } from 'react-icons/fi';
+import { FiMonitor, FiUser } from 'react-icons/fi';
 
 export enum MenuItems {
-    HOME = 'HOME',
     INSTANCES = 'INSTANCES',
     ADMIN_TEMPLATES = 'ADMIN_TEMPLATES',
     ADMIN_USERS = 'ADMIN_USERS',
@@ -19,12 +18,6 @@ interface MenuItemData {
 export const menuItemsMap: {
     [key in keyof typeof MenuItems]: MenuItemData;
 } = {
-    HOME: {
-        icon: FiHome,
-        label: 'Início',
-        href: '/',
-        adminOnly: false,
-    },
     INSTANCES: {
         icon: FiMonitor,
         label: 'Instâncias',
