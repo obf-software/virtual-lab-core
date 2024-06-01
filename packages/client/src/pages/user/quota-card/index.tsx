@@ -38,7 +38,7 @@ import { ConfirmDeletionAlertDialog } from '../../../components/confirm-deletion
 import {
     GroupBase,
     OptionBase,
-    Select as ChakraReactSelect,
+    AsyncSelect as ChakraReactSelect,
     SelectComponentsConfig,
     chakraComponents,
 } from 'chakra-react-select';
@@ -338,18 +338,28 @@ export const UserPageQuotaCard: React.FC<UserPageQuotaCardProps> = ({ userQuery 
 
                     <ChakraReactSelect
                         name='instanceType'
-                        placeholder='Selecione um tipo de instância'
+                        placeholder='Digite o nome do tipo de instância'
                         noOptionsMessage={() => 'Nenhum tipo de instância encontrado'}
                         selectedOptionColorScheme='blue'
                         isLoading={instanceTypesQuery.isLoading || updateQuotas.isPending}
                         components={instanceTypeSelectComponents}
-                        options={(() => {
-                            return instanceTypesQuery.data?.map((instanceType) => ({
-                                label: instanceType.name,
-                                value: instanceType.name,
-                                instanceType,
-                            }));
-                        })()}
+                        loadOptions={(input, callback) => {
+                            const filteredOptions =
+                                instanceTypesQuery.data?.filter((instanceType) =>
+                                    instanceType.name.toLowerCase().includes(input.toLowerCase()),
+                                ) ?? [];
+
+                            const mappedValues =
+                                filteredOptions
+                                    .filter((i) => i)
+                                    .map((i) => ({
+                                        label: i.name,
+                                        value: i.name,
+                                        instanceType: i,
+                                    })) ?? [];
+
+                            callback(mappedValues);
+                        }}
                         onChange={(selected) => {
                             if (selected === null) {
                                 return;
