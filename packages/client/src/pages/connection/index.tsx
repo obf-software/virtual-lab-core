@@ -1,21 +1,12 @@
 import React from 'react';
 import { Box, Center, Spinner, Stack, Text, useToast } from '@chakra-ui/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useConnection } from '../../hooks/use-connection';
-
-enum ConnectionState {
-    IDDLE = 'IDDLE',
-    CONNECTING = 'CONNECTING',
-    WAITING = 'WAITING',
-    CONNECTED = 'CONNECTED',
-    DISCONNECTING = 'DISCONNECTING',
-    DISCONNECTED = 'DISCONNECTED',
-}
+import { ConnectionState, useConnection } from '../../hooks/use-connection';
 
 const connectionStateText: Record<ConnectionState, string> = {
     [ConnectionState.IDDLE]: 'Aguardando conexão',
     [ConnectionState.CONNECTING]: 'Conectando',
-    [ConnectionState.WAITING]: 'Conectando',
+    [ConnectionState.WAITING]: 'Esperando resposta do servidor',
     [ConnectionState.CONNECTED]: 'Conexão estabelecida',
     [ConnectionState.DISCONNECTING]: 'Desconectando do servidor',
     [ConnectionState.DISCONNECTED]: 'Desconectado do servidor',
@@ -26,14 +17,40 @@ export const ConnectionPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const connectionString = searchParams.get('connectionString');
     const [counter, setCounter] = React.useState<number>(5);
+    const { display, state, errorMessage } = useConnection({
+        connectionString,
+    });
     const [statusText, setStatusText] = React.useState<string>(
         connectionStateText[ConnectionState.IDDLE],
     );
     const toast = useToast();
 
+    /**
+     * Update the status text.
+     */
     React.useEffect(() => {
-        let timeout: NodeJS.Timeout;
-        let interval: NodeJS.Timeout;
+        let timeout: NodeJS.Timeout | undefined;
+
+        if (state === 'DISCONNECTED') {
+            timeout = setTimeout(() => {
+                navigate('/instances');
+            }, 3000);
+        }
+
+        setStatusText(connectionStateText[state]);
+
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [state]);
+
+    /**
+     * Redirect to the home page if no connection string is found.
+     */
+    React.useEffect(() => {
+        let timeout: NodeJS.Timeout | undefined;
+        let interval: NodeJS.Timeout | undefined;
+
         if (!connectionString) {
             timeout = setTimeout(() => {
                 navigate('/');
@@ -42,6 +59,8 @@ export const ConnectionPage: React.FC = () => {
             interval = setInterval(() => {
                 setCounter((prev) => prev - 1);
             }, 1000);
+
+            console.log('No connection string found, redirecting in 5 seconds.');
         }
 
         return () => {
@@ -50,9 +69,31 @@ export const ConnectionPage: React.FC = () => {
         };
     }, [connectionString]);
 
-    if (!connectionString) {
-        return (
-            <Center height={'100vh'}>
+    /**
+     * Show a toast with the error message if it exists.
+     */
+    React.useEffect(() => {
+        let toastId: string | number | undefined;
+        if (errorMessage) {
+            toastId = toast({
+                title: 'Erro de conexão',
+                description: `${errorMessage}`,
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
+        }
+
+        return () => {
+            if (toastId) {
+                toast.close(toastId);
+            }
+        };
+    }, [errorMessage]);
+
+    return (
+        <Center h={'100vh'}>
+            {!connectionString ? (
                 <Stack
                     direction={'column'}
                     spacing={4}
@@ -80,112 +121,37 @@ export const ConnectionPage: React.FC = () => {
                         Você será redirecionado em {counter} segundos.
                     </Text>
                 </Stack>
-            </Center>
-        );
-    }
+            ) : (
+                <>
+                    <Stack
+                        hidden={state === ConnectionState.CONNECTED}
+                        direction={'column'}
+                        spacing={4}
+                        alignItems={'center'}
+                    >
+                        <Spinner
+                            size={'xl'}
+                            thickness={'4px'}
+                            speed={'0.65s'}
+                            emptyColor={'gray.200'}
+                            color={'blue.500'}
+                        />
+                        <Text
+                            fontSize={'xl'}
+                            fontWeight={'semibold'}
+                        >
+                            {statusText}
+                        </Text>
+                    </Stack>
 
-    const { display, state, bindControls, errorMessage, client } = useConnection({
-        connectionString,
-    });
-
-    display.onresize = (_width, height) => {
-        display.scale(window.innerHeight / height);
-    };
-
-    React.useEffect(() => {
-        const { unbindControls } = bindControls();
-
-        return () => {
-            unbindControls();
-
-            if (state === ConnectionState.CONNECTED) {
-                client.disconnect();
-            }
-        };
-    }, []);
-
-    React.useEffect(() => {
-        let toastId: string | number | undefined;
-        if (errorMessage) {
-            toastId = toast({
-                title: 'Erro de conexão',
-                description: `${errorMessage}`,
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-            });
-        }
-
-        return () => {
-            if (toastId) {
-                toast.close(toastId);
-            }
-        };
-    }, [errorMessage]);
-
-    React.useEffect(() => {
-        if (state === 'DISCONNECTED') {
-            setTimeout(() => {
-                navigate('/instances');
-            }, 3000);
-        }
-        setStatusText(connectionStateText[state]);
-    }, [state]);
-
-    // const displayHeight = display.getHeight();
-
-    // React.useEffect(() => {
-    //     console.log(displayHeight);
-    //     if (display.getHeight() === 0) {
-    //         return;
-    //     }
-
-    //     display.scale(window.innerHeight / displayHeight);
-    //     console.log(display.getScale());
-    // }, [displayHeight]);
-
-    // // Scale display to fit the screen Height
-    // console.log(window.innerHeight);
-    // console.log(display.getHeight());
-
-    // display.scale(window.innerHeight / display.getHeight());
-
-    // console.log(display.getScale());
-
-    return (
-        <Center h={'100vh'}>
-            <Stack
-                hidden={state === ConnectionState.CONNECTED}
-                direction={'column'}
-                spacing={4}
-                alignItems={'center'}
-            >
-                <Spinner
-                    size={'xl'}
-                    thickness={'4px'}
-                    speed={'0.65s'}
-                    emptyColor={'gray.200'}
-                    color={'blue.500'}
-                />
-                <Text
-                    fontSize={'xl'}
-                    fontWeight={'semibold'}
-                >
-                    {statusText}
-                </Text>
-            </Stack>
-
-            <Box
-                hidden={state !== ConnectionState.CONNECTED}
-                w={'100%'}
-                h={'100vh'}
-                justifyContent={'center'}
-                alignItems={'center'}
-                display={'flex'}
-                ref={(ref) => {
-                    ref?.replaceChildren(display.getElement());
-                }}
-            />
+                    <Box
+                        hidden={state !== ConnectionState.CONNECTED}
+                        ref={(ref) =>
+                            ref?.replaceChildren(display?.getElement() ?? (null as unknown as Node))
+                        }
+                    />
+                </>
+            )}
         </Center>
     );
 };

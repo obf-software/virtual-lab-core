@@ -1,7 +1,7 @@
 import React from 'react';
 import Guacamole from 'guacamole-client';
 
-enum ConnectionState {
+export enum ConnectionState {
     IDDLE = 'IDDLE',
     CONNECTING = 'CONNECTING',
     WAITING = 'WAITING',
@@ -34,68 +34,54 @@ const statusMap: Record<Guacamole.Status.Code, string> = {
     0x031d: 'The operation failed because the current client is already using too many resources',
 };
 
-export const useConnection = (props: { connectionString: string }) => {
+const stateNumberToEnumMap: Record<number, keyof typeof ConnectionState> = {
+    0: 'IDDLE',
+    1: 'CONNECTING',
+    2: 'WAITING',
+    3: 'CONNECTED',
+    4: 'DISCONNECTING',
+    5: 'DISCONNECTED',
+};
+
+export const useConnection = (props: { connectionString: string | null }) => {
     const [state, setState] = React.useState<keyof typeof ConnectionState>('IDDLE');
     const [errorMessage, setErrorMessage] = React.useState<string | undefined>(undefined);
+    const [display, setDisplay] = React.useState<Guacamole.Display>();
 
-    const tunnel = React.useMemo(() => {
-        const newTunnel = new Guacamole.WebSocketTunnel(
-            import.meta.env.VITE_APP_WEBSOCKET_SERVER_URL,
-        );
-        newTunnel.onerror = (error) => {
+    React.useEffect(() => {
+        if (!props.connectionString) {
+            return;
+        }
+
+        const onErrorCallback = (error: Guacamole.Status) => {
             setErrorMessage(statusMap[error.code] ?? 'Erro desconhecido');
         };
-        return newTunnel;
-    }, []);
 
-    const client = React.useMemo(() => {
+        const tunnel = new Guacamole.WebSocketTunnel(import.meta.env.VITE_APP_WEBSOCKET_SERVER_URL);
+        tunnel.onerror = onErrorCallback;
+
         const newClient = new Guacamole.Client(tunnel);
-
-        newClient.onerror = (error) => {
-            setErrorMessage(statusMap[error.code] ?? 'Erro desconhecido');
-        };
-
+        newClient.onerror = onErrorCallback;
         newClient.onstatechange = (state) => {
-            const stateMap: Record<number, keyof typeof ConnectionState> = {
-                0: 'IDDLE',
-                1: 'CONNECTING',
-                2: 'WAITING',
-                3: 'CONNECTED',
-                4: 'DISCONNECTING',
-                5: 'DISCONNECTED',
-            };
-
-            const newState = stateMap[state];
-
-            if (newState === undefined) {
-                console.log('Unknown state', state);
-                return;
-            }
-
-            setState(newState);
+            setState(stateNumberToEnumMap[state] ?? 'IDDLE');
         };
-
         newClient.connect(props.connectionString);
 
-        return newClient;
-    }, [tunnel, props.connectionString]);
+        const newDisplay = newClient.getDisplay();
+        newDisplay.onresize = (_width, height) => {
+            newDisplay.scale(window.innerHeight / height);
+        };
 
-    const display = React.useMemo(() => {
-        const newDisplay = client.getDisplay();
-        return newDisplay;
-    }, [client]);
-
-    const bindControls = () => {
         const newKeyboard = new Guacamole.Keyboard(document);
-        newKeyboard.onkeydown = (keysym) => client.sendKeyEvent(1, keysym);
-        newKeyboard.onkeyup = (keysym) => client.sendKeyEvent(0, keysym);
+        newKeyboard.onkeydown = (keysym) => newClient.sendKeyEvent(1, keysym);
+        newKeyboard.onkeyup = (keysym) => newClient.sendKeyEvent(0, keysym);
 
-        const newMouse = new Guacamole.Mouse(display.getElement());
+        const newMouse = new Guacamole.Mouse(newDisplay.getElement());
 
         const adjustScale = (mouseState: Guacamole.Mouse.State) =>
             new Guacamole.Mouse.State(
-                mouseState.x / display.getScale(),
-                mouseState.y / display.getScale(),
+                mouseState.x / newDisplay.getScale(),
+                mouseState.y / newDisplay.getScale(),
                 mouseState.left,
                 mouseState.middle,
                 mouseState.right,
@@ -103,28 +89,35 @@ export const useConnection = (props: { connectionString: string }) => {
                 mouseState.down,
             );
 
-        newMouse.onmousedown = (mouseState) => client.sendMouseState(adjustScale(mouseState));
-        newMouse.onmouseup = (mouseState) => client.sendMouseState(adjustScale(mouseState));
-        newMouse.onmousemove = (mouseState) => client.sendMouseState(adjustScale(mouseState));
+        newMouse.onmousedown = (mouseState) => newClient.sendMouseState(adjustScale(mouseState));
+        newMouse.onmouseup = (mouseState) => newClient.sendMouseState(adjustScale(mouseState));
+        newMouse.onmousemove = (mouseState) => newClient.sendMouseState(adjustScale(mouseState));
 
-        return {
-            mouse: newMouse,
-            keyboard: newKeyboard,
-            unbindControls: () => {
-                newKeyboard.onkeydown = null;
-                newKeyboard.onkeyup = null;
-                newMouse.onmousedown = null;
-                newMouse.onmouseup = null;
-                newMouse.onmousemove = null;
-            },
+        setDisplay(newDisplay);
+
+        return () => {
+            newKeyboard.onkeydown = null;
+            newKeyboard.onkeyup = null;
+
+            newMouse.onmousedown = null;
+            newMouse.onmouseup = null;
+            newMouse.onmousemove = null;
+
+            newDisplay.onresize = null;
+
+            newClient.onstatechange = null;
+            newClient.onerror = null;
+
+            tunnel.onerror = null;
+
+            newClient.disconnect();
+            tunnel.disconnect();
         };
-    };
+    }, []);
 
     return {
-        state,
-        client,
         display,
-        bindControls,
+        state,
         errorMessage,
     };
 };
