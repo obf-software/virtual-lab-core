@@ -111,7 +111,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                     },
                     confirm_password: {
                         label: 'Confirme a senha',
-                        placeholder: 'As senhas devem ser iguais',
+                        placeholder: '',
                         isRequired: true,
                         autocomplete: 'new-password',
                     },
@@ -147,7 +147,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                     },
                     confirm_password: {
                         label: 'Confirme a nova senha',
-                        placeholder: 'As senhas devem ser iguais',
+                        placeholder: '',
                         isRequired: true,
                         autocomplete: 'new-password',
                     },
@@ -161,7 +161,7 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                     },
                     confirm_password: {
                         label: 'Confirme a nova senha',
-                        placeholder: 'As senhas devem ser iguais',
+                        placeholder: '',
                         isRequired: true,
                         autocomplete: 'new-password',
                     },
