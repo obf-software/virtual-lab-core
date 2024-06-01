@@ -104,9 +104,9 @@ Isso pode ser feito de duas formas:
 1. **Durante o registro**: Um modal é exibido após o cadastro, solicitando a confirmação do email. Basta seguir as instruções, utilizando o código enviado por email.
 
 2. **Página de perfil**: Caso a verificação não tenha sido feita durante o registro, ou a conta tenha sido criada manualmente, é possível verificar o email através da página de perfil.
-   a. Acesse a página de perfil clicando no seu nome de usuário no canto superior direito.
-   b. Clique no botão `Verificar email`.
-   c. Um email será enviado com um código de verificação. Basta inserir o código no campo correspondente.
+    1. Acesse a página de perfil clicando no seu nome de usuário no canto superior direito.
+    2. Clique no botão `Verificar email`.
+    3. Um email será enviado com um código de verificação. Basta inserir o código no campo correspondente.
 
 ## Cotas de uso
 
@@ -161,3 +161,15 @@ Para atualizar as cotas de uso de um usuário:
 3. Acesse a página de perfil do usuário clicando no botão `Azul` "Abrir Usuário" na coluna `Ações`.
 
 4. Altere as cotas de uso interagindo com os campos de inserção de valores. As novas cotas serão aplicadas imediatamente, sem a necessidade de aprovação.
+
+## Notificações
+
+As notificações são mensagens enviadas pelo sistema para informar o usuário sobre eventos relevantes relacionados à algum recurso de sua responsabilidade.
+
+Elas são exibidas no canto superior direito da tela, no ícone de sino, junto com o número de notificações não lidas.
+
+:::tip Vale lembrar que
+
+As notificações têm caráter informativo e não requerem ação do usuário para a aplicação de alguma funcionalidade.
+
+:::
