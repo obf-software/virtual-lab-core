@@ -51,6 +51,8 @@ Amplify.configure({
                                   },
                               ],
                           },
+                          email: true,
+                          username: true,
                       }
                     : undefined,
         },

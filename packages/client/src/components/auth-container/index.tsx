@@ -1,6 +1,6 @@
 import { Authenticator } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
-import { Box, Button, Heading, Image } from '@chakra-ui/react';
+import { Box, Button, Image } from '@chakra-ui/react';
 import { signInWithRedirect } from 'aws-amplify/auth';
 
 export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
@@ -8,6 +8,49 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
     const hideSignUp = import.meta.env.VITE_APP_AWS_USER_POOL_SELF_SIGN_UP === 'false';
     const [isIdentityProviderButtonLoading, setIsIdentityProviderButtonLoading] =
         React.useState<boolean>(false);
+
+    const oAuthButton: JSX.Element = (
+        <Box
+            h={'42px'}
+            px={8}
+            mt={2}
+            mb={4}
+        >
+            <Button
+                isLoading={isIdentityProviderButtonLoading}
+                leftIcon={
+                    <Image
+                        src={'logo-utfpr.png'}
+                        h={4}
+                    />
+                }
+                fontWeight={'normal'}
+                variant={'outline'}
+                borderColor={'black'}
+                w={'100%'}
+                h={'100%'}
+                _hover={{
+                    borderColor: '#047d95',
+                    bgColor: '#e9f9fc',
+                }}
+                onClick={() => {
+                    setIsIdentityProviderButtonLoading(true);
+
+                    signInWithRedirect({
+                        provider: {
+                            custom: import.meta.env.VITE_APP_AWS_IDENTITY_PROVIDER_NAME,
+                        },
+                    }).catch((error) => {
+                        setIsIdentityProviderButtonLoading(false);
+
+                        console.error('Error signing in with custom provider', error);
+                    });
+                }}
+            >
+                Entrar com a UTFPR
+            </Button>
+        </Box>
+    );
 
     return (
         <Authenticator
@@ -25,15 +68,12 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                             borderLeft={'1px'}
                             borderRight={'1px'}
                         >
-                            <Heading
-                                as='h1'
-                                size='xl'
-                                textAlign='center'
-                                fontFamily={'mono'}
-                                py={6}
-                            >
-                                Virtual Lab
-                            </Heading>
+                            <Image
+                                src={'logo-light.png'}
+                                alt={'Logo'}
+                                h={200}
+                                mx={'auto'}
+                            />
                         </Box>
                     );
                 },
@@ -43,51 +83,15 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
                             return null;
                         }
 
-                        return (
-                            <Box
-                                h={'42px'}
-                                px={8}
-                                mt={8}
-                            >
-                                <Button
-                                    isLoading={isIdentityProviderButtonLoading}
-                                    leftIcon={
-                                        <Image
-                                            src={'logo-utfpr.png'}
-                                            h={4}
-                                        />
-                                    }
-                                    fontWeight={'normal'}
-                                    variant={'outline'}
-                                    borderColor={'black'}
-                                    w={'100%'}
-                                    h={'100%'}
-                                    _hover={{
-                                        borderColor: '#047d95',
-                                        bgColor: '#e9f9fc',
-                                    }}
-                                    onClick={() => {
-                                        setIsIdentityProviderButtonLoading(true);
-
-                                        signInWithRedirect({
-                                            provider: {
-                                                custom: import.meta.env
-                                                    .VITE_APP_AWS_IDENTITY_PROVIDER_NAME,
-                                            },
-                                        }).catch((error) => {
-                                            setIsIdentityProviderButtonLoading(false);
-
-                                            console.error(
-                                                'Error signing in with custom provider',
-                                                error,
-                                            );
-                                        });
-                                    }}
-                                >
-                                    Entrar com a UTFPR
-                                </Button>
-                            </Box>
-                        );
+                        return oAuthButton;
+                    },
+                },
+                SignUp: {
+                    Header: () => {
+                        if (!enableIdentityProvider) {
+                            return null;
+                        }
+                        return oAuthButton;
                     },
                 },
                 Footer: () => {

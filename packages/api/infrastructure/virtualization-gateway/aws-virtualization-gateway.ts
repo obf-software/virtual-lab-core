@@ -12,6 +12,7 @@ import {
     StopInstancesCommand,
     _InstanceType,
     paginateDescribeInstanceStatus,
+    paginateDescribeInstanceTypes,
 } from '@aws-sdk/client-ec2';
 import {
     VirtualizationGateway,
@@ -611,9 +612,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
 
     listInstanceTypes = async (instanceTypes?: string[]): Promise<VirtualInstanceType[]> => {
         try {
-            if (instanceTypes !== undefined && instanceTypes.length === 0) {
-                return [];
-            }
+            if (instanceTypes?.length === 0) return [];
 
             if (
                 instanceTypes === undefined &&
@@ -624,49 +623,38 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 return this.cachedInstanceTypes;
             }
 
-            const fetchedInstanceTypes: VirtualInstanceType[] = [];
-            let nextToken: string | undefined;
+            const results: InstanceTypeInfo[] = [];
 
-            // eslint-disable-next-line no-constant-condition
-            while (true) {
-                const { InstanceTypes, NextToken } = await this.ec2Client.send(
-                    new DescribeInstanceTypesCommand({
-                        InstanceTypes: instanceTypes as _InstanceType[] | undefined,
-                        Filters:
-                            instanceTypes === undefined
-                                ? [
-                                      { Name: 'bare-metal', Values: ['false'] },
-                                      { Name: 'current-generation', Values: ['true'] },
-                                      { Name: 'supported-usage-class', Values: ['on-demand'] },
-                                      { Name: 'supported-virtualization-type', Values: ['hvm'] },
-                                  ]
-                                : undefined,
-                        MaxResults: instanceTypes === undefined ? 100 : undefined,
-                        NextToken: nextToken,
-                    }),
-                );
-
-                fetchedInstanceTypes.push(
-                    ...(InstanceTypes?.map((instanceType) => this.mapInstanceType(instanceType)) ??
-                        []),
-                );
-
-                if (NextToken !== undefined) {
-                    console.log('NextToken', NextToken, InstanceTypes?.length);
-                    nextToken = NextToken;
-                } else {
-                    break;
-                }
+            for await (const page of paginateDescribeInstanceTypes(
+                { client: this.ec2Client },
+                {
+                    InstanceTypes: instanceTypes as _InstanceType[] | undefined,
+                    Filters:
+                        instanceTypes === undefined
+                            ? [
+                                  { Name: 'bare-metal', Values: ['false'] },
+                                  { Name: 'current-generation', Values: ['true'] },
+                                  { Name: 'supported-usage-class', Values: ['on-demand'] },
+                                  { Name: 'supported-virtualization-type', Values: ['hvm'] },
+                              ]
+                            : undefined,
+                },
+            )) {
+                results.push(...(page.InstanceTypes ?? []));
             }
 
+            const mappedInstanceTypes = results.map((instanceType) =>
+                this.mapInstanceType(instanceType),
+            );
+
             if (instanceTypes === undefined) {
-                this.cachedInstanceTypes = fetchedInstanceTypes;
+                this.cachedInstanceTypes = mappedInstanceTypes;
                 this.cachedInstanceTypesAt = dayjs().utc().toDate();
             }
 
-            return fetchedInstanceTypes;
+            return mappedInstanceTypes;
         } catch (error) {
-            console.log(error);
+            this.deps.logger.error('Failed to list instance types', { error });
             return [];
         }
     };
