@@ -181,7 +181,10 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 if (idsToFecth.length !== 0) {
                     for await (const page of paginateDescribeInstanceStatus(
                         { client: this.ec2Client },
-                        { InstanceIds: ids.filter((id) => !invalidIds.includes(id)) },
+                        {
+                            InstanceIds: ids.filter((id) => !invalidIds.includes(id)),
+                            IncludeAllInstances: true,
+                        },
                     )) {
                         results.push(...(page.InstanceStatuses ?? []));
                     }
