@@ -1,6 +1,6 @@
 import { Authenticator } from '@aws-amplify/ui-react';
 import React, { PropsWithChildren } from 'react';
-import { Box, Button, Image } from '@chakra-ui/react';
+import { Box, Button, Image, ToastId, useToast } from '@chakra-ui/react';
 import { signInWithRedirect } from 'aws-amplify/auth';
 import { I18n } from 'aws-amplify/utils';
 
@@ -26,6 +26,35 @@ export const AuthContainer: React.FC<PropsWithChildren> = ({ children }) => {
     const hideSignUp = import.meta.env.VITE_APP_AWS_USER_POOL_SELF_SIGN_UP === 'false';
     const [isIdentityProviderButtonLoading, setIsIdentityProviderButtonLoading] =
         React.useState<boolean>(false);
+    const toast = useToast();
+
+    const searchParams = new URLSearchParams(window.location.search);
+
+    const error = searchParams.get('error') ?? undefined;
+    const errorDescription = searchParams.get('error_description') ?? undefined;
+
+    React.useEffect(() => {
+        let toastId: ToastId | undefined;
+
+        if (
+            window.location.pathname === '/' &&
+            (error !== undefined || errorDescription !== undefined)
+        ) {
+            toastId = toast({
+                title: error ?? 'Erro',
+                description: errorDescription,
+                status: 'error',
+                duration: 9000,
+                isClosable: true,
+            });
+        }
+
+        return () => {
+            if (toastId !== undefined) {
+                toast.close(toastId);
+            }
+        };
+    }, [error, errorDescription]);
 
     const oAuthButton: JSX.Element = (
         <Box

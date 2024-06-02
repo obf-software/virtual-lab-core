@@ -10,4 +10,10 @@ export interface UserPoolGateway {
         verificationEmailMessage?: string;
         verificationSmsMessage?: string;
     }): Promise<void>;
+
+    updateUserPoolClient(props: {
+        clientId: string;
+        callbackUrls?: string[];
+        logoutUrls?: string[];
+    }): Promise<void>;
 }

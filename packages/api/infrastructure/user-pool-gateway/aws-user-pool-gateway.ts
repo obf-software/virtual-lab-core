@@ -1,6 +1,8 @@
 import {
     CognitoIdentityProviderClient,
+    DescribeUserPoolClientCommand,
     DescribeUserPoolCommand,
+    UpdateUserPoolClientCommand,
     UpdateUserPoolCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { UserPoolGateway } from '../../application/user-pool-gateway';
@@ -82,6 +84,53 @@ export class AWSUserPoolGateway implements UserPoolGateway {
                         props.verificationSmsMessage ??
                         UserPool.VerificationMessageTemplate?.SmsMessage,
                 },
+            }),
+        );
+    };
+
+    updateUserPoolClient = async (props: {
+        clientId: string;
+        callbackUrls?: string[];
+        logoutUrls?: string[];
+    }): Promise<void> => {
+        const { UserPoolClient } = await this.cognitoIdentityProviderClient.send(
+            new DescribeUserPoolClientCommand({
+                ClientId: props.clientId,
+                UserPoolId: this.deps.COGNITO_USER_POOL_ID,
+            }),
+        );
+
+        if (UserPoolClient === undefined) {
+            throw Errors.internalError(
+                `Cognito User Pool Client with ID ${this.deps.COGNITO_USER_POOL_ID} not found`,
+            );
+        }
+
+        await this.cognitoIdentityProviderClient.send(
+            new UpdateUserPoolClientCommand({
+                ClientId: UserPoolClient.ClientId,
+                UserPoolId: UserPoolClient.UserPoolId,
+                AllowedOAuthFlowsUserPoolClient: UserPoolClient.AllowedOAuthFlowsUserPoolClient,
+                AccessTokenValidity: UserPoolClient.AccessTokenValidity,
+                AllowedOAuthFlows: UserPoolClient.AllowedOAuthFlows,
+                AllowedOAuthScopes: UserPoolClient.AllowedOAuthScopes,
+                AnalyticsConfiguration: UserPoolClient.AnalyticsConfiguration,
+                AuthSessionValidity: UserPoolClient.AuthSessionValidity,
+                ClientName: UserPoolClient.ClientName,
+                DefaultRedirectURI: UserPoolClient.DefaultRedirectURI,
+                EnableTokenRevocation: UserPoolClient.EnableTokenRevocation,
+                ExplicitAuthFlows: UserPoolClient.ExplicitAuthFlows,
+                IdTokenValidity: UserPoolClient.IdTokenValidity,
+                EnablePropagateAdditionalUserContextData:
+                    UserPoolClient.EnablePropagateAdditionalUserContextData,
+                PreventUserExistenceErrors: UserPoolClient.PreventUserExistenceErrors,
+                ReadAttributes: UserPoolClient.ReadAttributes,
+                RefreshTokenValidity: UserPoolClient.RefreshTokenValidity,
+                SupportedIdentityProviders: UserPoolClient.SupportedIdentityProviders,
+                TokenValidityUnits: UserPoolClient.TokenValidityUnits,
+                WriteAttributes: UserPoolClient.WriteAttributes,
+                CallbackURLs: props.callbackUrls ?? UserPoolClient.CallbackURLs,
+                LogoutURLs: props.logoutUrls ?? UserPoolClient.LogoutURLs,
             }),
         );
     };

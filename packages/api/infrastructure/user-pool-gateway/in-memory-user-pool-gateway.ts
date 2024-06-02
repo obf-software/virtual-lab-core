@@ -13,4 +13,11 @@ export class InMemoryUserPoolGateway implements UserPoolGateway {
         verificationEmailMessage?: string;
         verificationSmsMessage?: string;
     }): Promise<void> => Promise.resolve();
+
+    // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars
+    updateUserPoolClient = async (props: {
+        clientId: string;
+        callbackUrls?: string[];
+        logoutUrls?: string[];
+    }): Promise<void> => Promise.resolve();
 }
