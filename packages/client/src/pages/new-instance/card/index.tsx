@@ -17,7 +17,7 @@ import { FiCalendar, FiClock, FiPlus } from 'react-icons/fi';
 import { NewInstancePageCardLaunchModal } from './launch-modal';
 import { BiHdd } from 'react-icons/bi';
 import dayjs from 'dayjs';
-import * as relativeTime from 'dayjs/plugin/relativeTime';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { IconType } from 'react-icons';
 import { InstanceTemplate } from '../../../services/api-protocols';

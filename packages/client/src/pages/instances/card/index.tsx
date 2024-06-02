@@ -34,7 +34,7 @@ import {
     FiTrash,
 } from 'react-icons/fi';
 import { IconType } from 'react-icons';
-import * as relativeTime from 'dayjs/plugin/relativeTime';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { BiBookBookmark, BiHdd } from 'react-icons/bi';
 import { BsGpuCard } from 'react-icons/bs';
 import { LiaMemorySolid } from 'react-icons/lia';

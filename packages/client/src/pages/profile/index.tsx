@@ -1,4 +1,3 @@
-import 'dayjs/locale/pt-br';
 import React, { useEffect } from 'react';
 import { useMenuContext } from '../../contexts/menu/hook';
 import {

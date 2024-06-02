@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Core } from './Core';
 
 export const ConnectionGateway = ({ stack }: sst.StackContext) => {
-    const { vpc, ssmParameters, defaultEventBus } = sst.use(Core);
+    const { ssmParameters, defaultEventBus } = sst.use(Core);
 
     const connectionGatewayService = new sst.Service(stack, 'ConnectionGatewayService', {
         path: 'packages/connection-gateway',
@@ -25,9 +25,11 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
             memoryUtilization: 70,
         },
         cdk: {
-            vpc,
             applicationLoadBalancerTargetGroup: {
                 stickinessCookieDuration: cdk.Duration.days(1),
+                healthCheck: {
+                    healthyHttpCodes: '200-499',
+                },
             },
         },
     });
