@@ -5,6 +5,7 @@ import { AppSyncApi } from './AppSyncApi';
 import { ConnectionGateway } from './ConnectionGateway';
 import { featureFlagIsEnabled } from './config/feature-flags';
 import { Docs } from './Docs';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 
 export const Client = ({ stack, app }: sst.StackContext) => {
     const { userPool, userPoolClient, userPoolDomain, identityPoolId, userPoolIdentityProvider } =
@@ -14,10 +15,58 @@ export const Client = ({ stack, app }: sst.StackContext) => {
     const { docsSite } = sst.use(Docs);
     const { serviceWebsocketUrl } = sst.use(ConnectionGateway);
 
+    let customDomain: sst.StaticSiteDomainProps | undefined;
+
+    if (
+        featureFlagIsEnabled({
+            featureFlag: 'CLIENT_CUSTOM_DOMAIN',
+            components: ['Client Site Custom Domain'],
+            forceDisable: app.mode === 'dev',
+        })
+    ) {
+        const domainName = process.env.CLIENT_CUSTOM_DOMAIN_NAME;
+        const certificateArn = process.env.CLIENT_CUSTOM_DOMAIN_CERTIFICATE_ARN;
+
+        if (domainName === undefined || certificateArn === undefined) {
+            throw new Error(
+                'CLIENT_CUSTOM_DOMAIN_NAME and CLIENT_CUSTOM_DOMAIN_CERTIFICATE_ARN must be set when CLIENT_CUSTOM_DOMAIN is enabled.',
+            );
+        }
+
+        customDomain = {
+            isExternalDomain: true,
+            domainName: domainName,
+            cdk: {
+                certificate: acm.Certificate.fromCertificateArn(
+                    stack,
+                    'ClientCertificate',
+                    certificateArn,
+                ),
+            },
+        };
+    }
+
     const staticSite = new sst.StaticSite(stack, 'StaticSite', {
         path: 'packages/client',
         buildCommand: 'npm run build',
+        customDomain,
         buildOutput: 'dist',
+        assets: {
+            fileOptions: [
+                {
+                    files: '**',
+                    cacheControl: 'max-age=0,no-cache,no-store,must-revalidate',
+                },
+                {
+                    files: '**/*.{js,css}',
+                    cacheControl: 'max-age=31536000,public,immutable',
+                },
+                {
+                    files: '**/*.{png,jpg,jpeg,gif,svg,ico}',
+                    cacheControl: 'max-age=31536000,public,immutable',
+                },
+            ],
+        },
         environment: {
             VITE_APP_AWS_REGION: app.region,
             VITE_APP_AWS_USER_POOL_ID: userPool.userPoolId,
@@ -55,8 +104,8 @@ export const Client = ({ stack, app }: sst.StackContext) => {
                     },
                 },
             },
-            onCreate: 'packages/api/interfaces/jobs/updateUserPoolGateway.handler',
-            onUpdate: 'packages/api/interfaces/jobs/updateUserPoolGateway.handler',
+            onCreate: 'packages/api/interfaces/jobs/update-user-pool.handler',
+            onUpdate: 'packages/api/interfaces/jobs/update-user-pool.handler',
             params: {
                 inviteUserEmailSubject: `Convite Virtual Lab`,
                 inviteUserEmailMessage: `
@@ -95,8 +144,34 @@ export const Client = ({ stack, app }: sst.StackContext) => {
         },
     );
 
+    const staticSiteUrls = [
+        staticSite.customDomainUrl,
+        staticSite.url,
+        'http://localhost:5173',
+    ].filter((url): url is string => url !== undefined);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const updateUserPoolClientUrlsScript = new sst.Script(stack, 'UpdateUserPoolClientUrlsScript', {
+        defaults: {
+            function: {
+                permissions: ['cognito-idp:*', 'iam:PassRole'],
+                environment: {
+                    COGNITO_USER_POOL_ID: userPool.userPoolId,
+                },
+            },
+        },
+        onCreate: 'packages/api/interfaces/jobs/update-user-pool-client.handler',
+        onUpdate: 'packages/api/interfaces/jobs/update-user-pool-client.handler',
+        params: {
+            clientId: userPoolClient.userPoolClientId,
+            callbackUrls: staticSiteUrls,
+            logoutUrls: staticSiteUrls,
+        },
+    });
+
     stack.addOutputs({
-        staticSiteUrl: siteUrl,
+        clientSiteUrl: siteUrl,
+        clientSiteDistributionUrl: staticSite.url,
     });
 
     return {

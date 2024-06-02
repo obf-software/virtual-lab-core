@@ -1,12 +1,11 @@
 import * as sst from 'sst/constructs';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Api } from './Api';
 import { OpenApiSpecs } from './OpenApiSpecs';
-import { Core } from './Core';
+import { featureFlagIsEnabled } from './config/feature-flags';
 
-export function Docs({ stack }: sst.StackContext) {
-    const { ssmParameters } = sst.use(Core);
-    const { pathsObjects } = sst.use(Api);
+export function Docs({ stack, app }: sst.StackContext) {
+    const { api, pathsObjects } = sst.use(Api);
 
     const openApiSpecs = new OpenApiSpecs(stack, 'OpenApiSpecs', {
         info: {
@@ -30,10 +29,10 @@ export function Docs({ stack }: sst.StackContext) {
             `,
         },
         servers: [
-            {
-                url: ssm.StringParameter.valueForStringParameter(stack, ssmParameters.apiUrl.name),
-                description: `Ambiente ${stack.stage}`,
-            },
+            // {
+            //     url: api.url,
+            //     description: `Ambiente ${stack.stage}`,
+            // },
         ],
         tags: [
             {
@@ -653,17 +652,66 @@ export function Docs({ stack }: sst.StackContext) {
         paths: pathsObjects,
     });
 
+    let customDomain: sst.StaticSiteDomainProps | undefined;
+
+    if (
+        featureFlagIsEnabled({
+            featureFlag: 'DOCS_CUSTOM_DOMAIN',
+            components: ['Docs Site Custom Domain'],
+            forceDisable: app.mode === 'dev',
+        })
+    ) {
+        const domainName = process.env.DOCS_CUSTOM_DOMAIN_NAME;
+        const certificateArn = process.env.DOCS_CUSTOM_DOMAIN_CERTIFICATE_ARN;
+
+        if (domainName === undefined || certificateArn === undefined) {
+            throw new Error(
+                'DOCS_CUSTOM_DOMAIN_NAME and DOCS_CUSTOM_DOMAIN_CERTIFICATE_ARN must be set when DOCS_CUSTOM_DOMAIN is enabled.',
+            );
+        }
+
+        customDomain = {
+            isExternalDomain: true,
+            domainName: domainName,
+            cdk: {
+                certificate: acm.Certificate.fromCertificateArn(
+                    stack,
+                    'ClientCertificate',
+                    certificateArn,
+                ),
+            },
+        };
+    }
+
     const docsSite = new sst.StaticSite(stack, 'DocsSite', {
         path: 'packages/docs',
         buildCommand: 'npm run build',
+        customDomain,
         buildOutput: 'build',
+        assets: {
+            fileOptions: [
+                {
+                    files: '**',
+                    cacheControl: 'max-age=0,no-cache,no-store,must-revalidate',
+                },
+                {
+                    files: '**/*.{js,css}',
+                    cacheControl: 'max-age=31536000,public,immutable',
+                },
+                {
+                    files: '**/*.{png,jpg,jpeg,gif,svg,ico}',
+                    cacheControl: 'max-age=31536000,public,immutable',
+                },
+            ],
+        },
         environment: {
             API_DOCUMENTATION_SPEC_URL: openApiSpecs.getSpecsUrl(),
         },
     });
 
     stack.addOutputs({
-        docsSiteUrl: docsSite.url,
+        docsSiteUrl: docsSite.customDomainUrl ?? docsSite.url ?? 'http://localhost:3000/',
+        docsSiteDistributionUrl: docsSite.url,
         openApiSpecsUrl: openApiSpecs.getSpecsUrl(),
     });
 

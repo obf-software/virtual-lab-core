@@ -84,3 +84,49 @@ Essa _feature flag_ é utilizada em conjunto com outras variáveis de ambiente p
 Essa _feature flag_ é desabilitada automaticamente quando a aplicação é executada com o comando `npm run dev`, pois a instrumentação do New Relic impacta na conexão das lambdas com o ambiente local.
 
 :::
+
+### `CLIENT_CUSTOM_DOMAIN`
+
+A _feature flag_ `CLIENT_CUSTOM_DOMAIN` é utilizada para habilitar a configuração de um domínio personalizado para o cliente.
+
+-   **Valor Padrão**: `false`
+
+:::info Importante
+
+Essa _feature flag_ é utilizada em conjunto com outras variáveis de ambiente para configurar o domínio personalizado. **Caso essas variáveis de ambiente não sejam configuradas corretamente, a configuração do domínio personalizado falhará.**
+
+-   `CLIENT_CUSTOM_DOMAIN_NAME`: Nome do domínio personalizado.
+-   `CLIENT_CUSTOM_DOMAIN_CERTIFICATE_ARN`: ARN do certificado SSL do domínio personalizado.
+
+Depois de configurar o domínio personalizado, é necessário configurar o DNS adicionando um registro CNAME que aponte para o domínio do CloudFront do cliente.
+
+:::
+
+:::warning Atenção
+
+Essa _feature flag_ é desabilitada automaticamente quando a aplicação é executada com o comando `npm run dev`, pois o cliente roda localmente.
+
+:::
+
+### `DOCS_CUSTOM_DOMAIN`
+
+A _feature flag_ `DOCS_CUSTOM_DOMAIN` é utilizada para habilitar a configuração de um domínio personalizado para a documentação.
+
+-   **Valor Padrão**: `false`
+
+:::info Importante
+
+Essa _feature flag_ é utilizada em conjunto com outras variáveis de ambiente para configurar o domínio personalizado. **Caso essas variáveis de ambiente não sejam configuradas corretamente, a configuração do domínio personalizado falhará.**
+
+-   `DOCS_CUSTOM_DOMAIN_NAME`: Nome do domínio personalizado.
+-   `DOCS_CUSTOM_DOMAIN_CERTIFICATE_ARN`: ARN do certificado SSL do domínio personalizado.
+
+Depois de configurar o domínio personalizado, é necessário configurar o DNS adicionando um registro CNAME que aponte para o domínio do CloudFront da documentação.
+
+:::
+
+:::warning Atenção
+
+Essa _feature flag_ é desabilitada automaticamente quando a aplicação é executada com o comando `npm run dev`, pois o cliente roda localmente.
+
+:::

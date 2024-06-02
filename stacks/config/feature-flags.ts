@@ -4,6 +4,8 @@ const enum FeatureFlag {
     USER_POOL_IDENTITY_PROVIDER,
     USER_POOL_SELF_SIGN_UP,
     NEW_RELIC_LAMBDA_INSTRUMENTATION,
+    CLIENT_CUSTOM_DOMAIN,
+    DOCS_CUSTOM_DOMAIN,
 }
 
 const featureFlagToDefaultValueMap: Record<keyof typeof FeatureFlag, boolean> = {
@@ -12,6 +14,8 @@ const featureFlagToDefaultValueMap: Record<keyof typeof FeatureFlag, boolean> = 
     USER_POOL_IDENTITY_PROVIDER: false,
     USER_POOL_SELF_SIGN_UP: true,
     NEW_RELIC_LAMBDA_INSTRUMENTATION: false,
+    CLIENT_CUSTOM_DOMAIN: false,
+    DOCS_CUSTOM_DOMAIN: false,
 };
 
 export const featureFlagIsEnabled = (input: {
