@@ -36,7 +36,7 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
 
     const serviceHttpUrl = connectionGatewayService.url ?? 'http://localhost:8080/';
     const serviceWebsocketUrl = serviceHttpUrl
-        .replace('https://', 'ws://')
+        .replace('https://', 'wss://')
         .replace('http://', 'ws://');
 
     stack.addOutputs({
