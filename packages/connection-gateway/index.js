@@ -1,6 +1,7 @@
 const GuacamoleLite = require('./src/Server');
 const { createLogger, transports, format } = require('winston');
 const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
+const { defaultProvider } = require('@aws-sdk/credential-provider-node');
 const { combine, splat, timestamp, printf } = format;
 
 const PORT = process.env.PORT || 8080;
@@ -27,13 +28,11 @@ const logger = createLogger({
 const getGuacamoleCypherKey = async () => {
     const ssmClient = new SSMClient({
         region: process.env.AWS_REGION,
-        credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            sessionToken: process.env.AWS_SESSION_TOKEN,
-        },
+        credentialDefaultProvider: defaultProvider({}),
     });
     const parameterName = process.env.VL_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME;
+
+    logger.info(`[GUACWS] Environment variables: ${process.env}`);
 
     logger.info(`[GUACWS] Getting Guacamole cypher key from SSM parameter ${parameterName}`);
 
@@ -96,6 +95,7 @@ getGuacamoleCypherKey()
         }
     })
     .catch((err) => {
-        logger.error('[GUACWS] Failed to get Guacamole cypher key from SSM');
-        logger.error(err);
+        logger.error('[GUACWS] Failed to get Guacamole cypher key from SSM', err);
+        // console.error(err);
+        process.exit(0);
     });

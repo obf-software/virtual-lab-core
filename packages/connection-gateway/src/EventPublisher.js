@@ -1,4 +1,5 @@
 const { EventBridgeClient, PutEventsCommand } = require('@aws-sdk/client-eventbridge');
+const { defaultProvider } = require('@aws-sdk/credential-provider-node');
 
 class EventPublisher {
     constructor(logger) {
@@ -44,11 +45,7 @@ class EventPublisher {
     publish = async (detailType, detail) => {
         const eventBridgeClient = new EventBridgeClient({
             region: process.env.AWS_REGION,
-            credentials: {
-                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-                sessionToken: process.env.AWS_SESSION_TOKEN,
-            },
+            credentials: defaultProvider(),
         });
 
         await eventBridgeClient.send(

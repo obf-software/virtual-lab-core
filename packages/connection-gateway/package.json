@@ -10,8 +10,9 @@
         "dev:run": "AWS_PROFILE=virtual-lab npx sst bind \"env | grep -E 'SST_|AWS_|VL_' > .env.tmp && docker run --env-file .env.tmp -p 8080:8080 connection-gateway\""
     },
     "dependencies": {
-        "@aws-sdk/client-eventbridge": "^3.540.0",
-        "@aws-sdk/client-ssm": "^3.540.0",
+        "@aws-sdk/client-eventbridge": "^3.588.0",
+        "@aws-sdk/client-ssm": "^3.588.0",
+        "@aws-sdk/credential-provider-node": "^3.588.0",
         "bufferutil": "^4.0.7",
         "deep-extend": "^0.6.0",
         "moment": "^2.29.4",
