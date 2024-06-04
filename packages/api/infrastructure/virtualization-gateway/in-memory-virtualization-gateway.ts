@@ -80,6 +80,7 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
             distribution: data.distribution ?? 'Ubuntu',
             platform: data.platform ?? 'UNKNOWN',
             storageInGb: data.storageInGb ?? 8,
+            state: data.state ?? 'AVAILABLE',
         };
 
         this.storage.machineImages ??= [];
@@ -324,6 +325,7 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
             distribution: `Ubuntu from ${virtualId}`,
             platform: 'UNKNOWN',
             storageInGb,
+            state: 'AVAILABLE',
         });
 
         return Promise.resolve(id);
