@@ -164,6 +164,11 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         return `virtual-lab-core-${virtualId}-${operation}`;
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    isInstanceReadyToConnect(virtualId: string): Promise<boolean> {
+        return Promise.resolve(true);
+    }
+
     getInstance = async (virtualId: string): Promise<VirtualInstance | undefined> => {
         return Promise.resolve(
             this.storage.virtualInstances?.find((i) => i.virtualId === virtualId),

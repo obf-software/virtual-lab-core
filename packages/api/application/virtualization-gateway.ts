@@ -11,6 +11,7 @@ export type VirtualizationGatewayScheduleOperation = 'turnOff';
 
 export interface VirtualizationGateway {
     getInstance(virtualId: string): Promise<VirtualInstance | undefined>;
+    isInstanceReadyToConnect(virtualId: string): Promise<boolean>;
     listInstancesStates(virtualIds: string[]): Promise<Record<string, InstanceState>>;
     startInstance(virtualId: string): Promise<InstanceState>;
     stopInstance(virtualId: string, hibernate: boolean, force: boolean): Promise<InstanceState>;

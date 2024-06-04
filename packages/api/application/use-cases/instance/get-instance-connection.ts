@@ -62,7 +62,14 @@ export class GetInstanceConnection {
             throw Errors.businessRuleViolation('Instance has not been launched yet');
         }
 
-        const virtualInstance = await this.virtualizationGateway.getInstance(virtualId);
+        const [virtualInstance, isReadyToConnect] = await Promise.all([
+            this.virtualizationGateway.getInstance(virtualId),
+            this.virtualizationGateway.isInstanceReadyToConnect(virtualId),
+        ]);
+
+        if (!isReadyToConnect) {
+            throw Errors.businessRuleViolation('Instance is being prepared for connection');
+        }
 
         if (!virtualInstance) {
             throw Errors.resourceNotFound('Virtual instance', virtualId);

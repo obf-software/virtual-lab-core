@@ -1,6 +1,7 @@
 import {
     CreateImageCommand,
     DescribeImagesCommand,
+    DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
     DescribeInstancesCommand,
     EC2Client,
@@ -146,6 +147,34 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         return `virtual-lab-core-${virtualId}-${operation}`;
     };
 
+    isInstanceReadyToConnect = async (virtualId: string): Promise<boolean> => {
+        try {
+            const command = new DescribeInstanceStatusCommand({
+                InstanceIds: [virtualId],
+                IncludeAllInstances: true,
+            });
+
+            const { InstanceStatuses } = await this.ec2Client.send(command);
+
+            if (InstanceStatuses === undefined || InstanceStatuses.length === 0) {
+                throw Errors.internalError('AWS Instance not found');
+            }
+
+            const instanceStatus = InstanceStatuses[0];
+
+            return (
+                instanceStatus.InstanceStatus?.Status === 'ok' &&
+                instanceStatus.SystemStatus?.Status === 'ok'
+            );
+        } catch (error) {
+            this.deps.logger.error('Failed to check if instance is ready to connect', {
+                error,
+                virtualId,
+            });
+            return false;
+        }
+    };
+
     getInstance = async (virtualId: string): Promise<VirtualInstance | undefined> => {
         const command = new DescribeInstancesCommand({ InstanceIds: [virtualId] });
         const { Reservations } = await this.ec2Client.send(command);
@@ -221,19 +250,6 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         };
 
         return await execute(virtualIds, []);
-
-        // const command = new DescribeInstanceStatusCommand({
-        //     IncludeAllInstances: true,
-        //     InstanceIds: virtualIds,
-        // });
-        // const { InstanceStatuses } = await this.ec2Client.send(command);
-        // const instanceStates: Record<string, InstanceState> = {};
-        // InstanceStatuses?.forEach((instanceStatus) => {
-        //     instanceStates[instanceStatus.InstanceId ?? ''] = this.mapInstanceState(
-        //         instanceStatus.InstanceState?.Name,
-        //     );
-        // });
-        // return instanceStates;
     };
 
     startInstance = async (virtualId: string): Promise<InstanceState> => {

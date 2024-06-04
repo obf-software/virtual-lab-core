@@ -254,11 +254,23 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                                         `/connection?connectionString=${encodedConnectionString}`,
                                     );
                                 })
-                                .catch(() => {
+                                .catch((error) => {
+                                    const messageMap: Record<string, string> = {
+                                        'Instance has not been launched yet':
+                                            'A instância ainda não foi configurada',
+                                        'Instance is being prepared for connection':
+                                            'A instância está sendo preparada para conexão',
+                                        'Instance is not ready yet':
+                                            'A instância ainda não está pronta',
+                                    };
+
+                                    const errorMessage =
+                                        messageMap[error instanceof Error ? error.message : ''] ??
+                                        'Ocorreu um erro ao obter os dados de conexão da instância. Tente novamente em alguns minutos';
+
                                     toast({
-                                        title: 'Erro ao obter dados de conexão',
-                                        description:
-                                            'Ocorreu um erro ao obter os dados de conexão da instância. Tente novamente mais tarde.',
+                                        title: 'Ainda não é possível conectar-se à instância',
+                                        description: errorMessage,
                                         status: 'error',
                                         duration: 5000,
                                         isClosable: true,
