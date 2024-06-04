@@ -32,7 +32,6 @@ describe('SignUpUser use case', () => {
             username,
             name: 'John Doe',
             preferredUsername: 'john',
-            role: 'USER',
         };
 
         const user = await useCase.execute(input);

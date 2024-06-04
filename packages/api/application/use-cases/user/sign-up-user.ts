@@ -5,7 +5,7 @@ import { UserRepository } from '../../user-repository';
 import { Errors } from '../../../domain/dtos/errors';
 import { VirtualizationGateway } from '../../virtualization-gateway';
 import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
-import { Role, roleSchema } from '../../../domain/dtos/role';
+import { roleSchema } from '../../../domain/dtos/role';
 
 export const signUpUserInputSchema = z
     .object({
@@ -30,13 +30,10 @@ export class SignUpUser {
     async execute(input: SignUpUserInput): Promise<SignUpUserOutput> {
         const existingUser = await this.userRepository.getByUsername(input.username);
 
-        const role: Role = input.role ?? 'PENDING';
-
         if (existingUser) {
             existingUser.update({
                 name: input.name,
                 preferredUsername: input.preferredUsername,
-                role,
             });
 
             await this.userRepository.update(existingUser);
@@ -53,7 +50,7 @@ export class SignUpUser {
             username: input.username,
             name: input.name,
             preferredUsername: input.preferredUsername,
-            role,
+            role: input.role ?? 'PENDING',
             allowedInstanceTypes: [instanceType],
         });
         newUser.id = await this.userRepository.save(newUser);
