@@ -9,6 +9,7 @@ import { VirtualizationGateway } from '../../virtualization-gateway';
 import { Errors } from '../../../domain/dtos/errors';
 import { InstanceTemplateRepository } from '../../instance-template-repository';
 import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
+import { MachineImageState } from '../../../domain/dtos/machine-image-state';
 
 export const launchInstanceInputSchema = z
     .object({
@@ -68,6 +69,24 @@ export class LaunchInstance {
             throw Errors.resourceNotFound(
                 'MachineImage',
                 instanceTemplate.getData().machineImageId,
+            );
+        }
+
+        if (instanceMachineImage.state !== 'AVAILABLE') {
+            const machineImageStateToReasonMap: Record<MachineImageState, string> = {
+                AVAILABLE: 'Machine Image is available',
+                DEREGISTERED: 'Machine Image is deregistered. Please contact support.',
+                DISABLED: 'Machine Image is disabled. Please contact support.',
+                ERROR: 'Machine Image is in error state. Please contact support.',
+                FAILED: 'Machine Image failed to launch. Please contact support.',
+                INVALID: 'Machine Image is invalid. Please contact support.',
+                PENDING: 'Machine Image is being processed. Please try again later.',
+                TRANSIENT: 'Machine Image is transient. Please contact support.',
+            };
+
+            throw Errors.businessRuleViolation(
+                machineImageStateToReasonMap[instanceMachineImage.state] ??
+                    'Machine Image is not available',
             );
         }
 

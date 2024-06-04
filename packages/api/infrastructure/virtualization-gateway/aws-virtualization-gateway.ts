@@ -54,6 +54,7 @@ import {
     SchedulerClient,
 } from '@aws-sdk/client-scheduler';
 import { Logger } from '../../application/logger';
+import { MachineImageState } from '../../domain/dtos/machine-image-state';
 
 dayjs.extend(utc);
 
@@ -104,6 +105,27 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
 
         if (state === undefined) {
             throw Errors.internalError('Instance state not found');
+        }
+
+        return state;
+    };
+
+    private mapMachineImageState = (stateName?: string): MachineImageState => {
+        const stateMap: Record<string, MachineImageState> = {
+            available: 'AVAILABLE',
+            deregistered: 'DEREGISTERED',
+            disabled: 'DISABLED',
+            error: 'ERROR',
+            failed: 'FAILED',
+            invalid: 'INVALID',
+            pending: 'PENDING',
+            transient: 'TRANSIENT',
+        };
+
+        const state = stateMap[stateName?.toLowerCase() ?? ''];
+
+        if (state === undefined) {
+            throw Errors.internalError('Machine image state not found');
         }
 
         return state;
@@ -494,11 +516,14 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                 platform = 'LINUX';
             }
 
+            image.State;
+
             return {
                 id: machineImageId,
                 storageInGb,
                 platform,
                 distribution: image.Description ?? 'unknown',
+                state: this.mapMachineImageState(image.State),
             };
         } catch (error) {
             console.log(error);
@@ -557,6 +582,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                     storageInGb,
                     platform,
                     distribution: image.Description ?? 'unknown',
+                    state: this.mapMachineImageState(image.State),
                 } satisfies MachineImage;
             }) ?? [];
 
