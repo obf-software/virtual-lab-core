@@ -1,7 +1,7 @@
 import { UserPoolGateway } from '../../application/user-pool-gateway';
 
 export class InMemoryUserPoolGateway implements UserPoolGateway {
-    // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateUserPool = async (props: {
         preSignUpLambdaArn?: string;
         postConfirmationLambdaArn?: string;
@@ -14,7 +14,7 @@ export class InMemoryUserPoolGateway implements UserPoolGateway {
         verificationSmsMessage?: string;
     }): Promise<void> => Promise.resolve();
 
-    // eslint-disable-next-line class-methods-use-this, @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateUserPoolClient = async (props: {
         clientId: string;
         callbackUrls?: string[];
