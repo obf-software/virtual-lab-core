@@ -1,6 +1,6 @@
 $ssmKey = $args[0]
 $ssmRegion = $args[1]
-$password = & "C:\Program Files\Amazon\AWSCLIV2\aws.exe"  ssm get-parameter --name "$ssmKey" --region "$ssmRegion" --with-decryption --query "Parameter.Value" --output text
+$password = (Get-SSMParameterValue -Name $ssmKey -Region $ssmRegion).Parameters.Value
 $securePass = ConvertTo-SecureString $password -AsPlainText -Force
 $username = "developer"
 $name = "Developer"
