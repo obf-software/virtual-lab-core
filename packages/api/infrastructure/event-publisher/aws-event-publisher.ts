@@ -1,8 +1,4 @@
-import {
-    EventBridgeClient,
-    PutEventsCommand,
-    PutEventsResultEntry,
-} from '@aws-sdk/client-eventbridge';
+import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { HttpRequest } from '@smithy/protocol-http';
 import { SignatureV4 } from '@smithy/signature-v4';
 import { defaultProvider } from '@aws-sdk/credential-provider-node';
@@ -40,27 +36,17 @@ export class AWSEventPublisher implements EventPublisher {
 
         const { Entries } = await this.eventBridgeClient.send(command);
 
-        const failEntries: PutEventsResultEntry[] = [];
-        const successEntries: PutEventsResultEntry[] = [];
-
         Entries?.forEach((entry) => {
-            if (entry.ErrorCode === undefined) {
-                successEntries.push(entry);
-            } else {
-                failEntries.push(entry);
+            if (entry.EventId !== undefined) {
+                this.deps.logger.info(`Published event "${entry.EventId}" to AWS EventBridge`);
+                return;
             }
+
+            const error = new Error(entry.ErrorMessage);
+            error.name = entry.ErrorCode ?? 'AWSEventBridgeError';
+
+            this.deps.logger.error(`Failed to publish event to AWS EventBridge`, { error });
         });
-
-        if (failEntries.length > 0) {
-            this.deps.logger.error(`Error publishing events to AWS EventBridge`, { failEntries });
-        }
-
-        if (successEntries.length > 0) {
-            this.deps.logger.info(`Successfully published events to AWS EventBridge`, {
-                successEntries,
-                events,
-            });
-        }
     }
 
     private async publishToAppSync(...events: ApplicationEvent[]): Promise<void> {
@@ -107,8 +93,16 @@ export class AWSEventPublisher implements EventPublisher {
 
                 const signedRequest = await signer.sign(request);
                 const response = await fetch(url, { ...signedRequest });
+                const statusCode = response.status;
+
+                if (statusCode >= 400) {
+                    const error = new Error(`AWS AppSync returned status code ${statusCode}`);
+                    error.name = 'AWSAppSyncError';
+                    error.cause = await response.text();
+                    throw error;
+                }
+
                 return {
-                    statusCode: response.status,
                     username: event.detail.username,
                     type: event.type,
                     data: event.detail,
@@ -116,30 +110,24 @@ export class AWSEventPublisher implements EventPublisher {
             }),
         );
 
-        const failResults: Record<string, unknown>[] = [];
-        const successResults: Record<string, unknown>[] = [];
-
         results.forEach((result) => {
             if (result.status === 'fulfilled') {
-                if (result.value.statusCode >= 200 && result.value.statusCode < 399) {
-                    successResults.push(result.value);
-                } else {
-                    failResults.push(result.value);
-                }
-            } else {
-                this.deps.logger.error(`Error calling AWS AppSync`, { error: result.reason });
+                this.deps.logger.info(
+                    `Published event "${result.value.type}" to AWS AppSync`,
+                    result.value,
+                );
+                return;
             }
-        });
 
-        if (failResults.length > 0) {
-            this.deps.logger.error(`Error publishing events to AWS AppSync`, { failResults });
-        }
+            const error =
+                result.reason instanceof Error ? result.reason : new Error('Internal error');
+            error.name = 'AWSAppSyncError';
 
-        if (successResults.length > 0) {
-            this.deps.logger.info(`Successfully published events to AWS AppSync`, {
-                successResults,
+            this.deps.logger.error(`Failed to publish event to AWS AppSync`, {
+                error,
+                reason: result.reason,
             });
-        }
+        });
     }
 
     async publish(...events: ApplicationEvent[]): Promise<void> {
@@ -148,12 +136,9 @@ export class AWSEventPublisher implements EventPublisher {
 
         events.forEach((event) => {
             if (!event.isValid()) {
-                this.deps.logger.error(
-                    `Event ${event.type} is not valid: ${JSON.stringify(
-                        event.detail,
-                    )}. Not publishing.`,
-                );
-
+                const error = new Error(`Event ${event.type} is not valid`);
+                error.name = 'InvalidEventError';
+                this.deps.logger.error(`Skipping event publishing`, { error, event });
                 return;
             }
 
@@ -162,9 +147,9 @@ export class AWSEventPublisher implements EventPublisher {
             } else if (event.destination === 'BUS') {
                 eventBridgeEvent.push(event);
             } else {
-                this.deps.logger.error(
-                    `Event ${event.type} is not suposed to be published. Not publishing.`,
-                );
+                const error = new Error(`Event ${event.type} is not suposed to be published`);
+                error.name = 'EventNotSupposedToBePublishedError';
+                this.deps.logger.error(error.message, { error, event });
             }
         });
 

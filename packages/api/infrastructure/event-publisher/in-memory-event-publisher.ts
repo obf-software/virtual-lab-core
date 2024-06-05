@@ -11,7 +11,7 @@ export class InMemoryEventPublisher implements EventPublisher {
     async publish(...events: ApplicationEvent[]): Promise<void> {
         events.forEach((event) => {
             if (!event.isValid() || event.destination === 'NONE') {
-                console.error('Invalid event', event);
+                console.error('Invalid event', { event });
                 return;
             }
             this.storage.push(event);

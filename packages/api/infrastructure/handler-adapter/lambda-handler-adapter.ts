@@ -17,6 +17,48 @@ import { z } from 'zod';
 import { Errors } from '../../domain/dtos/errors';
 
 export class LambdaHandlerAdapter {
+    private static readonly isLocal = () => process.env.IS_LOCAL === 'true';
+
+    private static readonly createLoggerCallback = (logger: Logger) => (error: unknown) => {
+        let message = 'Unknown';
+        let errorObject: Error | undefined;
+
+        if (error instanceof Error) {
+            message = error.message;
+            errorObject = error;
+        } else if (typeof error === 'string') {
+            message = error;
+            errorObject = new Error(error);
+        }
+
+        if (errorObject !== undefined) {
+            logger.error(message, errorObject);
+        } else {
+            logger.error(message);
+        }
+    };
+
+    private static readonly getHttpMiddlewares = (config: { logger: Logger }): MiddlewareObj[] => {
+        const isLocal = LambdaHandlerAdapter.isLocal();
+
+        return [
+            httpCors(),
+            injectLambdaContext(config.logger, { logEvent: !isLocal }),
+            httpErrorHandler({ logger: LambdaHandlerAdapter.createLoggerCallback(config.logger) }),
+        ];
+    };
+
+    private static readonly getEventBridgeMiddlewares = (config: {
+        logger: Logger;
+    }): MiddlewareObj[] => {
+        const isLocal = LambdaHandlerAdapter.isLocal();
+
+        return [
+            injectLambdaContext(config.logger, { logEvent: !isLocal }),
+            errorLogger({ logger: LambdaHandlerAdapter.createLoggerCallback(config.logger) }),
+        ];
+    };
+
     /**
      * Adapt a lambda handler to be used with middy. This is useful for adding
      * middlewares to the handler. The middlewares will be executed in the order
@@ -28,68 +70,22 @@ export class LambdaHandlerAdapter {
         return middyHandler;
     };
 
-    static adaptCustom = <T extends Handler>(handler: T, config: { logger: Logger }) => {
-        const isLocal = process.env.IS_LOCAL === 'true';
-
-        return LambdaHandlerAdapter.adapt(handler, [
-            injectLambdaContext(config.logger, { logEvent: !isLocal }),
-            errorLogger({
-                logger: (error: unknown) =>
-                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
-                        error,
-                    }),
-            }),
-        ]);
-    };
+    static adaptCustom = <T extends Handler>(handler: T, config: { logger: Logger }) =>
+        LambdaHandlerAdapter.adapt(handler, LambdaHandlerAdapter.getEventBridgeMiddlewares(config));
 
     static adaptApplicationEvent = <T extends ApplicationEvent = ApplicationEvent>(
         handler: EventBridgeHandler<T['type'], T['detail'], void>,
         config: { logger: Logger },
-    ) => {
-        const isLocal = process.env.IS_LOCAL === 'true';
-
-        return LambdaHandlerAdapter.adapt(handler, [
-            injectLambdaContext(config.logger, { logEvent: !isLocal }),
-            errorLogger({
-                logger: (error: unknown) =>
-                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
-                        error,
-                    }),
-            }),
-        ]);
-    };
+    ) =>
+        LambdaHandlerAdapter.adapt(handler, LambdaHandlerAdapter.getEventBridgeMiddlewares(config));
 
     static adaptAPIWithUserPoolAuthorizer = (
         handler: APIGatewayProxyHandlerV2WithJWTAuthorizer,
         config: { logger: Logger },
-    ) => {
-        const isLocal = process.env.IS_LOCAL === 'true';
+    ) => LambdaHandlerAdapter.adapt(handler, LambdaHandlerAdapter.getHttpMiddlewares(config));
 
-        return LambdaHandlerAdapter.adapt(handler, [
-            httpCors(),
-            injectLambdaContext(config.logger, { logEvent: !isLocal }),
-            httpErrorHandler({
-                logger: (error: unknown) =>
-                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
-                        error,
-                    }),
-            }),
-        ]);
-    };
-
-    static adaptSNS = (handler: SNSHandler, config: { logger: Logger }) => {
-        const isLocal = process.env.IS_LOCAL === 'true';
-
-        return LambdaHandlerAdapter.adapt(handler, [
-            injectLambdaContext(config.logger, { logEvent: !isLocal }),
-            errorLogger({
-                logger: (error: unknown) =>
-                    config.logger.error(error instanceof Error ? error.message : 'Unknown', {
-                        error,
-                    }),
-            }),
-        ]);
-    };
+    static adaptSNS = (handler: SNSHandler, config: { logger: Logger }) =>
+        LambdaHandlerAdapter.adapt(handler, LambdaHandlerAdapter.getEventBridgeMiddlewares(config));
 
     /**
      * Helper function to parse an API Gateway request with type hinting and schema validation.

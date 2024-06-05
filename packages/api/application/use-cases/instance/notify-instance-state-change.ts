@@ -41,7 +41,7 @@ export class NotifyInstanceStateChange {
         const user = await this.userRepository.getById(instance.getData().ownerId);
 
         if (!user) {
-            this.logger.error(`User not found, skipping instance state change notification`, {
+            this.logger.warn(`User not found, skipping instance state change notification`, {
                 ownerId: instance.getData().ownerId,
             });
             return;
