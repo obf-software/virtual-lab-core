@@ -1,6 +1,7 @@
 import * as sst from 'sst/constructs';
 import * as cdk from 'aws-cdk-lib';
 import { Core } from './Core';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
 export const ConnectionGateway = ({ stack }: sst.StackContext) => {
     const { ssmParameters, defaultEventBus, vpc } = sst.use(Core);
@@ -30,6 +31,12 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
                 stickinessCookieDuration: cdk.Duration.days(1),
                 healthCheck: {
                     healthyHttpCodes: '200-499',
+                },
+            },
+            fargateService: {
+                assignPublicIp: true,
+                vpcSubnets: {
+                    subnetType: ec2.SubnetType.PUBLIC,
                 },
             },
         },
