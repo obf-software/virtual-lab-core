@@ -56,7 +56,7 @@ export const Core = ({ stack }: sst.StackContext) => {
         {
             cacheEnabled: true,
             cacheSize: 1000,
-            logLevel: lambda.ParamsAndSecretsLogLevel.INFO,
+            logLevel: lambda.ParamsAndSecretsLogLevel.ERROR,
             httpPort: 2773,
             maxConnections: 1000,
             parameterStoreTtl: cdk.Duration.seconds(300),

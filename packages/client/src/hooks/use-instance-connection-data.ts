@@ -9,6 +9,7 @@ export const useInstanceConnectionData = (props: { instanceId: string }) => {
             if (!response.success) throw new Error(response.error);
             return response.data;
         },
+        retry: false,
         enabled: false,
         refetchOnWindowFocus: false,
     });

@@ -256,22 +256,24 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
                                 })
                                 .catch((error) => {
                                     const messageMap: Record<string, string> = {
-                                        'Instance has not been launched yet':
+                                        'Business rule violation: Instance has not been launched yet':
                                             'A instância ainda não foi configurada',
-                                        'Instance is being prepared for connection':
+                                        'Business rule violation: Instance is being prepared for connection':
                                             'A instância está sendo preparada para conexão',
-                                        'Instance is not ready yet':
+                                        'Business rule violation: Instance is not ready yet':
                                             'A instância ainda não está pronta',
                                     };
 
-                                    const errorMessage =
-                                        messageMap[error instanceof Error ? error.message : ''] ??
+                                    const mappedMessage =
+                                        messageMap[error instanceof Error ? error.message : ''];
+
+                                    const defaultMessage =
                                         'Ocorreu um erro ao obter os dados de conexão da instância. Tente novamente em alguns minutos';
 
                                     toast({
                                         title: 'Ainda não é possível conectar-se à instância',
-                                        description: errorMessage,
-                                        status: 'error',
+                                        description: mappedMessage ?? defaultMessage,
+                                        status: mappedMessage ? 'info' : 'error',
                                         duration: 5000,
                                         isClosable: true,
                                     });
