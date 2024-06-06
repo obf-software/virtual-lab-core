@@ -6,7 +6,7 @@ import {
     PathsObject,
     ReferenceObject,
     ResponseObject,
-} from 'openapi3-ts/oas30';
+} from 'openapi3-ts/dist/oas30';
 import * as s3deployment from 'aws-cdk-lib/aws-s3-deployment';
 import { Stack } from 'aws-cdk-lib';
 import _ from 'lodash';
