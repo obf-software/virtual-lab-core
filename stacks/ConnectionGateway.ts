@@ -3,7 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Core } from './Core';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 
-export const ConnectionGateway = ({ stack }: sst.StackContext) => {
+export const ConnectionGateway = ({ stack, app }: sst.StackContext) => {
     const { ssmParameters, defaultEventBus, vpc } = sst.use(Core);
 
     const connectionGatewayService = new sst.Service(stack, 'ConnectionGatewayService', {
@@ -16,6 +16,7 @@ export const ConnectionGateway = ({ stack }: sst.StackContext) => {
             PORT: '8080',
             VL_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME: ssmParameters.guacamoleCypherKey.name,
             VL_EVENT_BUS_ARN: defaultEventBus.eventBusArn,
+            VL_IS_LOCAL: app.local ? 'true' : 'false',
         },
         permissions: ['events:*', 'ssm:*'],
         scaling: {

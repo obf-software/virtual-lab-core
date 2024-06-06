@@ -28,7 +28,17 @@ const logger = createLogger({
 const getGuacamoleCypherKey = async () => {
     const ssmClient = new SSMClient({
         region: process.env.AWS_REGION,
-        credentialDefaultProvider: defaultProvider({}),
+        ...(process.env.VL_IS_LOCAL === 'true'
+            ? {
+                  credentials: {
+                      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                      sessionToken: process.env.AWS_SESSION_TOKEN,
+                  },
+              }
+            : {
+                  credentialDefaultProvider: defaultProvider(),
+              }),
     });
     const parameterName = process.env.VL_GUACAMOLE_CYPHER_KEY_PARAMETER_NAME;
 

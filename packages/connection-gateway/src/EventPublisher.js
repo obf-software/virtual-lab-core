@@ -45,7 +45,17 @@ class EventPublisher {
     publish = async (detailType, detail) => {
         const eventBridgeClient = new EventBridgeClient({
             region: process.env.AWS_REGION,
-            credentials: defaultProvider(),
+            ...(process.env.VL_IS_LOCAL === 'true'
+                ? {
+                      credentials: {
+                          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+                          sessionToken: process.env.AWS_SESSION_TOKEN,
+                      },
+                  }
+                : {
+                      credentialDefaultProvider: defaultProvider(),
+                  }),
         });
 
         await eventBridgeClient.send(
