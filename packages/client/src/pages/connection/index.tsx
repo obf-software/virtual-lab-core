@@ -158,7 +158,6 @@ export const ConnectionPage: React.FC = () => {
                         direction={'column'}
                         spacing={4}
                         alignItems={'center'}
-                        bg={'black'}
                     >
                         <Spinner
                             size={'xl'}
@@ -166,7 +165,6 @@ export const ConnectionPage: React.FC = () => {
                             speed={'0.65s'}
                             emptyColor={'gray.200'}
                             color={'blue.500'}
-                            bg={'black'}
                         />
 
                         <Text
