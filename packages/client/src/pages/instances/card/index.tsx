@@ -252,6 +252,11 @@ export const InstancesPageCard: React.FC<InstancesPageCardProps> = ({ instance, 
 
                                     navigate(
                                         `/connection?connectionString=${encodedConnectionString}`,
+                                        {
+                                            state: {
+                                                instanceName: instance.name,
+                                            },
+                                        },
                                     );
                                 })
                                 .catch((error) => {

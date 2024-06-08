@@ -11,27 +11,27 @@ export enum ConnectionState {
 }
 
 const statusMap: Record<Guacamole.Status.Code, string> = {
-    0x0000: 'SUCCESS: 0x0000',
-    0x0100: 'The requested operation is unsupported',
-    0x0200: 'The operation could not be performed due to an internal failure',
-    0x0201: 'The operation could not be performed as the server is busy',
-    0x0202: 'The operation could not be performed because the upstream server is not responding',
-    0x0203: 'The operation was unsuccessful due to an error or otherwise unexpected condition of the upstream server',
-    0x0204: 'The operation could not be performed as the requested resource does not exist',
-    0x0205: 'The operation could not be performed as the requested resource is already in use',
-    0x0206: 'The operation could not be performed as the requested resource is now closed',
-    0x0207: 'A instância está sendo configurada para receber conexões, tente novamente em alguns instantes', // The operation could not be performed because the upstream server does not appear to exist
-    0x0208: 'The operation could not be performed because the upstream server is not available to service the request',
-    0x0209: 'The session within the upstream server has ended because it conflicted with another session',
-    0x020a: 'The session within the upstream server has ended because it appeared to be inactive',
-    0x020b: 'The session within the upstream server has been forcibly terminated',
-    0x0300: 'The operation could not be performed because bad parameters were given',
-    0x0301: 'A instância está sendo configurada para receber conexões, tente novamente em alguns instantes', //'Permission was denied to perform the operation, as the user is not yet authorized (not yet logged in, for example)',
-    0x0303: 'Permission was denied to perform the operation, and this permission will not be granted even if the user is authorized',
-    0x0308: 'The client took too long to respond',
-    0x030d: 'The client sent too much data',
-    0x030f: 'The client sent data of an unsupported or unexpected type',
-    0x031d: 'The operation failed because the current client is already using too many resources',
+    0x0000: 'SUCESSO: 0x0000',
+    0x0100: 'A operação solicitada não é suportada',
+    0x0200: 'A operação não pôde ser realizada devido a uma falha interna',
+    0x0201: 'A operação não pôde ser realizada porque o servidor está ocupado',
+    0x0202: 'A operação não pôde ser realizada porque o servidor upstream não está respondendo',
+    0x0203: 'A operação não teve sucesso devido a um erro ou condição inesperada do servidor upstream',
+    0x0204: 'A operação não pôde ser realizada porque o recurso solicitado não existe',
+    0x0205: 'A operação não pôde ser realizada porque o recurso solicitado já está em uso',
+    0x0206: 'A operação não pôde ser realizada porque o recurso solicitado agora está fechado',
+    0x0207: 'A operação não pôde ser realizada porque o servidor upstream não parece existir',
+    0x0208: 'A operação não pôde ser realizada porque o servidor upstream não está disponível para atender à solicitação',
+    0x0209: 'A sessão dentro do servidor upstream terminou porque conflitou com outra sessão',
+    0x020a: 'A sessão dentro do servidor upstream terminou porque parecia estar inativa',
+    0x020b: 'A sessão dentro do servidor upstream foi terminada à força',
+    0x0300: 'A operação não pôde ser realizada porque foram fornecidos parâmetros ruins',
+    0x0301: 'A permissão foi negada para realizar a operação, pois o usuário ainda não está autorizado (por exemplo, ainda não fez login)',
+    0x0303: 'A permissão foi negada para realizar a operação, e essa permissão não será concedida mesmo que o usuário esteja autorizado',
+    0x0308: 'O cliente demorou muito para responder',
+    0x030d: 'O cliente enviou muitos dados',
+    0x030f: 'O cliente enviou dados de um tipo não suportado ou inesperado',
+    0x031d: 'A operação falhou porque o cliente atual já está usando muitos recursos',
 };
 
 const stateNumberToEnumMap: Record<number, keyof typeof ConnectionState> = {
@@ -69,7 +69,7 @@ export const useConnection = (props: { connectionString: string | null }) => {
 
         const newDisplay = newClient.getDisplay();
         newDisplay.onresize = (_width, height) => {
-            newDisplay.scale(window.innerHeight / height);
+            newDisplay.scale((window.innerHeight - 60) / height);
         };
 
         const newKeyboard = new Guacamole.Keyboard(document);

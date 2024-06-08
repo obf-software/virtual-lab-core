@@ -84,6 +84,7 @@ export class GetInstanceConnection {
                       port: 5901,
                       cursor: 'local',
                       password: instancePassword,
+                      'enable-audio': true,
                   })
                 : this.connectionEncoder.encodeRdpConnection({
                       hostname: virtualInstance.hostname,
@@ -95,6 +96,7 @@ export class GetInstanceConnection {
                       height: 768,
                       password: instancePassword,
                       username: 'developer',
+                      'enable-audio-input': true,
                   });
 
         const connectionString = await connectionStringPromise;

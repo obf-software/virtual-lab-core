@@ -280,7 +280,7 @@ export const InstancesPage: React.FC = () => {
                         <Fade in>
                             <SimpleGrid
                                 pb={10}
-                                columns={{ base: 1, md: 2 }}
+                                columns={{ base: 1, md: 1, xl: 2 }}
                                 spacing={10}
                             >
                                 {instances.map((instance) => (
