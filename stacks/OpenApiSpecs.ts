@@ -96,4 +96,29 @@ export class OpenApiSpecs extends Construct {
             };
         }, {} as PathsObject);
     };
+
+    static readonly markdown = (
+        stringTemplates: TemplateStringsArray,
+        ...templateArguments: (string | number | undefined)[]
+    ): string => {
+        const lines = stringTemplates
+            .reduce((acc, segment, i) => acc + segment + (templateArguments[i] ?? ''), '')
+            .trimEnd()
+            .split('\n')
+            .map((line) => line.replace(/^ +$/, ''));
+
+        while (lines[0].length === 0) lines.shift();
+        while (lines[lines.length - 1].length === 0) lines.pop();
+
+        const minLeadingSpaces = lines
+            .filter((line) => line.length > 0)
+            .reduce((acc, line) => {
+                const leadingSpaces = line.match(/^ */)?.[0].length ?? 0;
+                return leadingSpaces < acc ? leadingSpaces : acc;
+            }, Infinity);
+
+        return lines
+            .map((line) => (line.length > 0 ? line.substring(minLeadingSpaces) : line))
+            .join('\n');
+    };
 }

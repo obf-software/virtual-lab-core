@@ -3,36 +3,54 @@ import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import { Api } from './Api';
 import { OpenApiSpecs } from './OpenApiSpecs';
 import { featureFlagIsEnabled } from './config/feature-flags';
+import { StringParameter } from 'aws-cdk-lib/aws-ssm';
+import { Core } from './Core';
 
 export function Docs({ stack, app }: sst.StackContext) {
-    const { api, pathsObjects } = sst.use(Api);
+    const { ssmParameters } = sst.use(Core);
+    const { pathsObjects } = sst.use(Api);
 
     const openApiSpecs = new OpenApiSpecs(stack, 'OpenApiSpecs', {
         info: {
             title: 'API',
             version: '1.0.0',
-            description: `
-                Essa API é utilizada para gerenciar todos os recursos do sistema Virtual Lab.
+            description: OpenApiSpecs.markdown`
+                # Bem-vindo à API do Virtual Lab
 
-                A documentação é dividida em quatro categorias principais:
+                Esta API é responsável por fornecer acesso a recursos do Virtual Lab, um laboratório virtual de computação em nuvem.
 
-                - Instâncias: Rotas para manipulação das instâncias de máquinas virtuais.
+                ## Categorias
 
-                - Templates de instâncias: Rotas para manipulação dos templates de instâncias de máquinas virtuais. Templates são modelos de instâncias que podem ser utilizados para criar instâncias.
+                A API é dividida nas seguintes categorias, cada uma com suas respectivas rotas:
 
-                - Usuários: Rotas para manipulação dos usuários do sistema.
+                ### Instâncias
 
-                - Outros: Rotas para obtenção de informações adicionais sobre a API.
+                Rotas para manipulação das instâncias de máquinas virtuais.
 
+                ### Templates de instâncias
+                
+                Rotas para manipulação dos templates de instâncias de máquinas virtuais. Templates são modelos de instâncias que podem ser utilizados para criar instâncias.
 
-                Todas as rotas são protegidas através de autenticação JWT. Para obter um token, é necessário realizar login através do sistema de autenticação do AWS Cognito.
+                ### Usuários
+                
+                Rotas para manipulação dos usuários do sistema.
+
+                ### Outros
+                
+                Rotas para obtenção de informações adicionais sobre a API.
+
+                ### Autenticação
+
+                Todas as rotas são protegidas através de autenticação JWT. 
+                
+                Para obter um token, é necessário realizar login através do sistema de autenticação do AWS Cognito.
             `,
         },
         servers: [
-            // {
-            //     url: api.url,
-            //     description: `Ambiente ${stack.stage}`,
-            // },
+            {
+                url: StringParameter.valueForStringParameter(stack, ssmParameters.apiUrl.name),
+                description: `${stack.stage}`,
+            },
         ],
         tags: [
             {
