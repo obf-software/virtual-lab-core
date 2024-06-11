@@ -26,7 +26,7 @@ const statusMap: Record<Guacamole.Status.Code, string> = {
     0x020a: 'A sessão dentro do servidor upstream terminou porque parecia estar inativa',
     0x020b: 'A sessão dentro do servidor upstream foi terminada à força',
     0x0300: 'A operação não pôde ser realizada porque foram fornecidos parâmetros ruins',
-    0x0301: 'A permissão foi negada para realizar a operação, pois o usuário ainda não está autorizado (por exemplo, ainda não fez login)',
+    0x0301: 'O servidor está configurando o usuário, aguarde mais um pouco',
     0x0303: 'A permissão foi negada para realizar a operação, e essa permissão não será concedida mesmo que o usuário esteja autorizado',
     0x0308: 'O cliente demorou muito para responder',
     0x030d: 'O cliente enviou muitos dados',
