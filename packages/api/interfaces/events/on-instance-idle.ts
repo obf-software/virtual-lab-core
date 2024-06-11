@@ -17,6 +17,7 @@ const {
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
     EVENT_BUS_PUBLISHER_ROLE_ARN,
+    AWS_ACCOUNT_ID,
 } = process.env;
 const logger = new AWSLogger();
 const configVault =
@@ -36,6 +37,7 @@ const virtualizationGateway = new AwsVirtualizationGateway({
     SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
     EVENT_BUS_ARN,
     EVENT_BUS_PUBLISHER_ROLE_ARN,
+    AWS_ACCOUNT_ID,
 });
 const autoTurnInstanceOff = new AutoTurnInstanceOff(
     logger,

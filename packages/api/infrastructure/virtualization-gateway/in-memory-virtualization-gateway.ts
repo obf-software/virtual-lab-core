@@ -331,6 +331,14 @@ export class InMemoryVirtualizationGateway implements VirtualizationGateway {
         return Promise.resolve(id);
     };
 
+    deleteMachineImage = async (machineImageId: string): Promise<void> => {
+        this.storage.machineImages = this.storage.machineImages?.filter(
+            (i) => i.id !== machineImageId,
+        );
+
+        return Promise.resolve();
+    };
+
     getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {
         return Promise.resolve(this.storage.instanceTypes?.find((i) => i.name === instanceType));
     };

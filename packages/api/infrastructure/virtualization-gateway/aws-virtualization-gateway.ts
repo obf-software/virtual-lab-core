@@ -1,5 +1,6 @@
 import {
     CreateImageCommand,
+    DeregisterImageCommand,
     DescribeImagesCommand,
     DescribeInstanceStatusCommand,
     DescribeInstanceTypesCommand,
@@ -79,6 +80,7 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
             readonly logger: Logger;
             readonly configVault: ConfigVault;
             readonly AWS_REGION: string;
+            readonly AWS_ACCOUNT_ID: string;
             readonly SNS_TOPIC_ARN: string;
             readonly SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME: string;
             readonly SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME: string;
@@ -627,6 +629,33 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         }
 
         return ImageId;
+    };
+
+    deleteMachineImage = async (machineImageId: string): Promise<void> => {
+        try {
+            const { Images } = await this.ec2Client.send(
+                new DescribeImagesCommand({ ImageIds: [machineImageId] }),
+            );
+
+            if (!Images || Images?.length === 0) {
+                throw Errors.internalError('Machine image not found');
+            }
+
+            const { OwnerId } = Images[0];
+
+            if (OwnerId !== this.deps.AWS_ACCOUNT_ID) {
+                this.deps.logger.info('Skipping machine image deletion', {
+                    machineImageId,
+                    reason: 'Not owned by the account',
+                });
+
+                return;
+            }
+
+            await this.ec2Client.send(new DeregisterImageCommand({ ImageId: machineImageId }));
+        } catch (error) {
+            this.deps.logger.error('Failed to delete machine image', { error, machineImageId });
+        }
     };
 
     getInstanceType = async (instanceType: string): Promise<VirtualInstanceType | undefined> => {

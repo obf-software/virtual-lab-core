@@ -2,19 +2,27 @@ import { Errors } from '../../../../domain/dtos/errors';
 import { InMemoryAuth } from '../../../../infrastructure/auth/in-memory-auth';
 import { InMemoryInstanceTemplateRepository } from '../../../../infrastructure/instance-template-repository/in-memory-instance-template-repository';
 import { InMemoryLogger } from '../../../../infrastructure/logger/in-memory-logger';
+import { InMemoryVirtualizationGateway } from '../../../../infrastructure/virtualization-gateway/in-memory-virtualization-gateway';
 import { DeleteInstanceTemplate, DeleteInstanceTemplateInput } from '../delete-instance-template';
 
 describe('DeleteInstanceTemplate use case', () => {
     const logger = new InMemoryLogger();
     const auth = new InMemoryAuth();
     const instanceTemplateRepository = new InMemoryInstanceTemplateRepository();
-    const useCase = new DeleteInstanceTemplate(logger, auth, instanceTemplateRepository);
+    const virtualizationGateway = new InMemoryVirtualizationGateway();
+    const useCase = new DeleteInstanceTemplate(
+        logger,
+        auth,
+        instanceTemplateRepository,
+        virtualizationGateway,
+    );
 
     beforeEach(() => {
         jest.clearAllMocks();
 
         logger.reset();
         instanceTemplateRepository.reset();
+        virtualizationGateway.reset();
     });
 
     it('When input is invalid, then throw validationError', async () => {

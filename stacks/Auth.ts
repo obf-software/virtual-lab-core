@@ -22,6 +22,7 @@ export const Auth = ({ stack, app }: sst.StackContext) => {
         SNS_TOPIC_ARN: defaultSnsTopic.topicArn,
         EVENT_BUS_ARN: defaultEventBus.eventBusArn,
         EVENT_BUS_PUBLISHER_ROLE_ARN: defaultEventBusPublisherRole.roleArn,
+        AWS_ACCOUNT_ID: stack.account,
     };
 
     const triggerPermissions: sst.Permissions = [

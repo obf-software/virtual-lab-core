@@ -5,6 +5,7 @@ import { InstanceTemplateRepository } from '../../instance-template-repository';
 import { principalSchema } from '../../../domain/dtos/principal';
 import { Errors } from '../../../domain/dtos/errors';
 import { useCaseExecute } from '../../../domain/decorators/use-case-execute';
+import { VirtualizationGateway } from '../../virtualization-gateway';
 
 export const deleteInstanceTemplateInputSchema = z.object({
     principal: principalSchema,
@@ -20,6 +21,7 @@ export class DeleteInstanceTemplate {
         readonly logger: Logger,
         private readonly auth: Auth,
         private readonly instanceTemplateRepository: InstanceTemplateRepository,
+        private readonly virtualizationGateway: VirtualizationGateway,
     ) {}
 
     @useCaseExecute(deleteInstanceTemplateInputSchema)
@@ -34,6 +36,17 @@ export class DeleteInstanceTemplate {
             throw Errors.resourceNotFound('InstanceTemplate', input.instanceTemplateId);
         }
 
-        await this.instanceTemplateRepository.delete(instanceTemplate);
+        const results = await Promise.allSettled([
+            this.virtualizationGateway.deleteMachineImage(
+                instanceTemplate.getData().machineImageId,
+            ),
+            this.instanceTemplateRepository.delete(instanceTemplate),
+        ]);
+
+        results
+            .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+            .forEach((result) => {
+                this.logger.error('Error deleting instance template', { error: result.reason });
+            });
     }
 }

@@ -6,8 +6,20 @@ import { LambdaHandlerAdapter } from '../../../infrastructure/handler-adapter/la
 import { AWSLogger } from '../../../infrastructure/logger/aws-logger';
 import { DeleteInstanceTemplate } from '../../../application/use-cases/instance-template/delete-instance-template';
 import { z } from 'zod';
+import { AwsVirtualizationGateway } from '../../../infrastructure/virtualization-gateway/aws-virtualization-gateway';
 
-const { IS_LOCAL, AWS_REGION, AWS_SESSION_TOKEN, DATABASE_URL_PARAMETER_NAME } = process.env;
+const {
+    IS_LOCAL,
+    AWS_REGION,
+    AWS_SESSION_TOKEN,
+    DATABASE_URL_PARAMETER_NAME,
+    SNS_TOPIC_ARN,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+    EVENT_BUS_ARN,
+    EVENT_BUS_PUBLISHER_ROLE_ARN,
+    AWS_ACCOUNT_ID,
+} = process.env;
 
 const logger = new AWSLogger();
 const auth = new CognitoAuth();
@@ -19,7 +31,23 @@ const instanceTemplateRepository = new DatabaseInstanceTemplateRepository({
     configVault,
     DATABASE_URL_PARAMETER_NAME,
 });
-const deleteInstanceTemplate = new DeleteInstanceTemplate(logger, auth, instanceTemplateRepository);
+const virtualizationGateway = new AwsVirtualizationGateway({
+    logger,
+    configVault,
+    AWS_REGION,
+    SNS_TOPIC_ARN,
+    SERVICE_CATALOG_LINUX_PRODUCT_ID_PARAMETER_NAME,
+    SERVICE_CATALOG_WINDOWS_PRODUCT_ID_PARAMETER_NAME,
+    EVENT_BUS_ARN,
+    EVENT_BUS_PUBLISHER_ROLE_ARN,
+    AWS_ACCOUNT_ID,
+});
+const deleteInstanceTemplate = new DeleteInstanceTemplate(
+    logger,
+    auth,
+    instanceTemplateRepository,
+    virtualizationGateway,
+);
 
 export const handler = LambdaHandlerAdapter.adaptAPIWithUserPoolAuthorizer(
     async (event) => {

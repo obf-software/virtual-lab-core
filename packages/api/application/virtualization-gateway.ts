@@ -23,6 +23,7 @@ export interface VirtualizationGateway {
     getMachineImageById(machineImageId: string): Promise<MachineImage | undefined>;
     listRecommendedMachineImages(): Promise<MachineImage[]>;
     createMachineImage(virtualId: string, storageInGb: number): Promise<string>;
+    deleteMachineImage(machineImageId: string): Promise<void>;
     getInstanceType(instanceType: string): Promise<VirtualInstanceType | undefined>;
     listInstanceTypes(instanceTypes?: string[]): Promise<VirtualInstanceType[]>;
     scheduleInstanceOperation(

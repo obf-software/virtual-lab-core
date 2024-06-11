@@ -42,6 +42,7 @@ export const Api = ({ stack }: sst.StackContext) => {
         EVENT_BUS_ARN: defaultEventBus.eventBusArn,
         EVENT_BUS_PUBLISHER_ROLE_ARN: defaultEventBusPublisherRole.roleArn,
         APP_SYNC_API_URL: appSyncApi.url,
+        AWS_ACCOUNT_ID: stack.account,
     };
 
     const permissions: sst.Permissions = [
