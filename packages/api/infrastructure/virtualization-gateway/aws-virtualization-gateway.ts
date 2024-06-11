@@ -6,6 +6,7 @@ import {
     DescribeInstancesCommand,
     EC2Client,
     EC2ServiceException,
+    Image,
     InstanceStatus,
     InstanceTypeInfo,
     RebootInstancesCommand,
@@ -167,6 +168,20 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
         operation: VirtualizationGatewayScheduleOperation,
     ): string => {
         return `virtual-lab-core-${virtualId}-${operation}`;
+    };
+
+    private parseMachineImagePlatform = (image?: Image): InstancePlatform => {
+        let platform: MachineImage['platform'] = 'UNKNOWN';
+
+        const { Platform, PlatformDetails } = image ?? {};
+
+        if (Platform === 'Windows' || PlatformDetails?.toLowerCase().includes('windows')) {
+            platform = 'WINDOWS';
+        } else if (PlatformDetails?.toLowerCase().includes('linux')) {
+            platform = 'LINUX';
+        }
+
+        return platform;
     };
 
     isInstanceReadyToConnect = async (virtualId: string): Promise<boolean> => {
@@ -505,23 +520,10 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                     0,
                 ) ?? 0;
 
-            let platform: MachineImage['platform'] = 'UNKNOWN';
-
-            if (
-                image.Platform === 'Windows' ||
-                image.PlatformDetails?.toLowerCase().includes('windows')
-            ) {
-                platform = 'WINDOWS';
-            } else if (image.PlatformDetails?.toLowerCase().includes('linux')) {
-                platform = 'LINUX';
-            }
-
-            image.State;
-
             return {
                 id: machineImageId,
                 storageInGb,
-                platform,
+                platform: this.parseMachineImagePlatform(image),
                 distribution: image.Description ?? 'unknown',
                 state: this.mapMachineImageState(image.State),
             };
@@ -566,21 +568,10 @@ export class AwsVirtualizationGateway implements VirtualizationGateway {
                         0,
                     ) ?? 0;
 
-                let platform: MachineImage['platform'] = 'UNKNOWN';
-
-                if (
-                    image.Platform === 'Windows' ||
-                    image.PlatformDetails?.toLowerCase().includes('windows')
-                ) {
-                    platform = 'WINDOWS';
-                } else if (image.PlatformDetails?.toLowerCase().includes('linux')) {
-                    platform = 'LINUX';
-                }
-
                 return {
                     id: image.ImageId ?? '',
                     storageInGb,
-                    platform,
+                    platform: this.parseMachineImagePlatform(image),
                     distribution: image.Description ?? 'unknown',
                     state: this.mapMachineImageState(image.State),
                 } satisfies MachineImage;
