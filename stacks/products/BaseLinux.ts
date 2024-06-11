@@ -159,14 +159,7 @@ export class BaseLinuxProduct extends servicecatalog.ProductStack {
             filePath: baseLinuxUserDataFilePath,
             arguments: [props.passwordSsmParameterName, props.region].join(' '),
         });
-        userData.addCommands(
-            ...[
-                `rm -f ${baseLinuxUserDataFilePath}`,
-                'wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm',
-                'yum -y install ./google-chrome-stable_current_*.rpm',
-                'rm -f ./google-chrome-stable_current_*.rpm',
-            ],
-        );
+        userData.addCommands(`rm -f ${baseLinuxUserDataFilePath}`);
 
         const instance = new ec2.Instance(this, `${id}-Instance`, {
             role: props.role,

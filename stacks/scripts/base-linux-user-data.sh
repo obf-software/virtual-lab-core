@@ -26,3 +26,11 @@ sed -i 's/<USER>/ec2-user/' /etc/systemd/system/vncserver@.service
 systemctl daemon-reload
 systemctl enable vncserver@:1
 systemctl start vncserver@:1
+
+# check if google-chrome is installed
+if ! command -v google-chrome; then
+  wget https://dl.google.com/linux/direct/google-chrome-stable_current_x86_64.rpm
+  yum -y install ./google-chrome-stable_current_*.rpm
+  rm -f ./google-chrome-stable_current_*.rpm
+fi
+
