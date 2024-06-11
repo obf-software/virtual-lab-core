@@ -158,6 +158,7 @@ export class BaseWindowsProduct extends servicecatalog.ProductStack {
             filePath: baseWindowsUserDataFilePath,
             arguments: [props.passwordSsmParameterName, props.region].join(' '),
         });
+        userData.addCommands(`Remove-Item -Path "${baseWindowsUserDataFilePath}" -Force`);
 
         const instance = new ec2.Instance(this, `${id}-Instance`, {
             role: props.role,
