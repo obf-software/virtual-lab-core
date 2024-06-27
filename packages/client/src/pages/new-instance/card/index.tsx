@@ -121,7 +121,7 @@ export const NewInstancePageCard: React.FC<NewInstancePageCardProps> = ({
                                 <Text
                                     fontSize={'larger'}
                                     noOfLines={1}
-                                    overflow={'clip'}
+                                    isTruncated
                                 >
                                     {value}
                                 </Text>

@@ -269,7 +269,7 @@ export const TemplatesPageCard: React.FC<TemplatesPageCardProps> = ({
                                     <Text
                                         fontSize={'larger'}
                                         noOfLines={1}
-                                        overflow={'clip'}
+                                        isTruncated
                                     >
                                         {value}
                                     </Text>

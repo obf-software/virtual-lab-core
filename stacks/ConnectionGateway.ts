@@ -9,8 +9,8 @@ export const ConnectionGateway = ({ stack, app }: sst.StackContext) => {
     const connectionGatewayService = new sst.Service(stack, 'ConnectionGatewayService', {
         path: 'packages/connection-gateway',
         port: 8080,
-        memory: '0.5 GB',
-        cpu: '0.25 vCPU',
+        memory: '2 GB',
+        cpu: '1 vCPU',
         storage: '20 GB',
         environment: {
             PORT: '8080',

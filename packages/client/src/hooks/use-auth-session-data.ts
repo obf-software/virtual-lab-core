@@ -15,7 +15,9 @@ export const useAuthSessionData = () => {
     const [authSession, setAuthSession] = useState<AuthSessionData>();
 
     const getAuthSessionData = async (): Promise<AuthSessionData> => {
-        const authSession = await fetchAuthSession();
+        const authSession = await fetchAuthSession({
+            forceRefresh: true,
+        });
         const payload = authSession.tokens?.idToken?.payload;
         const userAttributes = await fetchUserAttributes();
 

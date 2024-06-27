@@ -131,15 +131,6 @@ export const InstancesPageCardCreateTemplateModal: React.FC<
                                 fontSize='lg'
                                 color={'gray.600'}
                             >
-                                É recomendado que a instância esteja desligada para garantir a
-                                consistência dos dados.
-                            </Text>
-
-                            <Text
-                                mt={2}
-                                fontSize='lg'
-                                color={'gray.600'}
-                            >
                                 A duração do processo pode variar de acordo com o tamanho do
                                 armazenamento da instância.
                             </Text>
